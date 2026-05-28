@@ -4,7 +4,7 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 
-public class errorHandlingJbdc extends Jdbc {
+public class ErrorHandlingJbdc extends Jdbc {
 
     public boolean status() {
         try {
