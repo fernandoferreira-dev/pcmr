@@ -4,7 +4,9 @@ import FooterComponent from '../components/footer-component'
 import appImage from '../assets/place-holder.png'
 import RegisterButtonComponent from '../components/register-button-component'
 
-export default function LoginPage() {
+type Props = { onLogin: () => void }
+
+export default function LoginPage({ onLogin }: Props) {
     return (
         <div>
             <div>
@@ -19,7 +21,7 @@ export default function LoginPage() {
                 <input id="password" name="password" type="password" />
 
                 <div className="button-row">
-                    <LoginButtonComponent/>
+                    <LoginButtonComponent onClick={onLogin} />
                     <RegisterButtonComponent/>
                 </div>
             </form>

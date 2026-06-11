@@ -1,8 +1,10 @@
 import '../styles/styles.css'
 
-export default function LoginButtonComponent() {
+type Props = { onClick : () => void }
+
+export default function LoginButtonComponent({ onClick }: Props) {
     return (
-        <button className="btn">
+        <button className="btn" onClick={onClick}>
             Login
         </button>
     )
