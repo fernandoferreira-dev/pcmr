@@ -9,13 +9,13 @@ type NavItem = {
 
 const mainNav: NavItem[] = [
   { label: "Dashboard", icon: "ti-home" },
-  { label: "Dados de Pacientes", icon: "ti-report-medical" },
-  { label: "Emails", icon: "ti-mail" },
-  { label: "Dados de Equipamentos", icon: "ti-cpu" },
+  { label: "Info", icon: "ti-report-medical" },
+  { label: "TBA", icon: "ti-report-medical" },
+  { label: "TBA", icon: "ti-report-medical" },
+  
 ];
 
 const settingsNav: NavItem[] = [
-  { label: "Team", icon: "ti-users" },
   { label: "Settings", icon: "ti-settings" },
 ];
 
@@ -28,7 +28,7 @@ export default function SidebarComponent() {
         <div className="sidebar-logo">
           <div className="sidebar-logo-text">
             <i className="ti ti-layout-sidebar sidebar-logo-icon" />
-            Workspace
+            <span>Medycist</span>
           </div>
         </div>
         <nav className="sidebar-nav">
