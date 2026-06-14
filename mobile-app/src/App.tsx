@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import LoginPage from './pages/login-page'
-import SidebarComponent from './components/side-bar-component'
+import MainPage from './pages/main-page'
 
 function App() {
   const [page, setPage] = useState<'login' | 'dashboard'>('login')
@@ -8,7 +8,7 @@ function App() {
   return page === 'login' ? (
     <LoginPage onLogin={() => setPage('dashboard')}/>
   ) : (
-    <SidebarComponent />
+    <MainPage/>
   )
 }
 
