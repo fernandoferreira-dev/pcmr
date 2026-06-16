@@ -2,8 +2,8 @@ import '../styles/styles.css'
 
 export default function RegisterButtonComponent() {
     return (
-        <button className="btn">
-            Register
+        <button className="registerbtn">
+            Esqueceu-se da palavra-passe? 
         </button>
     )
 }

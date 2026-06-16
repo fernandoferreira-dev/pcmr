@@ -9,16 +9,16 @@ type Props = { onLogin: () => void }
 export default function LoginPage({ onLogin }: Props) {
     return (
         <div>
+            <h1 style={{ color: '#4E5452' }}>Medycist</h1>
             <div>
                 <img src={appImage} alt="Illustrative image" style={{ width: '25%', height: 'auto' }} />
             </div>
-            <h1>Medycist</h1>
             <form className="login-page">
-                <label htmlFor="username">Username</label>
-                <input id="username" name="username" type="text" />
+                <label htmlFor="username" style={{ marginTop: '1rem' }}>Username</label>
+                <input className="input" id="username" name="username" type="text" />
 
                 <label htmlFor="password">Password</label>
-                <input id="password" name="password" type="password" />
+                <input className="input" id="password" name="password" type="password" />
 
                 <div className="button-row">
                     <LoginButtonComponent onClick={onLogin} />

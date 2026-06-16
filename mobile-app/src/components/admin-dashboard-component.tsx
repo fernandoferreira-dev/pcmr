@@ -1,14 +1,16 @@
-import DiagnosticButtonComponent from '../components/diagnostic-button-component';
+import DiagnosticButtonComponent from './diagnostic-button-component';
 import '../styles/styles.css';
 
 
 export default function AdminDashboardComponent() {
   return (
     <>
-      <div>
-        { /* Admin deverá ser o username do utilizadorasd */ }
+      <div className="main-page">
+        { /* Admin deverá ser o username do utilizador */ }
         <h1>Bem vindo, Admin</h1>
-        <DiagnosticButtonComponent/>
+        <div className="mainbox">  
+          <DiagnosticButtonComponent/>
+        </div>
       </div>
     </>
   )

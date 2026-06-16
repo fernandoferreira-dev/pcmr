@@ -1,3 +1,4 @@
+
 :root {
   --text: #6b6375;
   --text-h: #08060d;
@@ -48,6 +49,11 @@
   #social .button-icon {
     filter: invert(1) brightness(2);
   }
+}
+
+html, body, #root {
+  background-color: #CFCDCD;
+  min-height: 100%;
 }
 
 #root {
