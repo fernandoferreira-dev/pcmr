@@ -9,14 +9,26 @@
 
 .mainbox {
     display: flex;
+    flex-direction: row;
     align-self: center;
     justify-content: center;
+    gap: 1.5rem;
     border: 3px solid #B2C8B2;
     border-radius: 1rem;
     background-color: #E8E8E8;
-    height: 80vh;
-    width: 70%;
-    margin-top: 30px;
+    height: 70vh;
+    width: 80%;
+    margin-top: 30px;    
+}
+
+.OKstate {
+  display: block;
+  align-self: center;
+  border: 2px solid #a9c6a9;
+  border-radius: 3rem;
+  background-color: #a9c6a9;
+  width: 50%;
+  height: 60%;
 }
 
 .cancelbtn {
@@ -55,6 +67,7 @@
     border: 3px solid #a9c6a9;
     border-radius: 1rem;
     margin-left: 2rem;
+    margin-top: 2rem;
     width: 40%;
     height: 10%;
 }
@@ -78,13 +91,35 @@
     gap: 1rem;
 }
 
-.main-page h1 {
+.main-page h1{
     align-self: center;
     display: block;
     width: 50%;
     color: #000000;
     font-size: 2rem;
     line-height: 1;
+    margin-top: 2rem;
+}
+
+.main-page-states {
+  display: flex;
+  flex-direction: column;
+}
+
+.main-page-states-box {
+    display: flex;
+    flex-direction: row;
+    width: 60%;
+    height: 10%;
+    color: #000000;
+    font-size: 1.25rem;
+    line-height: 1;
+    margin-top: 2rem;
+    margin-right: 2rem;
+    border: 3px solid #B2C8B2;
+    border-radius: 1rem;
+    background-color: #FFFFFF;
+    padding: 0.5rem 1rem;
 }
 
 .login-page label {
