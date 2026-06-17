@@ -1,5 +1,5 @@
 import { useState, type JSX } from "react";
-import '../styles/styles.css';
+import '../../styles/navbar-styles/navbar-styles.css';
 
 interface IconProps {
   active: boolean;

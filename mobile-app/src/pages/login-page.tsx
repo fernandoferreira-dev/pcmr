@@ -1,8 +1,8 @@
-import '../styles/styles.css'
-import LoginButtonComponent from '../components/login-button-component'
-import FooterComponent from '../components/footer-component'
+import '../styles/login-page/login-page-styles.css'
+import LoginButtonComponent from '../components/login-page/login-button-component'
+import FooterComponent from '../components/misc/footer-component'
 import appImage from '../assets/place-holder.png'
-import RegisterButtonComponent from '../components/register-button-component'
+import RegisterButtonComponent from '../components/login-page/register-button-component'
 
 type Props = { onLogin: () => void }
 

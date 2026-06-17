@@ -1,4 +1,4 @@
-import '../styles/styles.css'
+import '../../styles/login-page/login-page-styles.css'
 
 export default function RegisterButtonComponent() {
     return (

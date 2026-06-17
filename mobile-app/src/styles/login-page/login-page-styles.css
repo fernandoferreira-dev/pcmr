@@ -1,0 +1,60 @@
+ .btn {
+    background-color: #6C757D;
+    color: #FFFFFF;
+    font-weight: bold;
+    padding: 0.5rem 1rem;
+    border: 3px solid #B2C8B2;
+    border-radius: 1rem;
+}
+
+.registerbtn {
+    position: fixed;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    margin-bottom: 20px;
+    color: #000000;
+    font-weight: bold;
+    padding: 0.5rem 1rem;
+    border: none;
+    background: none;
+}
+
+.login-page {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.button-row {
+  display: flex;
+  gap: 8px;
+  align-self: center;
+}
+
+.login-page label {
+    align-self: center;
+    display: block;
+    width: 50%;
+    color: #000000;
+}
+
+.login-page input {
+    align-self: center;
+    display: block;
+    width: 50%;
+    padding: 0.6rem 0.8rem;
+    color: #000000;
+    border: 1px solid #6C757D;
+    background-color: #CFCDCD;
+    border-radius: 1rem;
+}
+
+.footer {
+  width: 100%;
+  max-width: 1126px;
+  margin: 0 auto;
+  text-align: center;
+  position: fixed;
+  bottom: 0;
+}

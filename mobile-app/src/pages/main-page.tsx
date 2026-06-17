@@ -1,6 +1,6 @@
-import AdminDashboardComponent from '../components/admin-dashboard-component';
-import NavBarComponent from '../components/nav-bar-component';
-import '../styles/styles.css';
+import AdminDashboardComponent from '../components/dashboard/admin-dashboard-component';
+import NavBarComponent from '../components/misc/nav-bar-component';
+
 
 export default function MainPage() {
     return (

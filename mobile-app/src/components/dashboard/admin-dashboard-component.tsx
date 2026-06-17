@@ -1,5 +1,5 @@
 import DiagnosticButtonComponent from './diagnostic-button-component';
-import '../styles/styles.css';
+import '../../styles/dashboard-styles/dashboard-styles.css';
 
 export default function AdminDashboardComponent() {
   return (
