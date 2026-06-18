@@ -1,5 +1,7 @@
 import DiagnosticButtonComponent from './diagnostic-button-component';
 import '../../styles/dashboard-styles/dashboard-styles.css';
+import '../../styles/dashboard-styles/notification-box.css';
+import NotificationBoxComponent from './notifications-box-component';
 
 export default function AdminDashboardComponent() {
   return (
@@ -7,9 +9,9 @@ export default function AdminDashboardComponent() {
       <div className="main-page">
         { /* Admin deverá ser o username do utilizador */ }
         <h1>Bem vindo, Admin</h1>
-        <div className="mainbox">  
-          <DiagnosticButtonComponent/>
-          <div className="main-pages-states">
+        <div className="mainbox">
+          <DiagnosticButtonComponent />
+          <div className="main-page-states">
             <div className="main-page-states-box">
               <h2>Estado do servidor: </h2>
               <div className="OKstate"></div>
@@ -19,6 +21,7 @@ export default function AdminDashboardComponent() {
               <div className="OKstate"></div>
             </div>
           </div>
+          <NotificationBoxComponent/>
         </div>
       </div>
     </>

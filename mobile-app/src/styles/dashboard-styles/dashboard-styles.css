@@ -17,20 +17,28 @@
 .mainbox {
     display: flex;
     flex-direction: row;
+    flex-wrap: wrap;
     align-self: center;
-    justify-content: center;
+    justify-content: flex-start;
+    align-items: flex-start;
+    align-content: flex-start;
     gap: 1.5rem;
     border: 3px solid #B2C8B2;
     border-radius: 1rem;
     background-color: #E8E8E8;
     height: 70vh;
     width: 80%;
-    margin-top: 30px;    
+    padding: 1.5rem;
+    box-sizing: border-box;
+    margin-top: 30px;
+    overflow: hidden;
 }
 
 .main-page-states {
   display: flex;
   flex-direction: column;
+  flex: 1 1 45%;
+  min-width: 0;
 }
 
 .main-page-states-box {
@@ -41,8 +49,6 @@
     color: #000000;
     font-size: 1.25rem;
     line-height: 1;
-    margin-top: 2rem;
-    margin-right: 2rem;
     border: 3px solid #B2C8B2;
     border-radius: 1rem;
     background-color: #FFFFFF;
@@ -68,7 +74,7 @@
     display: flex;
     justify-content: center;
     align-items: center;
-    margin: 0 auto;
+    margin: 0;
     gap: 0.5rem;
     background-color: #FFFFFF;
     color: #000000;
@@ -77,9 +83,8 @@
     padding: 1.5rem 2rem;
     border: 3px solid #a9c6a9;
     border-radius: 1rem;
-    margin-left: 2rem;
-    margin-top: 2rem;
     width: 40%;
+    min-width: 0;
     height: 10%;
 }
 
