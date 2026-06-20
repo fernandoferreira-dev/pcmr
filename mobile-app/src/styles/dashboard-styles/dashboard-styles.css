@@ -12,6 +12,7 @@
     font-size: 2rem;
     line-height: 1;
     margin-top: 2rem;
+    
 }
 
 .mainbox {
@@ -37,13 +38,15 @@
 .main-page-states {
   display: flex;
   flex-direction: column;
-  flex: 1 1 45%;
+  flex: 1 1 45px;
   min-width: 0;
+  gap: 10px;
 }
 
 .main-page-states-box {
     display: flex;
     flex-direction: row;
+    align-self: last baseline;
     width: 60%;
     height: 10%;
     color: #000000;
@@ -74,13 +77,12 @@
     display: flex;
     justify-content: center;
     align-items: center;
-    margin: 0;
     gap: 0.5rem;
     background-color: #FFFFFF;
     color: #000000;
     font-weight: bold;
     font-size: 1rem;
-    padding: 1.5rem 2rem;
+    padding: 2.5rem 3rem;
     border: 3px solid #a9c6a9;
     border-radius: 1rem;
     width: 40%;

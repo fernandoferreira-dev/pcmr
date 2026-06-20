@@ -5,30 +5,38 @@
     max-width: 100%;
 }
 
-.notification-box div {
+.notification-box-text {
     display: flex;
     flex-direction: column;
-    margin: 0;
+    align-items: center;
+    gap: 5px;
+    margin: 5px;
     border: 3px solid #B2C8B2;
     border-radius: 1rem;
     background-color: #FFFFFF;
     padding: 0.75rem 1rem;
     width: 100%;
     box-sizing: border-box;
+    
 }
 
 .notification-box h1 {
+    align-self: first baseline;
     font-size: 30px;
     color: #000000;
     margin: 0 0 0.5rem 0;
+    white-space: nowrap;
 }
 
 .notification-box h2 {
+    align-self: first baseline;
     color: #000000;
-    margin: 0;
+    margin: 0.25rem 0 0;
 }
 
 .notification-box h3 {
+    align-self: first baseline;
     color: #000000;
     margin: 0.25rem 0 0;
+    font-size: 17px;
 }

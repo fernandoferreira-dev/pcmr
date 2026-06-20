@@ -6,7 +6,7 @@ interface DiagnosticButtonComponentProps {}
 
 const DiagnosticButtonComponent: FC<DiagnosticButtonComponentProps> = () => (
     <button className="diagnosticbtn">
-      <img src={btnImg} alt="Diagnostic Icon" style={{ width: '40%'}}/>
+      <img src={btnImg} alt="Diagnostic Icon" style={{ width: '40px'}}/>
       Iniciar Diagnóstico
     </button>
 );

@@ -1,18 +1,20 @@
 import { useState, type JSX } from "react";
 import '../../styles/navbar-styles/navbar-styles.css';
 
+type NavItemId = 'contact' | 'status' | 'home' | 'doctor' | 'records';
+
 interface IconProps {
   active: boolean;
 }
 
 interface NavItem {
-  id: string;
+  id: NavItemId;
   label: string;
   icon: (props: IconProps) => JSX.Element;
 }
 
 interface NavBarProps {
-  onNavigate?: (id: string) => void;
+  onNavigate?: (id: NavItemId) => void;
 }
 
 const NAV_ITEMS: NavItem[] = [
@@ -76,9 +78,9 @@ const NAV_ITEMS: NavItem[] = [
 const CREATORS = "© 2026 Diogo Rocha - Fernando Ferreira - Jaime Quaresma - João Santos";
 
 export default function NavBarComponent({ onNavigate }: NavBarProps) {
-  const [active, setActive] = useState("home");
+  const [active, setActive] = useState<NavItemId>("home");
 
-  const handleSelect = (id: string) => {
+  const handleSelect = (id: NavItemId) => {
     setActive(id);
     onNavigate?.(id);
   };
