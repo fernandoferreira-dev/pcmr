@@ -1,0 +1,64 @@
+.status-main-box {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-self: center;
+    justify-content: flex-start;
+    align-content: flex-start;
+    gap: 1.5rem;
+    border: 3px solid #B2C8B2;
+    border-radius: 1rem;
+    background-color: #E8E8E8;
+    height: 70vh;
+    width: 80%;
+    padding: 1.5rem;
+    box-sizing: border-box;
+    margin-top: 30px;
+    overflow: hidden;
+}
+
+.status-header {
+    color: #000000;
+    font-size: 30px;
+    margin-bottom: 40px;
+}
+
+.status-btn-box {
+    display: flex;
+    flex-direction: column;
+    color: #000000;
+    border: 3px solid #6C757D;
+    border-radius: 1rem;
+    padding: 0.5rem 1rem;
+    align-self: center;
+    background-color: #A8B8A0;
+    width: 150px;
+    height: 140px;
+    color: #ffffff;
+    gap: 10px;
+
+}
+
+.status-btn-box button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.5rem 1rem;
+    box-sizing: border-box;
+    align-self: center;
+    background-color: #C1D2C3;
+    color: #ffffff;
+    border: 3px solid #6C757D;
+    border-radius: 1rem;
+    width: 150px;
+    height: 50px;
+    text-align: center;
+    font-size: 16px;
+    line-height: 1.1;
+    white-space: normal;
+}
+
+.status-btn-box img {
+    align-self: center;
+    width: 90px;
+}
