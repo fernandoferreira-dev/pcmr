@@ -11,7 +11,7 @@ export default function App() {
       <div className="w-full max-w-5xl bg-white rounded-2xl shadow-lg p-6 flex gap-6">
         {/* Painel à Esquerda */}
         <div className="flex-1 bg-green-100 rounded-xl p-6 flex items-center justify-center">
-          <div className="w-full h-64 rounded-2xl bg-white shadow-inner overflow-hidden flex items-center justify-center">
+          <div className="w-full h-90 rounded-2xl bg-white shadow-inner overflow-hidden flex items-center justify-center">
             <img
               src="https://www.medikal.net/images/altkategori/mobil-ekg-monitorleri.jpg"
               alt="monitor"
@@ -23,7 +23,7 @@ export default function App() {
         {/* Painel à direita */}
         <div className="w-96 bg-white rounded-xl p-8 flex flex-col justify-between">
           <div>
-            <h2 className="text-2xl font-semibold text-gray-700 mb-6 text-center">MedyCist</h2>
+            <h2 className="text-3xl font-semibold text-gray-700 mb-7 text-center">MedyCist</h2>
 
             <label className="block text-sm text-gray-600 mb-2">Utilizador</label>
             <input
@@ -43,7 +43,7 @@ export default function App() {
 
           <button
             onClick={() => setShowPaginaInicial(true)}
-            className="mt-4 bg-green-200 hover:bg-green-300 text-gray-800 font-semibold py-3 rounded-full text-lg shadow-sm"
+            className="mt-4 bg-green-200 hover:bg-green-300 text-gray-800 font-semibold py-3 rounded-full text-lg shadow-sm border border-[#6c757d]"
           >
             ENTRAR
           </button>
