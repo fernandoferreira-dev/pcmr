@@ -4,3 +4,18 @@
 
 # ENV VARIABLES
 .env
+.env.local
+
+# Docker volumes
+mqtt-data/
+mqtt-log/
+
+# Build artifacts
+target/
+dist/
+node_modules/
+*.jar
+
+# OS files
+.DS_Store
+Thumbs.db
