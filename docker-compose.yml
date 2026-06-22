@@ -1,0 +1,70 @@
+services:
+  # Spring Boot API Backend
+  spring-app:
+    build:
+      context: ./api
+      dockerfile: Dockerfile
+    container_name: spring_app_container
+    ports:
+      - "8080:8080"
+    environment:
+      SPRING_APPLICATION_NAME: api
+      SERVER_PORT: 8080
+    depends_on:
+      - mqtt5
+    networks:
+      - pcmr-network
+    restart: unless-stopped
+
+  # Desktop Web Application
+  desktop-app:
+    build:
+      context: ./desktop-app
+      dockerfile: Dockerfile
+    container_name: desktop_app_container
+    ports:
+      - "3000:80"
+    depends_on:
+      - spring-app
+      - mqtt5
+    networks:
+      - pcmr-network
+    restart: unless-stopped
+
+  # Mobile Web Application
+  mobile-app:
+    build:
+      context: ./mobile-app
+      dockerfile: Dockerfile
+    container_name: mobile_app_container
+    ports:
+      - "3001:80"
+    depends_on:
+      - spring-app
+      - mqtt5
+    networks:
+      - pcmr-network
+    restart: unless-stopped
+
+  # MQTT5 Broker
+  mqtt5:
+    image: eclipse-mosquitto:latest
+    container_name: mqtt5
+    ports:
+      - "1883:1883" # default mqtt port
+      - "9001:9001" # default mqtt port for websockets
+    volumes:
+      - ./mqtt5/config:/mosquitto/config:ro
+      - mqtt-data:/mosquitto/data
+      - mqtt-log:/mosquitto/log
+    networks:
+      - pcmr-network
+    restart: unless-stopped
+
+volumes:
+  mqtt-data:
+  mqtt-log:
+
+networks:
+  pcmr-network:
+    driver: bridge
