@@ -10,6 +10,12 @@ services:
     environment:
       SPRING_APPLICATION_NAME: api
       SERVER_PORT: 8080
+      # PostgreSQL connection (remote)
+      SPRING_DATASOURCE_URL: "jdbc:postgresql://85.247.43.227:5432/pcmr"
+      SPRING_DATASOURCE_USERNAME: diogo
+      SPRING_DATASOURCE_PASSWORD: "1234"
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+      SPRING_JPA_SHOW_SQL: "true"
     depends_on:
       - mqtt5
     networks:
