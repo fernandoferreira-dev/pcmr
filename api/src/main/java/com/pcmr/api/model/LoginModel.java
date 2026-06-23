@@ -9,27 +9,40 @@ import jakarta.persistence.Column;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "users")
+@Table(name = "Pessoa")
 public class LoginModel {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     private Integer id;
 
-    @Column(unique = true)
+    @Column(name = "nome", nullable = false)
+    private String nome;
+
+    @Column(name = "email")
     private String email;
 
-    private String name;
-    private String password;
+    @Column(name = "password_hash")
+    private String passwordHash;
+
+    @Column(name = "tipo_de_utilizador")
+    private String tipoDeUtilizador;
 
     private LocalDateTime timeStamp = LocalDateTime.now();
 
-    // Getters and setters (explicitly implemented to avoid Lombok dependency)
     public Integer getId() {
         return id;
     }
 
     public void setId(Integer id) {
         this.id = id;
+    }
+
+    public String getNome() {
+        return nome;
+    }
+
+    public void setNome(String nome) {
+        this.nome = nome;
     }
 
     public String getEmail() {
@@ -40,20 +53,20 @@ public class LoginModel {
         this.email = email;
     }
 
-    public String getName() {
-        return name;
+    public String getPasswordHash() {
+        return passwordHash;
     }
 
-    public void setName(String name) {
-        this.name = name;
+    public void setPasswordHash(String passwordHash) {
+        this.passwordHash = passwordHash;
     }
 
-    public String getPassword() {
-        return password;
+    public String getTipoDeUtilizador() {
+        return tipoDeUtilizador;
     }
 
-    public void setPassword(String password) {
-        this.password = password;
+    public void setTipoDeUtilizador(String tipoDeUtilizador) {
+        this.tipoDeUtilizador = tipoDeUtilizador;
     }
 
     public LocalDateTime getTimeStamp() {

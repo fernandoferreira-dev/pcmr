@@ -17,9 +17,9 @@ public class UserController {
 							   @RequestParam String email,
 							   @RequestParam String password) {
 		LoginModel n = new LoginModel();
-		n.setName(name);
+		n.setNome(name);
 		n.setEmail(email);
-		n.setPassword(password);
+		n.setPasswordHash(password);
 		userRepository.save(n);
 		return "User Saved successfully!";
 	}
