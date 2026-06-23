@@ -5,6 +5,7 @@ export default function App() {
   const [showPaginaInicial, setShowPaginaInicial] = useState(false)
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [usernameError, setUsernameError] = useState(false)
@@ -23,7 +24,7 @@ export default function App() {
 
     if (missingUsername || missingPassword) {
       if (missingUsername && missingPassword) setError('Preencha utilizador e palavra-passe')
-      else if (missingUsername) setError('Preencha o Utilizador!') 
+      else if (missingUsername) setError('Preencha o Utilizador!')
       else setError('Preencha a Password!')
       return
     }
@@ -37,11 +38,8 @@ export default function App() {
       })
 
       if (res.ok) {
-        // login successful
         setShowPaginaInicial(true)
       } else if (res.status === 401) {
-        // Both credentials provided but incorrect: show combined warning,
-        // clear the input boxes and mark both fields as error (red ring).
         setError('Utilizador e palavra-passe incorretos')
         setUsername('')
         setPassword('')
@@ -61,11 +59,15 @@ export default function App() {
   }
 
   return (
-    <div className="min-h-screen bg-green-50 flex items-center justify-center p-6">
-      <div className="w-full max-w-5xl bg-white rounded-2xl shadow-lg p-6 flex gap-6">
-        {/* Painel à Esquerda */}
-        <div className="flex-1 bg-green-100 rounded-xl p-6 flex items-center justify-center">
-          <div className="w-full h-90 rounded-2xl bg-white shadow-inner overflow-hidden flex items-center justify-center">
+    <div className="min-h-screen bg-green-50 flex items-center justify-center p-4 sm:p-6">
+      <div className="w-full flex flex-col items-center">
+        <div className="w-full max-w-6xl bg-white rounded-3xl shadow-2xl p-6 sm:p-8 flex flex-col md:flex-row gap-6">
+        {/* Esquerda */}
+        <div className="hidden md:flex flex-1 bg-green-100 rounded-xl p-6 items-center justify-center">
+          <div
+            className="w-full h-48 sm:h-72 md:h-96 rounded-2xl bg-white shadow-inner overflow-hidden flex items-center justify-center"
+            style={{ filter: 'brightness(1.03) saturate(1.08) sepia(0.04)' }}
+          >
             <img
               src="https://www.medikal.net/images/altkategori/mobil-ekg-monitorleri.jpg"
               alt="monitor"
@@ -74,54 +76,72 @@ export default function App() {
           </div>
         </div>
 
-        {/* Painel à direita */}
-        <div className="w-96 bg-white rounded-xl p-8 flex flex-col justify-between">
+        {/* Direita*/}
+        <div className="w-full md:w-96 bg-white rounded-xl p-6 sm:p-8 flex flex-col justify-between">
           <div>
-            <h2 className="text-3xl font-semibold text-gray-700 mb-7 text-center">MedyCist</h2>
+            <h2 className="text-2xl sm:text-3xl font-semibold text-gray-700 mb-6 text-center">MedyCist</h2>
 
-            <label className="block text-1xl text-gray-600 mb-2">Utilizador</label>
-            <input
-              value={username}
-              onChange={(e) => {
-                setUsername(e.target.value)
-                // When user starts typing in one field, clear warnings for both
-                if (usernameError || passwordError) {
-                  setUsernameError(false)
-                  setPasswordError(false)
-                }
-                if (error) setError(null)
-              }}
-              className={
-                `w-full mb-4 px-5 py-2 border-2 rounded-full focus:outline-none ` +
-                `focus:ring-2 focus:ring-green-300 ` +
-                (usernameError
-                  ? 'ring-2 ring-red-500 border-red-500'
-                  : 'border-gray-300')
-              }
-              placeholder="Introduza o seu utilizador..."
-            />
+            <label className="block text-base sm:text-lg text-gray-600 mb-2">Utilizador</label>
+            <div className="relative mb-4">
 
-            <label className="block text-1xl text-gray-600 mb-2">Palavra-passe</label>
-            <input
-              value={password}
-              onChange={(e) => {
-                setPassword(e.target.value)
-                if (usernameError || passwordError) {
-                  setUsernameError(false)
-                  setPasswordError(false)
+              <input
+                value={username}
+                onChange={(e) => {
+                  setUsername(e.target.value)
+                  if (usernameError || passwordError) {
+                    setUsernameError(false)
+                    setPasswordError(false)
+                  }
+                  if (error) setError(null)
+                }}
+                className={
+                  `w-full mb-0 pl-4 pr-4 py-3 bg-gray-100 placeholder-gray-500 text-gray-700 rounded-xl focus:outline-none ` +
+                  `focus:ring-2 focus:ring-green-300 ` +
+                  (usernameError ? 'ring-4 ring-red-500 border-red-500' : 'border border-transparent')
                 }
-                if (error) setError(null)
-              }}
-              type="password"
-              className={
-                `w-full mb-2 px-5 py-2 border-2 rounded-full focus:outline-none ` +
-                `focus:ring-2 focus:ring-green-300 ` +
-                (passwordError
-                  ? 'ring-2 ring-red-500 border-red-500'
-                  : 'border-gray-300')
-              }
-              placeholder="Introduza a sua palavra-passe...."
-            />
+                placeholder="Introduza o seu utilizador..."
+              />
+            </div>
+
+            <label className="block text-base sm:text-lg text-gray-600 mb-2">Palavra-passe</label>
+            <div className="relative mb-2">
+
+              <input
+                value={password}
+                onChange={(e) => {
+                  setPassword(e.target.value)
+                  if (usernameError || passwordError) {
+                    setUsernameError(false)
+                    setPasswordError(false)
+                  }
+                  if (error) setError(null)
+                }}
+                type={showPassword ? 'text' : 'password'}
+                className={
+                  `w-full mb-0 pl-4 pr-12 py-3 bg-gray-100 placeholder-gray-500 text-gray-700 rounded-xl focus:outline-none ` +
+                  `focus:ring-2 focus:ring-green-300 ` +
+                  (passwordError ? 'ring-4 ring-red-500 border-red-500' : 'border border-transparent')
+                }
+                placeholder="Introduza a sua palavra-passe...."
+              />
+
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute inset-y-0 right-3 flex items-center text-gray-600"
+                aria-label="Toggle password visibility"
+              >
+                {showPassword ? (
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                    <path d="M3.172 3.172a4 4 0 015.656 0L10 4.343l1.172-1.171a4 4 0 115.656 5.656L10 16.828 3.172 10 3.172 3.172z" />
+                  </svg>
+                ) : (
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                    <path d="M2.458 12C3.732 7.943 7.522 5 10 5c2.478 0 6.268 2.943 7.542 7-.653 1.97-2.02 3.613-3.682 4.61L10 18l-5.86-1.39C4.478 15.613 3.11 13.97 2.458 12z" />
+                  </svg>
+                )}
+              </button>
+            </div>
 
             <div className="text-right text-xs text-gray-500 mb-6">Esqueceu-se da palavra-passe?</div>
 
@@ -131,11 +151,14 @@ export default function App() {
           <button
             onClick={handleLogin}
             disabled={loading}
-            className="mt-4 bg-green-200 hover:bg-green-300 disabled:opacity-60 text-gray-800 font-semibold py-3 rounded-full text-lg shadow-sm border border-[#6c757d]"
+            className="mt-4 disabled:opacity-60 text-white font-semibold py-4 rounded-full text-lg shadow-lg w-full bg-gradient-to-r from-green-400 to-green-600"
           >
             {loading ? 'A processar...' : 'ENTRAR'}
           </button>
         </div>
+        </div>
+
+        <footer className="w-full max-w-6xl mt-6 text-center text-sm text-gray-500">© {new Date().getFullYear()} 2026 Diogo Rocha - Fernando Ferreira - Jaime Quaresma - João Santos.</footer>
       </div>
     </div>
   )
