@@ -7,11 +7,27 @@ export default function App() {
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [usernameError, setUsernameError] = useState(false)
+  const [passwordError, setPasswordError] = useState(false)
 
   if (showPaginaInicial) return <PaginaInicial />
 
   const handleLogin = async () => {
     setError(null)
+
+    const missingUsername = !username.trim()
+    const missingPassword = !password.trim()
+
+    setUsernameError(missingUsername)
+    setPasswordError(missingPassword)
+
+    if (missingUsername || missingPassword) {
+      if (missingUsername && missingPassword) setError('Preencha utilizador e palavra-passe')
+      else if (missingUsername) setError('Preencha o Utilizador!') 
+      else setError('Preencha a Password!')
+      return
+    }
+
     setLoading(true)
     try {
       const res = await fetch('/api/auth/login', {
@@ -24,7 +40,13 @@ export default function App() {
         // login successful
         setShowPaginaInicial(true)
       } else if (res.status === 401) {
-        setError('Utilizador ou palavra-passe inválidos')
+        // Both credentials provided but incorrect: show combined warning,
+        // clear the input boxes and mark both fields as error (red ring).
+        setError('Utilizador e palavra-passe incorretos')
+        setUsername('')
+        setPassword('')
+        setUsernameError(true)
+        setPasswordError(true)
       } else if (res.status === 400) {
         setError('Preencha utilizador e palavra-passe')
       } else {
@@ -60,17 +82,44 @@ export default function App() {
             <label className="block text-1xl text-gray-600 mb-2">Utilizador</label>
             <input
               value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              className="w-full mb-4 px-5 py-2 border-2 border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-green-300"
+              onChange={(e) => {
+                setUsername(e.target.value)
+                // When user starts typing in one field, clear warnings for both
+                if (usernameError || passwordError) {
+                  setUsernameError(false)
+                  setPasswordError(false)
+                }
+                if (error) setError(null)
+              }}
+              className={
+                `w-full mb-4 px-5 py-2 border-2 rounded-full focus:outline-none ` +
+                `focus:ring-2 focus:ring-green-300 ` +
+                (usernameError
+                  ? 'ring-2 ring-red-500 border-red-500'
+                  : 'border-gray-300')
+              }
               placeholder="Introduza o seu utilizador..."
             />
 
             <label className="block text-1xl text-gray-600 mb-2">Palavra-passe</label>
             <input
               value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              onChange={(e) => {
+                setPassword(e.target.value)
+                if (usernameError || passwordError) {
+                  setUsernameError(false)
+                  setPasswordError(false)
+                }
+                if (error) setError(null)
+              }}
               type="password"
-              className="w-full mb-2 px-5 py-2 border-2 border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-green-300"
+              className={
+                `w-full mb-2 px-5 py-2 border-2 rounded-full focus:outline-none ` +
+                `focus:ring-2 focus:ring-green-300 ` +
+                (passwordError
+                  ? 'ring-2 ring-red-500 border-red-500'
+                  : 'border-gray-300')
+              }
               placeholder="Introduza a sua palavra-passe...."
             />
 
