@@ -16,8 +16,10 @@ services:
       SPRING_DATASOURCE_PASSWORD: "1234"
       SPRING_JPA_HIBERNATE_DDL_AUTO: update
       SPRING_JPA_SHOW_SQL: "true"
+      MQTT_BROKER_URL: tcp://mosquitto:1883
+      MQTT_TOPIC: sensors/#
     depends_on:
-      - mqtt5
+      - mosquitto
     networks:
       - pcmr-network
     restart: unless-stopped
@@ -54,13 +56,13 @@ services:
 
   # MQTT5 Broker
   mqtt5:
-    image: eclipse-mosquitto:latest
-    container_name: mqtt5
+    image: eclipse-mosquitto:2
+    container_name: mosquitto
     ports:
       - "1883:1883" # default mqtt port
       - "9001:9001" # default mqtt port for websockets
     volumes:
-      - ./mqtt5/config:/mosquitto/config:ro
+      - ./mosquitto/config:/mosquitto/config
       - mqtt-data:/mosquitto/data
       - mqtt-log:/mosquitto/log
     networks:
