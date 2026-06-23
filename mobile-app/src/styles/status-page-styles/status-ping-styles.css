@@ -18,6 +18,7 @@
 }
 
 .status-ping-box h1 {
+    color: #000000;
     border: 3px solid #b3b9b3;
     border-radius: 1rem;
     padding: 0.5rem;
@@ -26,7 +27,13 @@
     text-align: left;
 }
 
+
+.status-ping-box h2 {
+    color: #000000;
+}
+
 .status-ping-box p {
+    color: #000000;
     padding: 0.5rem;
     text-align: left;
 }
