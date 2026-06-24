@@ -13,6 +13,14 @@ import java.util.Optional;
 @RequestMapping("/api/auth")
 public class LoginController {
 
+    public static class LoginResponse {
+        public String nome;
+
+        public LoginResponse(String nome) {
+            this.nome = nome;
+        }
+    }
+
     @Autowired
     private UserRepository userRepository;
 
@@ -27,7 +35,7 @@ public class LoginController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<String> login(@RequestBody LoginRequest request) {
+    public ResponseEntity<?> login(@RequestBody LoginRequest request) {
         if (request.username == null || request.password == null) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("username and password required");
         }
@@ -35,7 +43,7 @@ public class LoginController {
         Optional<LoginModel> userOpt = loginService.authenticate(request.username, request.password);
 
         if (userOpt.isPresent()) {
-            return ResponseEntity.ok("Login successful");
+            return ResponseEntity.ok(new LoginResponse(userOpt.get().getNome()));
         } else {
             // Could be wrong password or not found; keep response generic or differentiate
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid username or password");

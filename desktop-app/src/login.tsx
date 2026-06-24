@@ -1,8 +1,45 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import PaginaInicial from './pagina_inicial'
+import viewImg from './assets/imagens/view.png'
+import hideImg from './assets/imagens/hide.png'
+
+const AUTH_SESSION_KEY = 'pcmr-auth-session'
+const AUTH_SESSION_DURATION_MS = 60 * 60 * 1000
+
+type AuthSession = {
+  userName: string
+  expiresAt: number
+}
+
+function loadStoredSession(): AuthSession | null {
+  if (typeof window === 'undefined') return null
+
+  const rawSession = window.localStorage.getItem(AUTH_SESSION_KEY)
+  if (!rawSession) return null
+
+  try {
+    const parsedSession = JSON.parse(rawSession) as Partial<AuthSession>
+    if (
+      typeof parsedSession.userName !== 'string' ||
+      typeof parsedSession.expiresAt !== 'number' ||
+      parsedSession.expiresAt <= Date.now()
+    ) {
+      window.localStorage.removeItem(AUTH_SESSION_KEY)
+      return null
+    }
+
+    return {
+      userName: parsedSession.userName,
+      expiresAt: parsedSession.expiresAt,
+    }
+  } catch {
+    window.localStorage.removeItem(AUTH_SESSION_KEY)
+    return null
+  }
+}
 
 export default function App() {
-  const [showPaginaInicial, setShowPaginaInicial] = useState(false)
+  const [session, setSession] = useState<AuthSession | null>(() => loadStoredSession())
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
@@ -11,7 +48,36 @@ export default function App() {
   const [usernameError, setUsernameError] = useState(false)
   const [passwordError, setPasswordError] = useState(false)
 
-  if (showPaginaInicial) return <PaginaInicial />
+  useEffect(() => {
+    if (!session) return
+
+    const msUntilExpiry = session.expiresAt - Date.now()
+    if (msUntilExpiry <= 0) {
+      window.localStorage.removeItem(AUTH_SESSION_KEY)
+      setSession(null)
+      return
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      window.localStorage.removeItem(AUTH_SESSION_KEY)
+      setSession(null)
+    }, msUntilExpiry)
+
+    return () => window.clearTimeout(timeoutId)
+  }, [session])
+
+  const handleLogout = () => {
+    window.localStorage.removeItem(AUTH_SESSION_KEY)
+    setSession(null)
+    setUsername('')
+    setPassword('')
+    setShowPassword(false)
+    setError(null)
+    setUsernameError(false)
+    setPasswordError(false)
+  }
+
+  if (session) return <PaginaInicial userName={session.userName} onLogout={handleLogout} />
 
   const handleLogin = async () => {
     setError(null)
@@ -38,7 +104,23 @@ export default function App() {
       })
 
       if (res.ok) {
-        setShowPaginaInicial(true)
+        let userName = username.trim()
+        const contentType = res.headers.get('content-type') || ''
+
+        if (contentType.includes('application/json')) {
+          const data = (await res.json()) as { nome?: string }
+          if (typeof data.nome === 'string' && data.nome.trim()) {
+            userName = data.nome.trim()
+          }
+        }
+
+        const nextSession = {
+          userName,
+          expiresAt: Date.now() + AUTH_SESSION_DURATION_MS,
+        }
+
+        window.localStorage.setItem(AUTH_SESSION_KEY, JSON.stringify(nextSession))
+        setSession(nextSession)
       } else if (res.status === 401) {
         setError('Utilizador e palavra-passe incorretos')
         setUsername('')
@@ -131,15 +213,11 @@ export default function App() {
                 className="absolute inset-y-0 right-3 flex items-center text-gray-600"
                 aria-label="Toggle password visibility"
               >
-                {showPassword ? (
-                  <svg xmlns="" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                    <path d="M3.172 3.172a4 4 0 015.656 0L10 4.343l1.172-1.171a4 4 0 115.656 5.656L10 16.828 3.172 10 3.172 3.172z" />
-                  </svg>
-                ) : (
-                  <svg xmlns="" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                    <path d="M2.458 12C3.732 7.943 7.522 5 10 5c2.478 0 6.268 2.943 7.542 7-.653 1.97-2.02 3.613-3.682 4.61L10 18l-5.86-1.39C4.478 15.613 3.11 13.97 2.458 12z" />
-                  </svg>
-                )}
+                <img
+                  src={showPassword ? hideImg : viewImg}
+                  alt={showPassword ? 'Esconder palavra-passe' : 'Mostrar palavra-passe'}
+                  className="h-5 w-5"
+                />
               </button>
             </div>
 
@@ -151,7 +229,7 @@ export default function App() {
           <button
             onClick={handleLogin}
             disabled={loading}
-            className="mt-4 disabled:opacity-60 text-white font-semibold py-4 rounded-full text-lg shadow-lg w-full bg-gradient-to-r from-green-400 to-green-600"
+            className="mt-4 cursor-pointer disabled:opacity-60 text-white font-semibold py-4 rounded-full text-lg shadow-md w-full bg-gradient-to-r from-green-400 to-green-600"
           >
             {loading ? 'A processar...' : 'ENTRAR'}
           </button>
