@@ -132,11 +132,11 @@ export default function App() {
                 aria-label="Toggle password visibility"
               >
                 {showPassword ? (
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                  <svg xmlns="" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                     <path d="M3.172 3.172a4 4 0 015.656 0L10 4.343l1.172-1.171a4 4 0 115.656 5.656L10 16.828 3.172 10 3.172 3.172z" />
                   </svg>
                 ) : (
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                  <svg xmlns="" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                     <path d="M2.458 12C3.732 7.943 7.522 5 10 5c2.478 0 6.268 2.943 7.542 7-.653 1.97-2.02 3.613-3.682 4.61L10 18l-5.86-1.39C4.478 15.613 3.11 13.97 2.458 12z" />
                   </svg>
                 )}
@@ -158,7 +158,7 @@ export default function App() {
         </div>
         </div>
 
-        <footer className="w-full max-w-6xl mt-6 text-center text-sm text-gray-500">© {new Date().getFullYear()} 2026 Diogo Rocha - Fernando Ferreira - Jaime Quaresma - João Santos.</footer>
+        <footer className="w-full max-w-6xl mt-6 text-center text-sm text-gray-500">© {new Date().getFullYear()} Diogo Rocha - Fernando Ferreira - Jaime Quaresma - João Santos.</footer>
       </div>
     </div>
   )

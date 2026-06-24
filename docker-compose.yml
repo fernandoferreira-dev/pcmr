@@ -19,7 +19,7 @@ services:
       MQTT_BROKER_URL: tcp://mosquitto:1883
       MQTT_TOPIC: sensors/#
     depends_on:
-      - mosquitto
+      - mqtt5
     networks:
       - pcmr-network
     restart: unless-stopped
@@ -62,7 +62,7 @@ services:
       - "1883:1883" # default mqtt port
       - "9001:9001" # default mqtt port for websockets
     volumes:
-      - ./mosquitto/config:/mosquitto/config
+      - ./mqtt5/config:/mosquitto/config
       - mqtt-data:/mosquitto/data
       - mqtt-log:/mosquitto/log
     networks:
