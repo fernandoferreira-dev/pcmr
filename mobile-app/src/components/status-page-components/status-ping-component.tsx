@@ -21,3 +21,4 @@ const StatusPingComponent: FC<StatusPingComponentProps> = () => (
 );
   
 export default StatusPingComponent;  
+ 
