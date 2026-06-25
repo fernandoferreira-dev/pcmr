@@ -10,14 +10,35 @@
     border-radius: 1rem;
     background-color: #E8E8E8;
     height: 70vh;
-    width: 80%;
+    width: 50vh;
     padding: 1.5rem;
     box-sizing: border-box;
     margin-top: 30px;
     overflow: hidden;
 }
 
+.notification-wrapper {
+    display: flex;
+    flex-direction: column;
+    flex-wrap: wrap;
+    align-self: center;
+    justify-content: flex-start;
+    align-content: center;
+    border: 3px solid #B2C8B2;
+    border-radius: 1rem;
+    background-color: #ffffff;
+    height: auto;
+    width: 40vh;
+    box-sizing: border-box;
+    overflow: hidden;
+    gap: 5px;
+}
+
 .message-icon {
+    width: 40px;
+}
+.message-state-icon {
+    margin-left: auto;
     width: 40px;
 }
 
@@ -26,6 +47,8 @@
     flex-direction: row;
     background-color: #A8B8A0;
     gap: 20px;
+    color: #000000;
+    width: auto;
 }
 
 .message-sender-info {
@@ -33,4 +56,5 @@
     align-content: flex-start;
     color: #000000;
     background-color: #ffffff;
+    width: auto;
 }
