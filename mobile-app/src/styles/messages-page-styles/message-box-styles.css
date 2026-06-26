@@ -4,7 +4,7 @@
     flex-wrap: wrap;
     align-self: center;
     justify-content: flex-start;
-    align-content: center;
+    align-content: flex-start;
     gap: 1.5rem;
     border: 3px solid #B2C8B2;
     border-radius: 1rem;
@@ -15,6 +15,10 @@
     box-sizing: border-box;
     margin-top: 30px;
     overflow: hidden;
+}
+
+.message-wrapper-header {
+    align-content: center;
 }
 
 .notification-wrapper {
@@ -28,7 +32,7 @@
     border-radius: 1rem;
     background-color: #ffffff;
     height: auto;
-    width: 40vh;
+    width: auto;
     box-sizing: border-box;
     overflow: hidden;
     gap: 5px;
