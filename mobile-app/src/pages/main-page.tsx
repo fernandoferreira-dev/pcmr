@@ -5,7 +5,8 @@ import ContactPage from './contact-page'
 import StatusPage from './status-page'
 import InfoPage from './info-page'
 import ClientInfoPage from './client-info-page'
-
+import SettingsButtonComponent from "../components/misc/settings-button-component"
+import "../styles/misc/header-styles.css" 
 export default function MainPage() {
     const [view, setView] = useState<'home' | 'contact' | 'status' | 'doctor' | 'records'>('home')
 
@@ -26,6 +27,9 @@ export default function MainPage() {
 
     return (
         <>
+            <div className="header-container">
+                <SettingsButtonComponent/>
+            </div>
             {renderView()}
             <NavBarComponent onNavigate={setView} />
         </>
