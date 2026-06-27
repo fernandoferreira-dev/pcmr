@@ -17,6 +17,10 @@
     overflow: hidden;
 }
 
+.message-wrapper h1 {
+    color: #000000;
+}
+
 .message-wrapper-header {
     align-content: center;
 }
