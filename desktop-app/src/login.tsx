@@ -140,6 +140,16 @@ export default function App() {
     }
   }
 
+  const handleLoginTeste = () => {
+    const testSession = {
+      userName: 'Utilizador Teste',
+      expiresAt: Date.now() + AUTH_SESSION_DURATION_MS,
+    }
+    window.localStorage.setItem(AUTH_SESSION_KEY, JSON.stringify(testSession))
+    setSession(testSession)
+  }
+
+
   return (
     <div className="min-h-screen bg-green-50 flex items-center justify-center p-4 sm:p-6">
       <div className="w-full flex flex-col items-center">
@@ -227,11 +237,19 @@ export default function App() {
           </div>
 
           <button
-            onClick={handleLogin}
-            disabled={loading}
+            onClick={handleLoginTeste} //handleLogin
+            disabled={loading}//disabled={loading}
             className="mt-4 cursor-pointer disabled:opacity-60 text-white font-semibold py-4 rounded-full text-lg shadow-md w-full bg-gradient-to-r from-green-400 to-green-600"
           >
             {loading ? 'A processar...' : 'ENTRAR'}
+          </button>
+          
+          <button
+            onClick={handleLoginTeste}
+            disabled={loading}
+            className="mt-4 cursor-pointer disabled:opacity-60 text-white font-semibold py-4 rounded-full text-lg shadow-md w-full bg-gradient-to-r from-green-400 to-green-600"
+          >
+            Entrar (Teste)
           </button>
         </div>
         </div>
