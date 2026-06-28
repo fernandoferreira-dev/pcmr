@@ -4,6 +4,7 @@ import "../../styles/misc/settings-btn-styles.css"
 
 export default function SettingsButtonComponent() {
     const [isOpen, setIsOpen] = useState(false);
+    const [darkEnabled, setIsEnabled] = useState(false);
     
     return(
         <>
@@ -15,7 +16,18 @@ export default function SettingsButtonComponent() {
                 {isOpen && (
                   <div className="overlay">
                     <div className="modal">
-                      <p>popup de teste</p>
+                      <p>Definições</p>
+                      <div className="settings">
+                        <label className="switch">
+                          <input
+                            type="checkbox"
+                            checked={darkEnabled}
+                            onChange={() => setIsEnabled(!darkEnabled)}
+                            />
+                          <span className="slider"></span>
+                        </label>
+                        <p>Modo Escuro</p>
+                      </div>
                       <button onClick={() => setIsOpen(false)}>Close</button>
                     </div>
                   </div>

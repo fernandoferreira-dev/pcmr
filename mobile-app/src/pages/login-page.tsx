@@ -24,7 +24,7 @@ export default function LoginPage({ onLogin }: Props) {
                     <LoginButtonComponent onClick={onLogin} />
                     <RegisterButtonComponent/>
                 </div>
-            </form>asdasdasd
+            </form>
             <FooterComponent/>
         </div>
     )
