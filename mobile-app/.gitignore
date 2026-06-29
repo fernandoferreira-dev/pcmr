@@ -22,3 +22,6 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+mqtt5/config/mosquitto.conf
+mqtt5/config/pwfile
