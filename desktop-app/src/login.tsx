@@ -237,7 +237,7 @@ export default function App() {
           </div>
 
           <button
-            onClick={handleLoginTeste} //handleLogin
+            onClick={handleLogin} //handleLogin
             disabled={loading}//disabled={loading}
             className="mt-4 cursor-pointer disabled:opacity-60 text-white font-semibold py-4 rounded-full text-lg shadow-md w-full bg-gradient-to-r from-green-400 to-green-600"
           >

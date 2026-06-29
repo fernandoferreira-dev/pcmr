@@ -1,15 +1,19 @@
 import React, { useState } from 'react'
 import DadosPessoais from './dados_pessoais'
-import DadosCliente from './dados_cliente'
+import DadosCliente from './Dados_Diagnosticos'
 import Comunicacao from './comunicacao'
 import DadosEquipamentos from './dados_equipamentos'
+import OverviewIcon from "./assets/imagens/dashboard.png";
+import DadosDiag from "./assets/imagens/Patient-Profile-59.png";
+import comunicaicon from "./assets/imagens/phone.png";
+import dadosequi from "./assets/imagens/quality-control-icon.webp";
+import cruzverde from "./assets/imagens/Untitled design (1).png";
 
-type View = 'home' | 'dados_pessoais' | 'dados_cliente' | 'comunicacao' | 'dados_equipamentos'
+type View = 'home' | 'dados_cliente' | 'comunicacao' | 'dados_equipamentos'
 
 const viewTitles: Record<View, string> = {
   home: 'Overview',
-  dados_pessoais: 'Dados Pessoais',
-  dados_cliente: 'Dados Pacientes',
+  dados_cliente: 'Dados Diagnósticos',
   comunicacao: 'Comunicação',
   dados_equipamentos: 'Dados Equipamentos',
 }
@@ -83,7 +87,7 @@ const OverviewDashboard = () => (
         <div className="text-sm font-bold text-gray-600 mb-2">Diagnóstico Rápido</div>
         <div className="flex-1 bg-[#AAB99F] rounded-xl border border-[#91a086] p-4 flex flex-col justify-between">
           <div className="w-10 h-10 bg-white/70 rounded-full flex items-center justify-center text-[#AAB99F] text-3xl font-bold shadow-sm">
-            +
+            <img src={cruzverde} alt="Diagnóstico" className="w-6 h-6 object-contain"/>
           </div>
           <button className="w-full py-2 bg-white/40 rounded-full text-white font-medium hover:bg-white/50 transition-colors shadow-sm">
             Iniciar Diagnóstico
@@ -98,28 +102,43 @@ export default function App({ userName, onLogout }: PaginaInicialProps) {
   const [view, setView] = useState<View>('home')
 
   let content: React.ReactNode
-  if (view === 'dados_pessoais') content = <DadosPessoais />
-  else if (view === 'dados_cliente') content = <DadosCliente />
+  if (view === 'dados_cliente') content = <DadosCliente />
   else if (view === 'comunicacao') content = <Comunicacao />
   else if (view === 'dados_equipamentos') content = <DadosEquipamentos />
   else content = <OverviewDashboard />
 
-  const NavButton = ({ id, label }: { id: View; label: string }) => {
-    const isActive = view === id
-    return (
-      <button
-        className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-colors ${
-          isActive
-            ? 'bg-[#8CA483] font-semibold text-black shadow-sm'
-            : 'hover:bg-[#9CB39E] text-gray-800'
-        }`}
-        onClick={() => setView(id)}
-      >
-        <div className={`w-6 h-6 rounded-md ${isActive ? 'bg-black' : 'bg-gray-600'}`} />
-        <span>{label}</span>
-      </button>
-    )
-  }
+  const NavButton = ({
+  id,
+  label,
+  icon,
+}: {
+  id: View
+  label: string
+  icon?: string // Mudamos de React.ReactNode para string
+}) => {
+  const isActive = view === id
+
+  return (
+    <button
+      className={`cursor-pointer w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-colors  ${
+        isActive
+          ? 'bg-[#8CA483] font-semibold text-black shadow-sm'
+          : 'hover:bg-[#9CB39E] text-gray-800'
+      }`}
+      onClick={() => setView(id)}
+    >
+      {/* Se houver um ícone, renderiza a tag img de fato */}
+      {icon && (
+        <img 
+          src={icon} 
+          alt={label} 
+          className="w-7 h-7 object-contain shrink-0" 
+        />
+      )}
+      <span>{label}</span>
+    </button>
+  )
+}
 
   return (
     <div className="h-screen w-screen bg-white flex flex-col font-sans overflow-hidden">
@@ -134,11 +153,10 @@ export default function App({ userName, onLogout }: PaginaInicialProps) {
           </div>
 
           <nav className="flex flex-col gap-2 overflow-y-auto">
-            <NavButton id="home" label="Overview" />
-            <NavButton id="dados_pessoais" label="Dados Pessoais" />
-            <NavButton id="dados_cliente" label="Dados Pacientes" />
-            <NavButton id="comunicacao" label="Comunicação" />
-            <NavButton id="dados_equipamentos" label="Dados Equipamentos" />
+            <NavButton id="home" label="Overview" icon={OverviewIcon} />
+            <NavButton id="dados_cliente" label="Dados Diagnósticos" icon={DadosDiag}/>
+            <NavButton id="comunicacao" label="Comunicação" icon={comunicaicon}/>
+            <NavButton id="dados_equipamentos" label="Dados Equipamentos" icon={dadosequi}/>
           </nav>
         </aside>
 
