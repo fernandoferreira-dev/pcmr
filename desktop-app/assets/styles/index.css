@@ -1,0 +1,44 @@
+:root {
+	--font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+	--font-heading: "Poppins", var(--font-sans);
+	--brand-50: #ecfdf5;
+	--brand-100: #dcfce7;
+	--brand-200: #bbf7d0;
+	--brand-300: #86efac;
+	--brand-400: #4ade80;
+	--brand-500: #22c55e;
+	--text-color: #374151;
+	--input-border: #d1d5db;
+}
+
+@import "tailwindcss";
+
+@layer base {
+	html, body {
+		font-family: var(--font-sans);
+		color: var(--text-color);
+		background-color: transparent;
+	}
+	h1, h2, h3, h4, h5, h6 {
+		font-family: var(--font-heading);
+	}
+}
+
+@layer components {
+	.btn-primary {
+		@apply font-semibold py-3 rounded-full text-lg shadow-sm;
+		background-color: var(--brand-500);
+		color: white;
+	}
+	.card {
+		@apply bg-white rounded-2xl shadow-lg p-6;
+	}
+	.input-rounded {
+		@apply w-full px-4 py-2 rounded-full focus:outline-none;
+		border: 2px solid var(--input-border);
+	}
+	.text-muted {
+		color: #6b7280;
+		font-size: 0.875rem;
+	}
+}

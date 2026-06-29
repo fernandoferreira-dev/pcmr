@@ -1,0 +1,85 @@
+services:
+  # Spring Boot API Backend
+  spring-app:
+    build:
+      context: ./api
+      dockerfile: Dockerfile
+    container_name: spring_app_container
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./api/src:/app/src 
+    environment:
+      SPRING_APPLICATION_NAME: api
+      SERVER_PORT: 8080
+      SPRING_DATASOURCE_URL: "jdbc:postgresql://85.247.43.227:5432/pcmr"
+      SPRING_DATASOURCE_USERNAME: diogo
+      SPRING_DATASOURCE_PASSWORD: "1234"
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+      SPRING_JPA_SHOW_SQL: "true"
+      MQTT_BROKER_URL: tcp://mosquitto:1883
+      MQTT_TOPIC: sensors/#
+    depends_on:
+      - mqtt5
+    networks:
+      - pcmr-network
+    restart: unless-stopped
+
+  # Desktop Web Application
+  desktop-app:
+    build:
+      context: ./desktop-app
+      dockerfile: Dockerfile
+    container_name: desktop_app_container
+    ports:
+      - "3000:80"
+    volumes:
+      - ./desktop-app/src:/app/src  # 🔥 Adicione isto
+      - ./desktop-app/index.html:/app/index.html  # Se precisar
+    depends_on:
+      - spring-app
+      - mqtt5
+    networks:
+      - pcmr-network
+    restart: unless-stopped
+
+  # Mobile Web Application
+  mobile-app:
+    build:
+      context: ./mobile-app
+      dockerfile: Dockerfile
+    container_name: mobile_app_container
+    ports:
+      - "3001:80"
+    volumes:
+      - ./mobile-app/src:/app/src  # 🔥 Adicione isto
+      - ./mobile-app/index.html:/app/index.html  # Se precisar
+    depends_on:
+      - spring-app
+      - mqtt5
+    networks:
+      - pcmr-network
+    restart: unless-stopped
+
+  # MQTT5 Broker
+  mqtt5:
+    image: eclipse-mosquitto:2
+    container_name: mosquitto
+    ports:
+      - "1883:1883"
+      - "9001:9001"
+    volumes:
+      - ./mqtt5/config:/mosquitto/config
+      - mqtt-data:/mosquitto/data
+      - mqtt-log:/mosquitto/log
+    networks:
+      - pcmr-network
+    restart: unless-stopped
+
+volumes:
+  mqtt-data:
+  mqtt-log:
+
+networks:
+  pcmr-network:
+    driver: bridge
