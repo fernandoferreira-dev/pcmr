@@ -137,13 +137,6 @@ docker compose ps
 - Implement centralized logging
 - Set resource limits for containers
 
-## Verify Setup
-
-Check if everything is ready:
-```bash
-./verify_docker_setup.sh
-```
-
 ## File Structure
 
 ```
