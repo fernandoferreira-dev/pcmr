@@ -5,3 +5,7 @@
 # ENV VARIABLES
 .env
 
+# MQTT local config
+mqtt5/config/mosquitto.conf
+mqtt5/config/pwfile
+
