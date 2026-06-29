@@ -38,8 +38,7 @@ function loadStoredSession(): AuthSession | null {
   }
 }
 
-export default function App() {
-  const [session, setSession] = useState<AuthSession | null>(() => loadStoredSession())
+export default function App() {  const [session, setSession] = useState<AuthSession | null>(() => loadStoredSession())
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
