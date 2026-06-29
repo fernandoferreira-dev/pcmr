@@ -5,5 +5,3 @@
 # ENV VARIABLES
 .env
 
-mqtt5/config/mosquitto.conf
-mqtt5/config/pwfile
