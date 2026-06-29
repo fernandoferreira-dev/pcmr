@@ -1,7 +1,6 @@
 import type { FC } from 'react';
 import '../../styles/status-page-styles/status-ping-styles.css'
 import SysNotificationImg from "../../assets/system-notification.png"
-import UserNotificationImg from "../../assets/user-notification.png"
 
 interface StatusPingComponentProps {}
 

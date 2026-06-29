@@ -7,12 +7,21 @@ import InfoPage from './info-page'
 import ClientInfoPage from './client-info-page'
 import SettingsButtonComponent from "../components/misc/settings-button-component"
 import "../styles/misc/header-styles.css" 
+
 export default function MainPage() {
-    const [view, setView] = useState<'home' | 'contact' | 'status' | 'doctor' | 'records'>('home')
+    const [view, setView] = useState<'home' | 'comms' | 'status' | 'doctor' | 'records'>('home')
+
+    const pageTitles = {
+        home:       'Medycist - Dashboard',
+        comms:      'Medycist - Comunicação',
+        status:     'Medycist - Dados de Equipamentos',
+        doctor:     'Medycist - Dados Pessoais',
+        records:    'Medycist - Dados Diagnósticos',
+    } as const
 
     const renderView = () => {
         switch (view) {
-            case 'contact':
+            case 'comms':
                 return <ContactPage/>
             case 'status':
                 return <StatusPage/>
@@ -28,7 +37,10 @@ export default function MainPage() {
     return (
         <>
             <div className="header-container">
-                <SettingsButtonComponent/>
+                <div className="header-row">
+                    <h1 className="header-page-title">{pageTitles[view]}</h1>
+                    <SettingsButtonComponent/>
+                </div>
             </div>
             {renderView()}
             <NavBarComponent onNavigate={setView} />

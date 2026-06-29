@@ -1,8 +1,14 @@
+import UserCounterComponent from "../components/client-info-page-components/user-counter-component"
+import DiagnosticCounterComponent from "../components/client-info-page-components/diagnostic-counter-component"
+import "../styles/diagnostic-data-styles/data-containers-styles.css"
+
 export default function ClientInfoPage() {
     return (
         <>
-            <h1>Dados de clientes</h1>
-            <p>Dados de clientes placeholder</p>
+            <div className="data-wrapper">
+                <UserCounterComponent/>
+                <DiagnosticCounterComponent/>
+            </div>
         </>
     )
 }

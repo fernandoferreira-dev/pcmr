@@ -1,0 +1,39 @@
+.data-wrapper {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-self: center;
+    justify-content: center;
+    align-items: center;
+    align-content: center;
+    gap: 0.5rem;
+    border: 3px solid #B2C8B2;
+    border-radius: 1rem;
+    background-color: #E8E8E8;
+    height: 70vh;
+    width: 50vh;
+    padding: 1.5rem;
+    box-sizing: border-box;
+    margin-top: 30px;
+    overflow: hidden;
+}
+
+.data-container  {
+    display: flex;
+    flex-direction: column;
+    align-content: last baseline;
+    background-color: #FFFFFF;
+    border: 3px solid #000000;
+    border-radius: 1rem;
+    color: #000000;
+    padding: 1.5rem;
+}
+
+.data-container p {
+    align-self: flex-start;    
+    color: #000000;
+}
+
+.data-container h2 {
+    color: #000000;
+}

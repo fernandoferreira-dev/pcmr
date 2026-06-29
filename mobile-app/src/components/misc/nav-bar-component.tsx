@@ -1,7 +1,7 @@
 import { useState, type JSX } from "react";
 import '../../styles/navbar-styles/navbar-styles.css';
 
-type NavItemId = 'contact' | 'status' | 'home' | 'doctor' | 'records';
+type NavItemId = 'comms' | 'status' | 'home' | 'doctor' | 'records';
 
 interface IconProps {
   active: boolean;
@@ -19,8 +19,8 @@ interface NavBarProps {
 
 const NAV_ITEMS: NavItem[] = [
   {
-    id: "contact",
-    label: "Contact",
+    id: "comms",
+    label: "comms",
     icon: ({ active }: IconProps) => (
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={active ? 2.2 : 1.8} strokeLinecap="round" strokeLinejoin="round" width={26} height={26}>
         <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.8 11.6 19.79 19.79 0 0 1 1.72 3 2 2 0 0 1 3.7 1h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L7.91 8.7a16 16 0 0 0 6 6l1.06-1.06a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 15.92z" />

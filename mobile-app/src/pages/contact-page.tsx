@@ -5,9 +5,7 @@ import "../styles/messages-page-styles/message-box-styles.css"
 export default function ContactPage() {
     return (
         <>
-            
-            <h1>Contactos</h1>
-            <div className="message-wrapper">
+                <div className="message-wrapper">
                 <MessageSearchBarComponent/>
                 <h1>Mensagens recentes</h1>
                 <MessageComponent/>

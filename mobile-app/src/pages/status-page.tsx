@@ -5,7 +5,6 @@ import StatusPingComponent from '../components/status-page-components/status-pin
 export default function StatusPage() {
     return (
         <>
-            <h1 className="status-header">Dados de equipamentos</h1>
             <div className="status-main-box">
                 <StatusButtonComponent/>
                 <SearchBarComponent/>
