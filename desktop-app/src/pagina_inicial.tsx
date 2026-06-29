@@ -80,7 +80,7 @@ const OverviewDashboard = () => (
 
       {/* Diagnóstico Rápido */}
       <div className="flex-1 bg-white rounded-xl border border-gray-300 p-4 shadow-sm flex flex-col">
-        <div className="text-sm font-bold text-gray-600 mb-2">Diagnóstico Rápid</div>
+        <div className="text-sm font-bold text-gray-600 mb-2">Diagnóstico Rápido</div>
         <div className="flex-1 bg-[#AAB99F] rounded-xl border border-[#91a086] p-4 flex flex-col justify-between">
           <div className="w-10 h-10 bg-white/70 rounded-full flex items-center justify-center text-[#AAB99F] text-3xl font-bold shadow-sm">
             +
