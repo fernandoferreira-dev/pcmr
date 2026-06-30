@@ -1,8 +1,10 @@
-export default function App() {
+import React, { useState } from 'react';
+import enviar from "./assets/imagens/transferir.png"; // Importado como 'enviar'
+
+
+export default function DadosDiagnostico() {
   return (
-    <div className="app-container" style={{padding: 24}}>
-      <h1>Dados Cliente</h1>
-      <p>j</p>
-    </div>
+    <div className="relative w-full h-full bg-[#EBEBEB] rounded-[2rem] p-6 shadow-inner flex flex-col overflow-hidden">
+</div>
   )
 }
