@@ -39,7 +39,10 @@ export default function MainPage() {
             <div className="header-container">
                 <div className="header-row">
                     <h1 className="header-page-title">{pageTitles[view]}</h1>
-                    <SettingsButtonComponent/>
+                    <div className="buttons-row">
+                        <SettingsButtonComponent/>
+                        <SettingsButtonComponent/>
+                    </div>
                 </div>
             </div>
             {renderView()}
