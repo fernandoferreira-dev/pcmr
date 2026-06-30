@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import DadosPessoais from './dados_pessoais'
-import DadosCliente from './Dados_Diagnosticos'
+import DadosDiagnostico from './Dados_Diagnosticos'
 import Comunicacao from './comunicacao'
 import DadosEquipamentos from './dados_equipamentos'
 import OverviewIcon from "./assets/imagens/dashboard.png";
@@ -9,11 +9,12 @@ import comunicaicon from "./assets/imagens/phone.png";
 import dadosequi from "./assets/imagens/quality-control-icon.webp";
 import cruzverde from "./assets/imagens/Untitled design (1).png";
 
-type View = 'home' | 'dados_cliente' | 'comunicacao' | 'dados_equipamentos'
+// Alterado de 'dados_cliente' para 'dados_diagnostico'
+type View = 'home' | 'dados_diagnostico' | 'comunicacao' | 'dados_equipamentos'
 
 const viewTitles: Record<View, string> = {
   home: 'Overview',
-  dados_cliente: 'Dados Diagnósticos',
+  dados_diagnostico: 'Dados Diagnósticos', // Ajustado aqui
   comunicacao: 'Comunicação',
   dados_equipamentos: 'Dados Equipamentos',
 }
@@ -102,43 +103,43 @@ export default function App({ userName, onLogout }: PaginaInicialProps) {
   const [view, setView] = useState<View>('home')
 
   let content: React.ReactNode
-  if (view === 'dados_cliente') content = <DadosCliente />
+  // Ajustado a validação e o componente correspondente aqui
+  if (view === 'dados_diagnostico') content = <DadosDiagnostico />
   else if (view === 'comunicacao') content = <Comunicacao />
   else if (view === 'dados_equipamentos') content = <DadosEquipamentos />
   else content = <OverviewDashboard />
 
   const NavButton = ({
-  id,
-  label,
-  icon,
-}: {
-  id: View
-  label: string
-  icon?: string // Mudamos de React.ReactNode para string
-}) => {
-  const isActive = view === id
+    id,
+    label,
+    icon,
+  }: {
+    id: View
+    label: string
+    icon?: string
+  }) => {
+    const isActive = view === id
 
-  return (
-    <button
-      className={`cursor-pointer w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-colors  ${
-        isActive
-          ? 'bg-[#8CA483] font-semibold text-black shadow-sm'
-          : 'hover:bg-[#9CB39E] text-gray-800'
-      }`}
-      onClick={() => setView(id)}
-    >
-      {/* Se houver um ícone, renderiza a tag img de fato */}
-      {icon && (
-        <img 
-          src={icon} 
-          alt={label} 
-          className="w-7 h-7 object-contain shrink-0" 
-        />
-      )}
-      <span>{label}</span>
-    </button>
-  )
-}
+    return (
+      <button
+        className={`cursor-pointer w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-colors  ${
+          isActive
+            ? 'bg-[#8CA483] font-semibold text-black shadow-sm'
+            : 'hover:bg-[#9CB39E] text-gray-800'
+        }`}
+        onClick={() => setView(id)}
+      >
+        {icon && (
+          <img 
+            src={icon} 
+            alt={label} 
+            className="w-7 h-7 object-contain shrink-0" 
+          />
+        )}
+        <span>{label}</span>
+      </button>
+    )
+  }
 
   return (
     <div className="h-screen w-screen bg-white flex flex-col font-sans overflow-hidden">
@@ -154,7 +155,8 @@ export default function App({ userName, onLogout }: PaginaInicialProps) {
 
           <nav className="flex flex-col gap-2 overflow-y-auto">
             <NavButton id="home" label="Overview" icon={OverviewIcon} />
-            <NavButton id="dados_cliente" label="Dados Diagnósticos" icon={DadosDiag}/>
+            {/* Ajustado o ID do botão de navegação */}
+            <NavButton id="dados_diagnostico" label="Dados Diagnósticos" icon={DadosDiag}/>
             <NavButton id="comunicacao" label="Comunicação" icon={comunicaicon}/>
             <NavButton id="dados_equipamentos" label="Dados Equipamentos" icon={dadosequi}/>
           </nav>
