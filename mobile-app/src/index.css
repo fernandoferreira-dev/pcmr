@@ -56,6 +56,18 @@ html, body, #root {
   min-height: 100%;
 }
 
+body {
+  transition: background-color 0.2s ease;
+}
+
+body.dark-theme {
+  background-color: #16171d;
+}
+
+body.dark-theme #root {
+  background-color: #16171d;
+}
+
 #root {
   width: 1126px;
   max-width: 100%;

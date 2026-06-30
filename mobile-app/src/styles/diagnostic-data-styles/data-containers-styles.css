@@ -10,8 +10,8 @@
     border: 3px solid #B2C8B2;
     border-radius: 1rem;
     background-color: #E8E8E8;
-    height: 70vh;
-    width: 50vh;
+    height: auto;
+    width: 40vh;
     padding: 1.5rem;
     box-sizing: border-box;
     margin-top: 30px;
