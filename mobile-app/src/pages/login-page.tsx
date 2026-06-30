@@ -3,6 +3,7 @@ import LoginButtonComponent from '../components/login-page/login-button-componen
 import FooterComponent from '../components/misc/footer-component'
 import appImage from '../assets/place-holder.png'
 import RegisterButtonComponent from '../components/login-page/register-button-component'
+import CreateAccountComponent from '../components/login-page/create-account-btn-component'
 
 type Props = { onLogin: () => void }
 
@@ -22,6 +23,7 @@ export default function LoginPage({ onLogin }: Props) {
 
                 <div className="button-row">
                     <LoginButtonComponent onClick={onLogin} />
+                    <CreateAccountComponent/>
                     <RegisterButtonComponent/>
                 </div>
             </form>
