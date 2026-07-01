@@ -1,4 +1,4 @@
-package com.pcmr.api.configuration;
+package com.pcmr.api.mqtt;
 
 import org.springframework.integration.annotation.ServiceActivator;
 import org.springframework.messaging.Message;
