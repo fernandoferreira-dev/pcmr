@@ -142,7 +142,7 @@ export default function App({ userName, onLogout }: PaginaInicialProps) {
   }
 
   return (
-    <div className="h-screen w-screen bg-white flex flex-col font-sans overflow-hidden">
+    <div className="h-screen w-screen bg-[var(--background)] flex flex-col font-sans overflow-hidden">
       
       <div className="flex-1 flex p-4 gap-6 overflow-hidden"> 
         
@@ -163,7 +163,7 @@ export default function App({ userName, onLogout }: PaginaInicialProps) {
         </aside>
 
         {/* Área Principal */}
-        <main className="flex-1 flex flex-col min-w-0 pr-4 pt-2 pb-4 overflow-hidden">
+        <main className="flex-1 flex flex-col min-w-0 pr-4 pt-2 pb-4 overflow-hidden bg-[var(--background)]">
           
           {/* Cabeçalho */}
           <header className="flex justify-between items-center mb-6 px-2 shrink-0">
@@ -184,7 +184,7 @@ export default function App({ userName, onLogout }: PaginaInicialProps) {
           </header>
 
           {/* Conteúdo Dinâmico */}
-          <div className="flex-1 overflow-hidden">
+          <div className="flex-1 overflow-hidden bg-[var(--background)]">
             {content}
           </div>
         </main>
