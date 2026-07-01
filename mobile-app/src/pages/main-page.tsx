@@ -6,6 +6,7 @@ import StatusPage from './status-page'
 import InfoPage from './info-page'
 import ClientInfoPage from './client-info-page'
 import SettingsButtonComponent from "../components/misc/settings-button-component"
+import SendEmailButtonComponent from "../components/misc/send-email-btn"
 import "../styles/misc/header-styles.css" 
 
 export default function MainPage() {
@@ -41,7 +42,7 @@ export default function MainPage() {
                     <h1 className="header-page-title">{pageTitles[view]}</h1>
                     <div className="buttons-row">
                         <SettingsButtonComponent/>
-                        <SettingsButtonComponent/>
+                        <SendEmailButtonComponent/>s
                     </div>
                 </div>
             </div>

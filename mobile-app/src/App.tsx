@@ -1,15 +1,15 @@
-import { useState } from 'react'
-import LoginPage from './pages/login-page'
-import MainPage from './pages/main-page'
+import { useState } from "react";
+import LoginPage from "./pages/login-page";
+import MainPage from "./pages/main-page";
 
 function App() {
-  const [page, setPage] = useState<'login' | 'dashboard'>('login')
+  const [page, setPage] = useState<"login" | "dashboard">("login");
 
-  return page === 'login' ? (
-    <LoginPage onLogin={() => setPage('dashboard')}/>
+  return page === "login" ? (
+    <LoginPage onLogin={() => setPage("dashboard")} />
   ) : (
-    <MainPage/>
-  )
+    <MainPage />
+  );
 }
 
-export default App
+export default App;

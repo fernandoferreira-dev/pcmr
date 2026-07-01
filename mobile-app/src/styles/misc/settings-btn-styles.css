@@ -17,6 +17,23 @@
     width: 40px;
 }
 
+.send-email {
+    display: block;
+    width: auto;
+}
+
+.message-body {
+    align-self: center;
+    display: block;
+    width: 50%;
+    height: 50px;
+    padding: 0.6rem 0.8rem;
+    color: #000000;
+    border: 1px solid #6C757D;
+    background-color: #CFCDCD;
+    border-radius: 1rem;
+}
+
 .log-out-btn {
     color: #000000;
     font-weight: bold;
