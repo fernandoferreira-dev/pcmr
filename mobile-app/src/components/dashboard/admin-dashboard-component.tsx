@@ -4,6 +4,26 @@ import '../../styles/dashboard-styles/notification-box.css';
 import NotificationBoxComponent from './notifications-box-component';
 
 export default function AdminDashboardComponent() {
+  const isServerOk = true;
+  const isSensorOk = true;
+
+  const getStatusStyle = (isOk: boolean) => {
+    switch (isOk) {
+      case true:
+        return {
+          backgroundColor: 'green',
+          borderColor: 'green',
+        };
+      case false:
+        return {
+          backgroundColor: 'red',
+          borderColor: 'red',
+        };
+      default:
+        return {};
+    }
+  };
+
   return (
     <>
       <div className="main-page">
@@ -14,11 +34,11 @@ export default function AdminDashboardComponent() {
           <div className="main-page-states">
             <div className="main-page-states-box">
               <h2>Estado do servidor: </h2>
-              <div className="OKstate"></div>
+              <div className="OKstate" style={getStatusStyle(isServerOk)}></div>
             </div>
             <div className="main-page-states-box">
               <h2>Estado do sensor nó: </h2>
-              <div className="OKstate"></div>
+              <div className="OKstate" style={getStatusStyle(isSensorOk)}></div>
             </div>
           </div>
           <NotificationBoxComponent/>

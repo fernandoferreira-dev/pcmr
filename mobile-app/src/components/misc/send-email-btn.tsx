@@ -12,7 +12,6 @@ export default function SendEmailButtonComponent() {
               <button onClick={() => setIsOpen(true)} className="settings-container-button">
                 <img className="settings-icon" src={EmailIcon} alt="Email"></img>
               </button>
-
                 {isOpen && (
                   <div className="overlay">
                     <div className="modal">
