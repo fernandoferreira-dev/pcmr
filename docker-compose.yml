@@ -69,7 +69,7 @@ services:
       - "1883:1883"
       - "9001:9001"
     volumes:
-      - ./mqtt5/config:/mosquitto/config
+      - ./configuration/mqtt5/config:/mosquitto/config
       - mqtt-data:/mosquitto/data
       - mqtt-log:/mosquitto/log
     networks:
