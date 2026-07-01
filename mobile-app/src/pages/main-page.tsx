@@ -15,7 +15,7 @@ export default function MainPage() {
   >("home");
 
   const pageTitles = {
-    home: "Medycist test - Dashboard",
+    home: "Medycist test test - Dashboard",
     comms: "Medycist - Comunicação",
     status: "Medycist - Dados de Equipamentos",
     doctor: "Medycist - Dados Pessoais",
