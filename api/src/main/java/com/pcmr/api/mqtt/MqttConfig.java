@@ -1,4 +1,4 @@
-package com.pcmr.api.configuration;
+package com.pcmr.api.mqtt;
 
 import java.util.UUID;
 
