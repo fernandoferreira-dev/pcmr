@@ -2,6 +2,7 @@ package com.pcmr.api.mqtt;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.pcmr.api.dto.SensorReadingDTO;
+import com.pcmr.api.service.BiometriaService;
 import com.pcmr.api.service.MedicaoService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.integration.annotation.ServiceActivator;
@@ -14,6 +15,9 @@ public class MqttMessageHandler {
     @Autowired
     private MedicaoService medicaoService;
 
+    @Autowired
+    private BiometriaService biometriaService;
+
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     @ServiceActivator(inputChannel = "mqttInputChannel")
@@ -21,6 +25,15 @@ public class MqttMessageHandler {
         String payload = message.getPayload().toString();
         String topic = message.getHeaders().get("mqtt_receivedTopic", String.class);
 
+        // --- ROTA BIOMETRIA ---
+        // Tópico: casa/biometria/acesso
+        // Payload: DETETADO:123, REGISTADO:123, NAO_RECONHECIDO, ERRO_REGISTO, AGUARDAR_DEDO_REGISTO
+        if (topic != null && topic.contains("casa/biometria")) {
+            biometriaService.processarMensagem(payload);
+            return;
+        }
+
+        // --- ROTA SENSORES ---
         String deviceId = extrairDeviceId(topic);
         if (deviceId == null) {
             System.err.println("Tópico MQTT sem deviceId reconhecível: " + topic);
