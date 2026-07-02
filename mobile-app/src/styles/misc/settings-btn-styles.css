@@ -25,7 +25,7 @@
 .message-body {
     align-self: center;
     display: block;
-    width: auto;
+    width: 50%;
     height: 50px;
     padding: 0.6rem 0.8rem;
     color: #000000;
@@ -61,7 +61,6 @@
     text-align: center;
     width: auto;
     height: auto;
-    gap: 5px
 }
 
 .option-container {
@@ -69,6 +68,10 @@
     flex-direction: row;
     gap: 0.5rem;
 } 
+
+.option-container input {
+    width: auto;
+}
 
 .settings {
     display: flex;
