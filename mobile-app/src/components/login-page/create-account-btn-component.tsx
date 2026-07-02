@@ -63,7 +63,7 @@ export default function CreateAccountComponent() {
                       onChange={(e) => setSelectedOption(e.target.value)}
                     >
                       <option value="opcao-pt">Português</option>
-                      <option value="opcao-ing">Inglês</option>
+                      <option value="opcao-ing">Inglêss</option>
                       <option value="opcao-esp">Espanhol</option>
                     </select>
                   </label>
