@@ -6,9 +6,7 @@ public class Jdbc {
     private String username = "";
     private String databaseName = "pcmr";
     private String password = "";
-    private Strint temple = "Temple";
-      private Strint temple = "Temple";
-    private Strint temple = "Temple";
+    private String temple = "Temple";
 
     public String getJdbcLocation() {
         return jdbcLocation;
