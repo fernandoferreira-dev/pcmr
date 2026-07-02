@@ -2,12 +2,14 @@ import React, { useEffect, useState } from 'react'
 import PaginaInicial from './pagina_inicial'
 import viewImg from './assets/imagens/view.png'
 import hideImg from './assets/imagens/hide.png'
+import { useBiometriaLogin } from './hooks/useBiometria'
 
 const AUTH_SESSION_KEY = 'pcmr-auth-session'
 const AUTH_SESSION_DURATION_MS = 60 * 60 * 1000
 
 type AuthSession = {
   userName: string
+  userId: number
   expiresAt: number
 }
 
@@ -21,6 +23,7 @@ function loadStoredSession(): AuthSession | null {
     const parsedSession = JSON.parse(rawSession) as Partial<AuthSession>
     if (
       typeof parsedSession.userName !== 'string' ||
+      typeof parsedSession.userId !== 'number' ||
       typeof parsedSession.expiresAt !== 'number' ||
       parsedSession.expiresAt <= Date.now()
     ) {
@@ -30,6 +33,7 @@ function loadStoredSession(): AuthSession | null {
 
     return {
       userName: parsedSession.userName,
+      userId: parsedSession.userId,
       expiresAt: parsedSession.expiresAt,
     }
   } catch {
@@ -38,7 +42,8 @@ function loadStoredSession(): AuthSession | null {
   }
 }
 
-export default function App() {  const [session, setSession] = useState<AuthSession | null>(() => loadStoredSession())
+export default function App() {
+  const [session, setSession] = useState<AuthSession | null>(() => loadStoredSession())
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
@@ -46,6 +51,27 @@ export default function App() {  const [session, setSession] = useState<AuthSess
   const [error, setError] = useState<string | null>(null)
   const [usernameError, setUsernameError] = useState(false)
   const [passwordError, setPasswordError] = useState(false)
+
+  const {
+    status: bioStatus,
+    mensagem: bioMensagem,
+    userData: bioUserData,
+    iniciarLoginBiometria: bioLogin,
+    cancelar: bioCancelar,
+  } = useBiometriaLogin()
+
+  // Quando o login biométrico é bem-sucedido, cria sessão
+  useEffect(() => {
+    if (bioStatus === 'sucesso' && bioUserData) {
+      const nextSession: AuthSession = {
+        userName: bioUserData.nome,
+        userId: bioUserData.userId,
+        expiresAt: Date.now() + AUTH_SESSION_DURATION_MS,
+      }
+      window.localStorage.setItem(AUTH_SESSION_KEY, JSON.stringify(nextSession))
+      setSession(nextSession)
+    }
+  }, [bioStatus, bioUserData])
 
   useEffect(() => {
     if (!session) return
@@ -76,7 +102,7 @@ export default function App() {  const [session, setSession] = useState<AuthSess
     setPasswordError(false)
   }
 
-  if (session) return <PaginaInicial userName={session.userName} onLogout={handleLogout} />
+  if (session) return <PaginaInicial userName={session.userName} userId={session.userId} onLogout={handleLogout} />
 
   const handleLogin = async () => {
     setError(null)
@@ -106,15 +132,20 @@ export default function App() {  const [session, setSession] = useState<AuthSess
         let userName = username.trim()
         const contentType = res.headers.get('content-type') || ''
 
+        let userId = 0
         if (contentType.includes('application/json')) {
-          const data = (await res.json()) as { nome?: string }
+          const data = (await res.json()) as { nome?: string; userId?: number }
           if (typeof data.nome === 'string' && data.nome.trim()) {
             userName = data.nome.trim()
+          }
+          if (typeof data.userId === 'number' && data.userId > 0) {
+            userId = data.userId
           }
         }
 
         const nextSession = {
           userName,
+          userId,
           expiresAt: Date.now() + AUTH_SESSION_DURATION_MS,
         }
 
@@ -142,12 +173,12 @@ export default function App() {  const [session, setSession] = useState<AuthSess
   const handleLoginTeste = () => {
     const testSession = {
       userName: 'Utilizador Teste',
+      userId: 0,
       expiresAt: Date.now() + AUTH_SESSION_DURATION_MS,
     }
     window.localStorage.setItem(AUTH_SESSION_KEY, JSON.stringify(testSession))
     setSession(testSession)
   }
-
 
   return (
     <div className="min-h-screen bg-green-50 flex items-center justify-center p-4 sm:p-6">
@@ -167,14 +198,13 @@ export default function App() {  const [session, setSession] = useState<AuthSess
           </div>
         </div>
 
-        {/* Direita*/}
+        {/* Direita */}
         <div className="w-full md:w-96 bg-white rounded-xl p-6 sm:p-8 flex flex-col justify-between">
           <div>
             <h2 className="text-2xl sm:text-3xl font-semibold text-gray-700 mb-6 text-center">MedyCist</h2>
 
             <label className="block text-base sm:text-lg text-gray-600 mb-2">Utilizador</label>
             <div className="relative mb-4">
-
               <input
                 value={username}
                 onChange={(e) => {
@@ -196,7 +226,6 @@ export default function App() {  const [session, setSession] = useState<AuthSess
 
             <label className="block text-base sm:text-lg text-gray-600 mb-2">Palavra-passe</label>
             <div className="relative mb-2">
-
               <input
                 value={password}
                 onChange={(e) => {
@@ -233,20 +262,59 @@ export default function App() {  const [session, setSession] = useState<AuthSess
             <div className="text-right text-xs text-gray-500 mb-6">Esqueceu-se da palavra-passe?</div>
 
             {error && <div className="text-sm text-red-600 mb-4">{error}</div>}
+
+            {/* Mensagem biométrica */}
+            {bioStatus !== 'idle' && (
+              <div className={`text-sm mb-4 p-3 rounded-xl ${
+                bioStatus === 'aguardar_dedo' || bioStatus === 'a_processar'
+                  ? 'bg-blue-50 text-blue-700'
+                  : bioStatus === 'sucesso'
+                  ? 'bg-green-50 text-green-700'
+                  : bioStatus === 'timeout'
+                  ? 'bg-yellow-50 text-yellow-700'
+                  : 'bg-red-50 text-red-700'
+              }`}>
+                {bioMensagem}
+                {(bioStatus === 'aguardar_dedo' || bioStatus === 'a_processar') && (
+                  <button
+                    onClick={bioCancelar}
+                    className="ml-2 text-xs underline hover:no-underline"
+                  >
+                    Cancelar
+                  </button>
+                )}
+              </div>
+            )}
           </div>
 
           <button
-            onClick={handleLogin} //handleLogin
-            disabled={loading}//disabled={loading}
+            onClick={handleLogin}
+            disabled={loading || bioStatus === 'aguardar_dedo' || bioStatus === 'a_processar'}
             className="mt-4 cursor-pointer disabled:opacity-60 text-white font-semibold py-4 rounded-full text-lg shadow-md w-full bg-gradient-to-r from-green-400 to-green-600"
           >
             {loading ? 'A processar...' : 'ENTRAR'}
           </button>
+
+          {/* Botão de Impressão Digital */}
+          <button
+            onClick={bioLogin}
+            disabled={loading || bioStatus === 'aguardar_dedo' || bioStatus === 'a_processar'}
+            className="mt-3 cursor-pointer disabled:opacity-60 text-white font-semibold py-4 rounded-full text-lg shadow-md w-full bg-gradient-to-r from-emerald-500 to-teal-600 flex items-center justify-center gap-2"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M2 12C2 6.5 6.5 2 12 2s10 4.5 10 10" />
+              <path d="M5 12C5 8.1 8.1 5 12 5s7 3.1 7 7" />
+              <path d="M8 12c0-2.2 1.8-4 4-4s4 1.8 4 4" />
+              <circle cx="12" cy="12" r="2" />
+              <path d="M2 12h20" />
+            </svg>
+            Entrar com Impressão Digital
+          </button>
           
           <button
             onClick={handleLoginTeste}
-            disabled={loading}
-            className="mt-4 cursor-pointer disabled:opacity-60 text-white font-semibold py-4 rounded-full text-lg shadow-md w-full bg-gradient-to-r from-green-400 to-green-600"
+            disabled={loading || bioStatus === 'aguardar_dedo' || bioStatus === 'a_processar'}
+            className="mt-3 cursor-pointer disabled:opacity-60 text-white font-semibold py-4 rounded-full text-lg shadow-md w-full bg-gradient-to-r from-green-400 to-green-600"
           >
             Entrar (Teste)
           </button>

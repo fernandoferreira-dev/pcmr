@@ -15,9 +15,11 @@ public class LoginController {
 
     public static class LoginResponse {
         public String nome;
+        public Integer userId;
 
-        public LoginResponse(String nome) {
+        public LoginResponse(String nome, Integer userId) {
             this.nome = nome;
+            this.userId = userId;
         }
     }
 
@@ -43,7 +45,8 @@ public class LoginController {
         Optional<LoginModel> userOpt = loginService.authenticate(request.username, request.password);
 
         if (userOpt.isPresent()) {
-            return ResponseEntity.ok(new LoginResponse(userOpt.get().getNome()));
+            LoginModel user = userOpt.get();
+            return ResponseEntity.ok(new LoginResponse(user.getNome(), user.getId()));
         } else {
             // Could be wrong password or not found; keep response generic or differentiate
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid username or password");
