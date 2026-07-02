@@ -10,14 +10,15 @@ import dadosequi from "./assets/imagens/quality-control-icon.webp";
 import cruzverde from "./assets/imagens/Untitled design (1).png";
 import { useBiometriaRegisto } from './hooks/useBiometria'
 
-// Alterado de 'dados_cliente' para 'dados_diagnostico'
-type View = 'home' | 'dados_diagnostico' | 'comunicacao' | 'dados_equipamentos'
+type View = 'home' | 'dados_diagnostico' | 'comunicacao' | 'dados_equipamentos' | 'dados_pessoais'
 
+// 1. AJUSTE: Adicionado o título para a view dados_pessoais
 const viewTitles: Record<View, string> = {
   home: 'Overview',
   dados_diagnostico: 'Dados Diagnósticos',
   comunicacao: 'Comunicação',
   dados_equipamentos: 'Dados Equipamentos',
+  dados_pessoais: 'Dados Pessoais', 
 }
 
 type PaginaInicialProps = {
@@ -111,10 +112,12 @@ export default function App({ userName, userId, onLogout }: PaginaInicialProps) 
     cancelar: bioCancelar,
   } = useBiometriaRegisto()
 
+  // 2. AJUSTE: Adicionada a verificação para renderizar o componente <DadosPessoais />
   let content: React.ReactNode
   if (view === 'dados_diagnostico') content = <DadosDiagnostico />
   else if (view === 'comunicacao') content = <Comunicacao />
   else if (view === 'dados_equipamentos') content = <DadosEquipamentos />
+  else if (view === 'dados_pessoais') content = <DadosPessoais />
   else content = <OverviewDashboard />
 
   const NavButton = ({
@@ -166,6 +169,10 @@ export default function App({ userName, userId, onLogout }: PaginaInicialProps) 
             <NavButton id="dados_diagnostico" label="Dados Diagnósticos" icon={DadosDiag}/>
             <NavButton id="comunicacao" label="Comunicação" icon={comunicaicon}/>
             <NavButton id="dados_equipamentos" label="Dados Equipamentos" icon={dadosequi}/>
+            
+            {/* 3. AJUSTE: Novo botão adicionado à Sidenav */}
+            {/* Nota: Pode importar e passar uma imagem para a propriedade 'icon' caso queira */}
+            <NavButton id="dados_pessoais" label="Dados Pessoais" icon={DadosDiag} />
           </nav>
         </aside>
 
