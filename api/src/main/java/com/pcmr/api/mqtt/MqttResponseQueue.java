@@ -1,4 +1,11 @@
 package com.pcmr.api.mqtt;
+
+import org.springframework.stereotype.Service;
+
+import java.util.Map;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
+
 @Service
 public class MqttResponseQueue {
     private final Map<String, CompletableFuture<String>> pending = new ConcurrentHashMap<>();
