@@ -27,53 +27,30 @@ public class LoginModel {
     @Column(name = "tipo_de_utilizador")
     private String tipoDeUtilizador;
 
+    @Column(name = "impressao_digital")
+    private String impressaoDigital;
+
     private LocalDateTime timeStamp = LocalDateTime.now();
 
-    public Integer getId() {
-        return id;
-    }
+    // Getters e Setters
+    public Integer getId() { return id; }
+    public void setId(Integer id) { this.id = id; }
 
-    public void setId(Integer id) {
-        this.id = id;
-    }
+    public String getNome() { return nome; }
+    public void setNome(String nome) { this.nome = nome; }
 
-    public String getNome() {
-        return nome;
-    }
+    public String getEmail() { return email; }
+    public void setEmail(String email) { this.email = email; }
 
-    public void setNome(String nome) {
-        this.nome = nome;
-    }
+    public String getPasswordHash() { return passwordHash; }
+    public void setPasswordHash(String passwordHash) { this.passwordHash = passwordHash; }
 
-    public String getEmail() {
-        return email;
-    }
+    public String getTipoDeUtilizador() { return tipoDeUtilizador; }
+    public void setTipoDeUtilizador(String tipoDeUtilizador) { this.tipoDeUtilizador = tipoDeUtilizador; }
 
-    public void setEmail(String email) {
-        this.email = email;
-    }
+    public String getImpressaoDigital() { return impressaoDigital; }
+    public void setImpressaoDigital(String impressaoDigital) { this.impressaoDigital = impressaoDigital; }
 
-    public String getPasswordHash() {
-        return passwordHash;
-    }
-
-    public void setPasswordHash(String passwordHash) {
-        this.passwordHash = passwordHash;
-    }
-
-    public String getTipoDeUtilizador() {
-        return tipoDeUtilizador;
-    }
-
-    public void setTipoDeUtilizador(String tipoDeUtilizador) {
-        this.tipoDeUtilizador = tipoDeUtilizador;
-    }
-
-    public LocalDateTime getTimeStamp() {
-        return timeStamp;
-    }
-
-    public void setTimeStamp(LocalDateTime timeStamp) {
-        this.timeStamp = timeStamp;
-    }
+    public LocalDateTime getTimeStamp() { return timeStamp; }
+    public void setTimeStamp(LocalDateTime timeStamp) { this.timeStamp = timeStamp; }
 }
