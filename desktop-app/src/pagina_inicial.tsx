@@ -3,11 +3,12 @@ import DadosPessoais from './dados_pessoais'
 import DadosDiagnostico from './Dados_Diagnosticos'
 import Comunicacao from './comunicacao'
 import DadosEquipamentos from './dados_equipamentos'
-import OverviewIcon from "./assets/imagens/dashboard.png";
+import OverviewIcon from "./assets/imagens/infographics.png";
 import DadosDiag from "./assets/imagens/Patient-Profile-59.png";
 import comunicaicon from "./assets/imagens/phone.png";
-import dadosequi from "./assets/imagens/quality-control-icon.webp";
+import dadosequi from "./assets/imagens/server.png";
 import cruzverde from "./assets/imagens/Untitled design (1).png";
+import datapessoal from "./assets/imagens/personal-information.png";
 import { useBiometriaRegisto } from './hooks/useBiometria'
 
 type View = 'home' | 'dados_diagnostico' | 'comunicacao' | 'dados_equipamentos' | 'dados_pessoais'
@@ -169,10 +170,7 @@ export default function App({ userName, userId, onLogout }: PaginaInicialProps) 
             <NavButton id="dados_diagnostico" label="Dados Diagnósticos" icon={DadosDiag}/>
             <NavButton id="comunicacao" label="Comunicação" icon={comunicaicon}/>
             <NavButton id="dados_equipamentos" label="Dados Equipamentos" icon={dadosequi}/>
-            
-            {/* 3. AJUSTE: Novo botão adicionado à Sidenav */}
-            {/* Nota: Pode importar e passar uma imagem para a propriedade 'icon' caso queira */}
-            <NavButton id="dados_pessoais" label="Dados Pessoais" icon={DadosDiag} />
+            <NavButton id="dados_pessoais" label="Dados Pessoais" icon={datapessoal} />
           </nav>
         </aside>
 
