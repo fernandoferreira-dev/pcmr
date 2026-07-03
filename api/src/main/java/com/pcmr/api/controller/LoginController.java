@@ -1,7 +1,6 @@
 package com.pcmr.api.controller;
 
-import com.pcmr.api.model.LoginModel;
-import com.pcmr.api.repository.UserRepository;
+import com.pcmr.api.model.Utilizador;
 import com.pcmr.api.service.LoginService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -15,23 +14,18 @@ public class LoginController {
 
     public static class LoginResponse {
         public String nome;
-        public Integer userId;
+        public Long userId; // Alterado para Long para alinhar com a base de dados
 
-        public LoginResponse(String nome, Integer userId) {
+        public LoginResponse(String nome, Long userId) {
             this.nome = nome;
             this.userId = userId;
         }
     }
 
     @Autowired
-    private UserRepository userRepository;
-
-    @Autowired
     private LoginService loginService;
 
-    // Standard Request DTO for login
     public static class LoginRequest {
-        // Accept either nome (username) or email
         public String username;
         public String password;
     }
@@ -42,13 +36,14 @@ public class LoginController {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("username and password required");
         }
 
-        Optional<LoginModel> userOpt = loginService.authenticate(request.username, request.password);
+        // Alterado de LoginModel para Utilizador
+        Optional<Utilizador> userOpt = loginService.authenticate(request.username, request.password);
 
         if (userOpt.isPresent()) {
-            LoginModel user = userOpt.get();
-            return ResponseEntity.ok(new LoginResponse(user.getNome(), user.getId()));
+            Utilizador user = userOpt.get();
+            // Retorna o username e o ID correto do Utilizador
+            return ResponseEntity.ok(new LoginResponse(user.getUsername(), user.getIdUtilizador()));
         } else {
-            // Could be wrong password or not found; keep response generic or differentiate
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid username or password");
         }
     }
