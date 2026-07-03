@@ -1,13 +1,14 @@
 package com.pcmr.api.service;
 
-import com.pcmr.api.model.LoginModel;
+import com.pcmr.api.model.AcessoBiometrico;
+import com.pcmr.api.model.Utilizador;
 import com.pcmr.api.mqtt.MqttPublisherService;
+import com.pcmr.api.repository.AcessoBiometricoRepository;
 import com.pcmr.api.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import java.time.Instant;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
@@ -25,31 +26,21 @@ public class BiometriaService {
     @Autowired
     private UserRepository userRepository;
 
-    /**
-     * Mapa de sessões de registo pendentes: userId -> Future que será completado quando o ESP32 confirmar
-     */
-    private final Map<Integer, CompletableFuture<Boolean>> pendingEnrollments = new ConcurrentHashMap<>();
+    @Autowired
+    private AcessoBiometricoRepository acessoBiometricoRepository;
 
-    /**
-     * Mapa de sessões de login pendentes: correlationId -> Future que será completado com o fingerprintId
-     */
+    // Alterado de Integer para Long para aceitar o userId
+    private final Map<Long, CompletableFuture<Boolean>> pendingEnrollments = new ConcurrentHashMap<>();
     private final Map<String, CompletableFuture<Integer>> pendingLogins = new ConcurrentHashMap<>();
 
     // ========== REGISTO ==========
 
-    /**
-     * Inicia o processo de registo de impressão digital para um utilizador.
-     * Envia comando REGISTAR:{userId} para o ESP32 via MQTT.
-     * Retorna um Future que será completado quando o ESP32 confirmar o registo.
-     */
-    public CompletableFuture<Boolean> iniciarRegisto(int userId) {
+    public CompletableFuture<Boolean> iniciarRegisto(long userId) {
         CompletableFuture<Boolean> future = new CompletableFuture<>();
-        pendingEnrollments.put(userId, future);
+        pendingEnrollments.put(userId, future); // Agora compila perfeitamente!
 
-        // Envia comando para o ESP32
         mqttPublisher.publish(topicComando, "REGISTAR:" + userId);
 
-        // Timeout de 30 segundos
         java.util.concurrent.Executors.newSingleThreadScheduledExecutor()
                 .schedule(() -> {
                     CompletableFuture<Boolean> f = pendingEnrollments.remove(userId);
@@ -61,10 +52,7 @@ public class BiometriaService {
         return future;
     }
 
-    /**
-     * Completar o registo (chamado pelo MqttMessageHandler quando recebe REGISTADO:{id} do ESP32)
-     */
-    public void completarRegisto(int fingerprintId, boolean sucesso) {
+    public void completarRegisto(long fingerprintId, boolean sucesso) {
         CompletableFuture<Boolean> future = pendingEnrollments.remove(fingerprintId);
         if (future != null && !future.isDone()) {
             future.complete(sucesso);
@@ -73,17 +61,11 @@ public class BiometriaService {
 
     // ========== LOGIN ==========
 
-    /**
-     * Gera um correlationId e retorna-o. O frontend faz polling com este ID.
-     * Quando o utilizador põe o dedo, o ESP32 publica DETETADO:{fingerprintId}
-     * e o handler MQTT completa o future correspondente.
-     */
     public String iniciarLogin() {
         String correlationId = java.util.UUID.randomUUID().toString();
         CompletableFuture<Integer> future = new CompletableFuture<>();
         pendingLogins.put(correlationId, future);
 
-        // Timeout de 30 segundos
         java.util.concurrent.Executors.newSingleThreadScheduledExecutor()
                 .schedule(() -> {
                     CompletableFuture<Integer> f = pendingLogins.remove(correlationId);
@@ -95,37 +77,25 @@ public class BiometriaService {
         return correlationId;
     }
 
-    /**
-     * Verifica se o login com impressão digital já foi concluído.
-     * Retorna o utilizador se o fingerprint foi reconhecido e associado na BD.
-     */
-    public Optional<LoginModel> checkLoginStatus(String correlationId) {
+    public Optional<Utilizador> checkLoginStatus(String correlationId) {
         CompletableFuture<Integer> future = pendingLogins.get(correlationId);
-        if (future == null) return Optional.empty();
-
-        if (!future.isDone()) return Optional.empty();
+        if (future == null || !future.isDone()) return Optional.empty();
 
         try {
-            int fingerprintId = future.getNow(0);
-            if (fingerprintId <= 0) return Optional.empty();
+            int idDigital = future.getNow(0);
+            if (idDigital <= 0) return Optional.empty();
 
-            // Remove da lista de pendentes (já foi processado)
             pendingLogins.remove(correlationId);
 
-            // Procura o utilizador pelo ID da impressão digital
-            return userRepository.findByImpressaoDigital(String.valueOf(fingerprintId));
+            Optional<AcessoBiometrico> bioAcesso = acessoBiometricoRepository.findByImpAcesso(String.valueOf(idDigital));
+            return bioAcesso.map(AcessoBiometrico::getUtilizador);
+            
         } catch (Exception e) {
             return Optional.empty();
         }
     }
 
-    /**
-     * Completa o login com o fingerprintId (chamado pelo MqttMessageHandler quando recebe DETETADO:{id})
-     * Verifica se este fingerprint está associado a algum utilizador na BD.
-     */
     public void completarDeteccao(int fingerprintId) {
-        // Tenta encontrar uma sessão de login pendente
-        // Como temos múltiplas sessões possíveis, completamos a primeira que encontrar
         for (Map.Entry<String, CompletableFuture<Integer>> entry : pendingLogins.entrySet()) {
             CompletableFuture<Integer> future = entry.getValue();
             if (!future.isDone()) {
@@ -137,23 +107,17 @@ public class BiometriaService {
 
     // ========== CONSULTA ==========
 
-    /**
-     * Usado pelo MqttMessageHandler para processar as mensagens MQTT biometria
-     */
     public void processarMensagem(String payload) {
         if (payload == null) return;
 
-        // REGISTADO:{id}
         if (payload.startsWith("REGISTADO:")) {
             try {
-                int id = Integer.parseInt(payload.substring(10).trim());
+                long id = Long.parseLong(payload.substring(10).trim());
                 completarRegisto(id, true);
             } catch (NumberFormatException ignored) {}
         }
-        // ERRO_REGISTO
         else if (payload.startsWith("ERRO_REGISTO")) {
-            // Completa todas as sessões de registo pendentes com erro
-            for (Map.Entry<Integer, CompletableFuture<Boolean>> entry : pendingEnrollments.entrySet()) {
+            for (Map.Entry<Long, CompletableFuture<Boolean>> entry : pendingEnrollments.entrySet()) {
                 CompletableFuture<Boolean> future = entry.getValue();
                 if (!future.isDone()) {
                     future.complete(false);
@@ -161,20 +125,17 @@ public class BiometriaService {
             }
             pendingEnrollments.clear();
         }
-        // DETETADO:{id}
         else if (payload.startsWith("DETETADO:")) {
             try {
                 int id = Integer.parseInt(payload.substring(9).trim());
                 completarDeteccao(id);
             } catch (NumberFormatException ignored) {}
         }
-        // NAO_RECONHECIDO
         else if (payload.startsWith("NAO_RECONHECIDO")) {
-            // Notifica todas as sessões de login pendentes que falhou
             for (Map.Entry<String, CompletableFuture<Integer>> entry : pendingLogins.entrySet()) {
                 CompletableFuture<Integer> future = entry.getValue();
                 if (!future.isDone()) {
-                    future.complete(0); // 0 = não reconhecido
+                    future.complete(0);
                 }
             }
         }
