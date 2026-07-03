@@ -11,8 +11,10 @@ import org.springframework.stereotype.Service;
 
 import java.util.Map;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
 
 @Service
 public class BiometriaService {
@@ -29,50 +31,64 @@ public class BiometriaService {
     @Autowired
     private AcessoBiometricoRepository acessoBiometricoRepository;
 
-    // Alterado de Integer para Long para aceitar o userId
     private final Map<Long, CompletableFuture<Boolean>> pendingEnrollments = new ConcurrentHashMap<>();
     private final Map<String, CompletableFuture<Integer>> pendingLogins = new ConcurrentHashMap<>();
 
-    // ========== REGISTO ==========
 
     public CompletableFuture<Boolean> iniciarRegisto(long userId) {
         CompletableFuture<Boolean> future = new CompletableFuture<>();
-        pendingEnrollments.put(userId, future); // Agora compila perfeitamente!
+        pendingEnrollments.put(userId, future);
 
-        mqttPublisher.publish(topicComando, "REGISTAR:" + userId);
+        mqttPublisher.publish(topicComando, "{\"modo\": \"enroll\"}");
 
-        java.util.concurrent.Executors.newSingleThreadScheduledExecutor()
-                .schedule(() -> {
-                    CompletableFuture<Boolean> f = pendingEnrollments.remove(userId);
-                    if (f != null && !f.isDone()) {
-                        f.completeExceptionally(new RuntimeException("Timeout: registo de impressão digital excedeu 30s"));
-                    }
-                }, 30, java.util.concurrent.TimeUnit.SECONDS);
+        CompletableFuture.delayedExecutor(30, TimeUnit.SECONDS).execute(() -> {
+            CompletableFuture<Boolean> f = pendingEnrollments.remove(userId);
+            if (f != null && !f.isDone()) {
+                f.completeExceptionally(new RuntimeException("Timeout: Registo excedeu 30s"));
+                mqttPublisher.publish(topicComando, "{\"modo\": \"idle\"}");
+            }
+        });
 
         return future;
     }
 
-    public void completarRegisto(long fingerprintId, boolean sucesso) {
-        CompletableFuture<Boolean> future = pendingEnrollments.remove(fingerprintId);
-        if (future != null && !future.isDone()) {
-            future.complete(sucesso);
+    public void completarRegisto(int fingerprintId, boolean sucesso) {
+        Long userId = null;
+        for (Map.Entry<Long, CompletableFuture<Boolean>> entry : pendingEnrollments.entrySet()) {
+            if (!entry.getValue().isDone()) {
+                userId = entry.getKey();
+                entry.getValue().complete(sucesso);
+                pendingEnrollments.remove(userId);
+                break;
+            }
+        }
+
+        if (sucesso && userId != null) {
+            AcessoBiometrico novoAcesso = new AcessoBiometrico();
+            novoAcesso.setImpAcesso(String.valueOf(fingerprintId));
+            
+            Utilizador user = userRepository.findById(userId)
+                    .orElseThrow(() -> new RuntimeException("Utilizador não encontrado"));
+            
+            novoAcesso.setUtilizador(user);
+            acessoBiometricoRepository.save(novoAcesso);
+            
+            System.out.println("✓ Utilizador " + userId + " associado ao ID biométrico " + fingerprintId);
+            mqttPublisher.publish(topicComando, "{\"modo\": \"idle\"}");
         }
     }
 
-    // ========== LOGIN ==========
-
     public String iniciarLogin() {
-        String correlationId = java.util.UUID.randomUUID().toString();
+        String correlationId = UUID.randomUUID().toString();
         CompletableFuture<Integer> future = new CompletableFuture<>();
         pendingLogins.put(correlationId, future);
 
-        java.util.concurrent.Executors.newSingleThreadScheduledExecutor()
-                .schedule(() -> {
-                    CompletableFuture<Integer> f = pendingLogins.remove(correlationId);
-                    if (f != null && !f.isDone()) {
-                        f.completeExceptionally(new RuntimeException("Timeout: leitura de impressão digital excedeu 30s"));
-                    }
-                }, 30, java.util.concurrent.TimeUnit.SECONDS);
+        CompletableFuture.delayedExecutor(30, TimeUnit.SECONDS).execute(() -> {
+            CompletableFuture<Integer> f = pendingLogins.remove(correlationId);
+            if (f != null && !f.isDone()) {
+                f.completeExceptionally(new RuntimeException("Timeout: Leitura de impressão digital excedeu 30s"));
+            }
+        });
 
         return correlationId;
     }
@@ -82,14 +98,19 @@ public class BiometriaService {
         if (future == null || !future.isDone()) return Optional.empty();
 
         try {
-            int idDigital = future.getNow(0);
-            if (idDigital <= 0) return Optional.empty();
-
+            int fingerprintId = future.get();
             pendingLogins.remove(correlationId);
 
-            Optional<AcessoBiometrico> bioAcesso = acessoBiometricoRepository.findByImpAcesso(String.valueOf(idDigital));
-            return bioAcesso.map(AcessoBiometrico::getUtilizador);
+            Optional<AcessoBiometrico> bioAcesso = acessoBiometricoRepository.findByImpAcesso(String.valueOf(fingerprintId));
             
+            if (bioAcesso.isPresent()) {
+                Utilizador user = bioAcesso.get().getUtilizador();
+                System.out.println("✓ Login biométrico efetuado por: " + user.getUsername());
+                return Optional.of(user);
+            } else {
+                System.out.println("✗ ID " + fingerprintId + " sem utilizador associado.");
+                return Optional.empty();
+            }
         } catch (Exception e) {
             return Optional.empty();
         }
@@ -97,46 +118,10 @@ public class BiometriaService {
 
     public void completarDeteccao(int fingerprintId) {
         for (Map.Entry<String, CompletableFuture<Integer>> entry : pendingLogins.entrySet()) {
-            CompletableFuture<Integer> future = entry.getValue();
-            if (!future.isDone()) {
-                future.complete(fingerprintId);
+            if (!entry.getValue().isDone()) {
+                entry.getValue().complete(fingerprintId);
+                System.out.println("✓ Login processado para ID: " + fingerprintId);
                 return;
-            }
-        }
-    }
-
-    // ========== CONSULTA ==========
-
-    public void processarMensagem(String payload) {
-        if (payload == null) return;
-
-        if (payload.startsWith("REGISTADO:")) {
-            try {
-                long id = Long.parseLong(payload.substring(10).trim());
-                completarRegisto(id, true);
-            } catch (NumberFormatException ignored) {}
-        }
-        else if (payload.startsWith("ERRO_REGISTO")) {
-            for (Map.Entry<Long, CompletableFuture<Boolean>> entry : pendingEnrollments.entrySet()) {
-                CompletableFuture<Boolean> future = entry.getValue();
-                if (!future.isDone()) {
-                    future.complete(false);
-                }
-            }
-            pendingEnrollments.clear();
-        }
-        else if (payload.startsWith("DETETADO:")) {
-            try {
-                int id = Integer.parseInt(payload.substring(9).trim());
-                completarDeteccao(id);
-            } catch (NumberFormatException ignored) {}
-        }
-        else if (payload.startsWith("NAO_RECONHECIDO")) {
-            for (Map.Entry<String, CompletableFuture<Integer>> entry : pendingLogins.entrySet()) {
-                CompletableFuture<Integer> future = entry.getValue();
-                if (!future.isDone()) {
-                    future.complete(0);
-                }
             }
         }
     }
