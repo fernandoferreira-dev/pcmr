@@ -1,102 +1,112 @@
 # Database Schema
 
-## TipoUtilizador
-| Field              | Type | Key |
-|-------------------|------|-----|
-| idTipoUtilizador  | PK   | Primary Key |
-| nome              |      | |
-| descricao         |      | |
+## tipo_utilizador
+| Campo              | Tipo | Chave |
+|-------------------|------|--------|
+| id_tipo_utilizador | PK | Primary Key |
+| nome              | VARCHAR | |
+| descricao         | VARCHAR | |
+
+---
+
+## pessoa
+| Campo             | Tipo | Chave |
+|------------------|------|--------|
+| id_pessoa        | PK | Primary Key |
+| nome             | VARCHAR | |
+| data_nascimento  | DATE | |
+| email            | VARCHAR | |
 
 ---
 
 ## utilizador
-| Field                  | Type | Key |
-|-----------------------|------|-----|
-| idUtilizador          | PK   | Primary Key |
-| idTipoUtilizador      | FK   | Foreign Key → TipoUtilizador.idTipoUtilizador |
-| idPessoa              | FK   | Foreign Key → Pessoa.idPessoa |
-| username              |      | |
-| password              |      | |
-| dataCriacao           |      | |
-| dataUltimaAtualizacao |      | |
+| Campo                    | Tipo | Chave |
+|-------------------------|------|--------|
+| id_utilizador           | PK | Primary Key |
+| id_tipo_utilizador      | FK | Foreign Key → tipo_utilizador.id_tipo_utilizador |
+| id_pessoa               | FK | Foreign Key → pessoa.id_pessoa |
+| username                | VARCHAR | |
+| password                | VARCHAR | |
+| data_criacao            | DATETIME | |
+| data_ultima_atualizacao | DATETIME | |
 
 ---
 
-## UtilizadorPacienteAcesso
-| Field         | Type | Key |
-|--------------|------|-----|
-| idToken      | PK   | Primary Key |
-| idUtilizador | FK   | Foreign Key → utilizador.idUtilizador |
-| tokenAcesso  |      | |
-| dataInicio   |      | |
-| dataFim      |      | |
+## utilizador_paciente_acesso
+| Campo         | Tipo | Chave |
+|--------------|------|--------|
+| id_token     | PK | Primary Key |
+| id_utilizador| FK | Foreign Key → utilizador.id_utilizador |
+| token_acesso | VARCHAR | |
+| data_inicio  | DATETIME | |
+| data_fim     | DATETIME | |
 
 ---
 
-## Pessoa
-| Field            | Type | Key |
-|-----------------|------|-----|
-| idPessoa        | PK   | Primary Key |
-| nome            |      | |
-| dataNascimento  |      | |
-| email           |      | |
+## acesso_biometrico
+| Campo                 | Tipo | Chave |
+|----------------------|------|--------|
+| id_acesso_biometrico | PK | Primary Key |
+| id_utilizador        | FK | Foreign Key → utilizador.id_utilizador |
+| imp_acesso           | VARCHAR | |
+| data_registo         | DATETIME | |
 
 ---
 
-## Consulta
-| Field             | Type | Key |
-|------------------|------|-----|
-| idConsulta       | PK   | Primary Key |
-| idDiagnostico    | FK   | Foreign Key → Diagnostico.idDiagnostico |
-| gdhConsulta      |      | |
-| idPessoaMedico   | FK   | Foreign Key → Pessoa.idPessoa |
-| idPessoaPaciente | FK   | Foreign Key → Pessoa.idPessoa |
-| observacoes      |      | |
+## sensor
+| Campo       | Tipo | Chave |
+|------------|------|--------|
+| id_sensor  | PK | Primary Key |
+| nome       | VARCHAR | |
+| localizacao| VARCHAR | |
+| estado     | VARCHAR | |
 
 ---
 
-## Diagnostico
-| Field               | Type | Key |
-|--------------------|------|-----|
-| idDiagnostico      | PK   | Primary Key |
-| idConsulta         | FK   | Foreign Key → Consulta.idConsulta |
-| idSensor           | FK   | Foreign Key → Sensor.idSensor |
-| gdhDiagnostico     |      | |
-| temperatura        |      | |
-| bpm                |      | |
-| magnitude_g        |      | |
-| relacaoCausaEfeito |      | |
+## estado_sensor
+| Campo              | Tipo | Chave |
+|-------------------|------|--------|
+| id_estado_sensor  | PK | Primary Key |
+| id_sensor         | FK | Foreign Key → sensor.id_sensor |
+| resultado         | VARCHAR | |
+| gdh               | DATETIME | |
+| versao_firmware   | VARCHAR | |
 
 ---
 
-## Sensor
-| Field        | Type | Key |
-|-------------|------|-----|
-| idSensor    | PK   | Primary Key |
-| nome        |      | |
-| localizacao |      | |
-| estado      |      | |
+## consulta
+| Campo               | Tipo | Chave |
+|--------------------|------|--------|
+| id_consulta        | PK | Primary Key |
+| gdh_consulta       | DATETIME | |
+| id_pessoa_medico   | FK | Foreign Key → pessoa.id_pessoa |
+| id_pessoa_paciente | FK | Foreign Key → pessoa.id_pessoa |
+| observacoes        | TEXT | |
 
 ---
 
-## EstadoSensor
-| Field             | Type | Key |
-|------------------|------|-----|
-| idEstadoSensor   | PK   | Primary Key |
-| idSensor         | FK   | Foreign Key → Sensor.idSensor |
-| resultado        |      | |
-| gdh              |      | |
-| versaoFirmware   |      | |
+## diagnostico
+| Campo                 | Tipo | Chave |
+|----------------------|------|--------|
+| id_diagnostico       | PK | Primary Key |
+| id_consulta          | FK | Foreign Key → consulta.id_consulta |
+| id_sensor            | FK | Foreign Key → sensor.id_sensor |
+| gdh_diagnostico      | DATETIME | |
+| temperatura          | FLOAT | |
+| bpm                  | INT | |
+| magnitude_g          | FLOAT | |
+| relacao_causa_efeito | TEXT | |
 
 ---
 
-# Relationships
+# Relacionamentos
 
-- TipoUtilizador 1 ─── N utilizador
-- Pessoa 1 ─── N utilizador
-- utilizador 1 ─── N UtilizadorPacienteAcesso
-- Pessoa 1 ─── N Consulta (como Médico)
-- Pessoa 1 ─── N Consulta (como Paciente)
-- Consulta 1 ─── 1 Diagnostico
-- Sensor 1 ─── N Diagnostico
-- Sensor 1 ─── N EstadoSensor
+- tipo_utilizador 1 ─── N utilizador
+- pessoa 1 ─── N utilizador
+- utilizador 1 ─── N utilizador_paciente_acesso
+- utilizador 1 ─── N acesso_biometrico
+- pessoa 1 ─── N consulta (médico)
+- pessoa 1 ─── N consulta (paciente)
+- consulta 1 ─── N diagnostico
+- sensor 1 ─── N diagnostico
+- sensor 1 ─── N estado_sensor
