@@ -167,4 +167,20 @@ public class BiometriaService {
             }
         }
     }
+
+    public void cancelarRegisto(long userId) {
+    CompletableFuture<Boolean> f = pendingEnrollments.remove(userId);
+    if (f != null && !f.isDone()) {
+        f.completeExceptionally(new java.util.concurrent.CancellationException("Cancelado pelo utilizador"));
+    }
+    mqttPublisher.publish(topicComando, "{\"modo\": \"idle\"}");
+}
+
+    public void cancelarLogin(String correlationId) {
+        CompletableFuture<Integer> f = pendingLogins.remove(correlationId);
+        if (f != null && !f.isDone()) {
+            f.completeExceptionally(new java.util.concurrent.CancellationException("Cancelado pelo utilizador"));
+        }
+        mqttPublisher.publish(topicComando, "{\"modo\": \"idle\"}");
+    }
 }

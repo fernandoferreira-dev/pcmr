@@ -40,11 +40,14 @@ public class MqttMessageHandler {
             
             if (topic.equals("sensor/enroll")) {
                 JsonNode json = objectMapper.readTree(payload);
-                int idSensor = json.get("id_sensor").asInt();
-                
-                biometriaService.completarRegisto(idSensor, true);
+                if (json.has("erro") && json.get("erro").asBoolean()) {
+                    biometriaService.completarRegisto(-1, false);
                 return;
             }
+            int idSensor = json.get("id_sensor").asInt();
+            biometriaService.completarRegisto(idSensor, true);
+            return;
+}
 
             String deviceId = extrairDeviceId(topic);
             if (deviceId != null) {
