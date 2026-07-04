@@ -1,17 +1,48 @@
-import React, { useState } from 'react'
+import { type ReactNode, useState } from 'react'
 import DadosPessoais from './dados_pessoais'
 import DadosDiagnostico from './Dados_Diagnosticos'
 import Comunicacao from './comunicacao'
 import DadosEquipamentos from './dados_equipamentos'
-import OverviewIcon from "./assets/imagens/infographics.png";
-import DadosDiag from "./assets/imagens/Patient-Profile-59.png";
-import comunicaicon from "./assets/imagens/phone.png";
-import dadosequi from "./assets/imagens/server.png";
-import cruzverde from "./assets/imagens/Untitled design (1).png";
-import datapessoal from "./assets/imagens/personal-information.png";
 import { useBiometriaRegisto } from './hooks/useBiometria'
 
+const OverviewIcon = new URL("./assets/imagens/infographics.png", import.meta.url).href
+const DadosDiag = new URL("./assets/imagens/Patient-Profile-59.png", import.meta.url).href
+const comunicaicon = new URL("./assets/imagens/phone.png", import.meta.url).href
+const dadosequi = new URL("./assets/imagens/server.png", import.meta.url).href
+const cruzverde = new URL("./assets/imagens/Untitled design (1).png", import.meta.url).href
+const datapessoal = new URL("./assets/imagens/personal-information.png", import.meta.url).href
+
 type View = 'home' | 'dados_diagnostico' | 'comunicacao' | 'dados_equipamentos' | 'dados_pessoais'
+
+type NavButtonProps = {
+  id: View
+  label: string
+  icon?: string
+  isActive: boolean
+  onClick: (id: View) => void
+}
+
+function NavButton({ id, label, icon, isActive, onClick }: NavButtonProps) {
+  return (
+    <button
+      className={`cursor-pointer w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-colors  ${
+        isActive
+          ? 'bg-[#8CA483] font-semibold text-black shadow-sm'
+          : 'hover:bg-[#9CB39E] text-gray-800'
+      }`}
+      onClick={() => onClick(id)}
+    >
+      {icon && (
+        <img
+          src={icon}
+          alt={label}
+          className="w-7 h-7 object-contain shrink-0"
+        />
+      )}
+      <span>{label}</span>
+    </button>
+  )
+}
 
 // 1. AJUSTE: Adicionado o título para a view dados_pessoais
 const viewTitles: Record<View, string> = {
@@ -29,7 +60,7 @@ type PaginaInicialProps = {
 }
 
 const OverviewDashboard = () => (
-  <div className="flex flex-col gap-4 w-full h-full p-6 bg-[#EBEBEB] rounded-[2rem] shadow-inner overflow-y-auto">
+  <div className="flex flex-col gap-4 w-full h-full p-6 bg-[#EBEBEB] rounded-4xl shadow-inner overflow-y-auto">
     
     {/* Filtros Superiores */}
     <div className="text-xs text-gray-500 font-bold tracking-wider shrink-0">
@@ -73,7 +104,7 @@ const OverviewDashboard = () => (
       </div>
     </div>
 
-    <div className="flex flex-col flex-1 min-h-[150px] bg-white rounded-xl border border-gray-300 p-4 shadow-sm">
+    <div className="flex flex-col flex-1 min-h-37.5 bg-white rounded-xl border border-gray-300 p-4 shadow-sm">
       <div className="text-sm font-semibold text-gray-500">Diagnósticos Totais</div>
       <div className="flex-1 flex items-center justify-center text-3xl font-medium text-gray-800">
         Gráfico
@@ -114,68 +145,36 @@ export default function App({ userName, userId, onLogout }: PaginaInicialProps) 
   } = useBiometriaRegisto()
 
   // 2. AJUSTE: Adicionada a verificação para renderizar o componente <DadosPessoais />
-  let content: React.ReactNode
+  let content: ReactNode
   if (view === 'dados_diagnostico') content = <DadosDiagnostico />
   else if (view === 'comunicacao') content = <Comunicacao />
   else if (view === 'dados_equipamentos') content = <DadosEquipamentos />
   else if (view === 'dados_pessoais') content = <DadosPessoais />
   else content = <OverviewDashboard />
 
-  const NavButton = ({
-    id,
-    label,
-    icon,
-  }: {
-    id: View
-    label: string
-    icon?: string
-  }) => {
-    const isActive = view === id
-
-    return (
-      <button
-        className={`cursor-pointer w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-colors  ${
-          isActive
-            ? 'bg-[#8CA483] font-semibold text-black shadow-sm'
-            : 'hover:bg-[#9CB39E] text-gray-800'
-        }`}
-        onClick={() => setView(id)}
-      >
-        {icon && (
-          <img 
-            src={icon} 
-            alt={label} 
-            className="w-7 h-7 object-contain shrink-0" 
-          />
-        )}
-        <span>{label}</span>
-      </button>
-    )
-  }
-
   return (
-    <div className="h-screen w-screen bg-[var(--background)] flex flex-col font-sans overflow-hidden">
+    <div className="h-screen w-screen bg-(--background) flex flex-col font-sans overflow-hidden">
       
       <div className="flex-1 flex p-4 gap-6 overflow-hidden"> 
         
         {/* Barra Lateral */}
-        <aside className="w-72 h-full bg-[#AAB99F] rounded-[2rem] p-6 shadow-md flex flex-col">
+        <aside className="w-72 h-full bg-[#AAB99F] rounded-4xl p-6 shadow-md flex flex-col">
           <div className="flex items-center gap-3 mb-10 mt-2">
             <div className="h-10 w-10 bg-red-600 rounded-sm shadow-sm" />
             <div className="text-2xl font-semibold text-gray-800 tracking-wide">MedyCist</div>
           </div>
 
           <nav className="flex flex-col gap-2 overflow-y-auto">
-            <NavButton id="home" label="Overview" icon={OverviewIcon} />
-            <NavButton id="dados_diagnostico" label="Dados Diagnósticos" icon={DadosDiag}/>
-            <NavButton id="comunicacao" label="Comunicação" icon={comunicaicon}/>
-            <NavButton id="dados_equipamentos" label="Dados Equipamentos" icon={dadosequi}/>
-            <NavButton id="dados_pessoais" label="Dados Pessoais" icon={datapessoal} />
+            <NavButton id="home" label="Overview" icon={OverviewIcon} isActive={view === 'home'} onClick={setView} />
+            <NavButton id="dados_diagnostico" label="Dados Diagnósticos" icon={DadosDiag} isActive={view === 'dados_diagnostico'} onClick={setView} />
+            <NavButton id="comunicacao" label="Comunicação" icon={comunicaicon} isActive={view === 'comunicacao'} onClick={setView} />
+            <NavButton id="dados_equipamentos" label="Dados Equipamentos" icon={dadosequi} isActive={view === 'dados_equipamentos'} onClick={setView} />
+            <NavButton id="dados_pessoais" label="Dados Pessoais" icon={datapessoal} isActive={view === 'dados_pessoais'} onClick={setView} />
           </nav>
         </aside>
 
         {/* Área Principal */}
-        <main className="flex-1 flex flex-col min-w-0 pr-4 pt-2 pb-4 overflow-hidden bg-[var(--background)]">
+        <main className="flex-1 flex flex-col min-w-0 pr-4 pt-2 pb-4 overflow-hidden bg-(--background)">
           
           {/* Cabeçalho */}
           <header className="flex justify-between items-center mb-6 px-2 shrink-0">
@@ -236,7 +235,7 @@ export default function App({ userName, userId, onLogout }: PaginaInicialProps) 
           </header>
 
           {/* Conteúdo Dinâmico */}
-          <div className="flex-1 overflow-hidden bg-[var(--background)]">
+          <div className="flex-1 overflow-hidden bg-(--background)">
             {content}
           </div>
         </main>

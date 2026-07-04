@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
-import enviar from "./assets/imagens/transferir.png"; // Importado como 'enviar'
+import { useState } from 'react';
+
+const enviar = new URL("./assets/imagens/transferir.png", import.meta.url).href
 
 export default function Comunicacao() {
   const [termoPesquisa, setTermoPesquisa] = useState('');
@@ -16,7 +17,7 @@ export default function Comunicacao() {
   );
 
   return (
-    <div className="relative w-full h-full bg-[#EBEBEB] rounded-[2rem] p-6 shadow-inner flex flex-col overflow-hidden">
+    <div className="relative w-full h-full bg-[#EBEBEB] rounded-4xl p-6 shadow-inner flex flex-col overflow-hidden">
       
       {/* Barra de Pesquisa */}
       <div className="mb-6 shrink-0 max-w-lg">
