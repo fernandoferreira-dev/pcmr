@@ -8,14 +8,14 @@ services:
     ports:
       - "8080:8080"
     volumes:
-      - ./api/src:/app/src 
+      - ./api/src:/app/src
     environment:
       SPRING_APPLICATION_NAME: api
       SERVER_PORT: 8080
       SPRING_DATASOURCE_URL: "jdbc:postgresql://85.247.43.227:5432/pcmr"
       SPRING_DATASOURCE_USERNAME: diogo
       SPRING_DATASOURCE_PASSWORD: "1234"
-      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+      SPRING_JPA_HIBERNATE_DDL_AUTO: none
       SPRING_JPA_SHOW_SQL: "true"
       MQTT_BROKER_URL: tcp://mosquitto:1883
       MQTT_TOPIC: sensors/#
@@ -34,8 +34,8 @@ services:
     ports:
       - "3000:80"
     volumes:
-      - ./desktop-app/src:/app/src  # 🔥 Adicione isto
-      - ./desktop-app/index.html:/app/index.html  # Se precisar
+      - ./desktop-app/src:/app/src
+      - ./desktop-app/index.html:/app/index.html
     depends_on:
       - spring-app
       - mqtt5
@@ -52,8 +52,8 @@ services:
     ports:
       - "3001:80"
     volumes:
-      - ./mobile-app/src:/app/src  # 🔥 Adicione isto
-      - ./mobile-app/index.html:/app/index.html  # Se precisar
+      - ./mobile-app/src:/app/src
+      - ./mobile-app/index.html:/app/index.html
     depends_on:
       - spring-app
       - mqtt5
@@ -69,7 +69,7 @@ services:
       - "1883:1883"
       - "9001:9001"
     volumes:
-      - ./configuration/mqtt5/config:/mosquitto/config:Z
+      - ./configuration/mqtt5/config:/mosquitto/config
       - mqtt-data:/mosquitto/data
       - mqtt-log:/mosquitto/log
     networks:

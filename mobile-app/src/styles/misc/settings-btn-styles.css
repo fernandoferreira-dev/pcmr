@@ -49,6 +49,7 @@
     background-color: rgba(0,0,0,0.5);
     align-items: center;
     justify-content: center;
+    z-index: 1000;
 }
 
 .modal {
@@ -62,6 +63,8 @@
     width: auto;
     height: auto;
     gap: 0.5rem;
+    position: relative;
+    z-index: 1001;
 }
 
 .option-container {

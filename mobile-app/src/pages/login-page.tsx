@@ -14,7 +14,7 @@ export default function LoginPage({ onLogin }: Props) {
             <div>
                 <img src={appImage} alt="Illustrative image" style={{ width: '25%', height: 'auto' }} />
             </div>
-            <form className="login-page">
+            <div className="login-page">
                 <label htmlFor="username" style={{ marginTop: '1rem' }}>Username</label>
                 <input className="input" id="username" name="username" type="text" />
 
@@ -26,7 +26,7 @@ export default function LoginPage({ onLogin }: Props) {
                     <CreateAccountComponent/>
                     <RegisterButtonComponent/>
                 </div>
-            </form>
+            </div>
             <FooterComponent/>
         </div>
     )
