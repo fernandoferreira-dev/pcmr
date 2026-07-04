@@ -119,4 +119,20 @@ public class BiometriaController {
 
         return ResponseEntity.ok(Map.of("status", "pendente"));
     }
+
+    @PostMapping("/registar/cancelar")
+public ResponseEntity<?> cancelarRegisto(@RequestBody Map<String, Long> body) {
+    Long userId = body.get("userId");
+    if (userId != null) biometriaService.cancelarRegisto(userId);
+    return ResponseEntity.ok(Map.of("cancelado", true));
+}
+
+@PostMapping("/login/cancelar")
+public ResponseEntity<?> cancelarLogin(@RequestBody Map<String, String> body) {
+    String correlationId = body.get("correlationId");
+    if (correlationId != null) biometriaService.cancelarLogin(correlationId);
+    return ResponseEntity.ok(Map.of("cancelado", true));
+}
+
+
 }

@@ -24,7 +24,8 @@ interface UseBiometriaRegistoResult {
 }
 
 const POLL_INTERVAL_MS = 2000
-const MAX_POLL_ATTEMPTS = 15 
+const MAX_POLL_ATTEMPTS = 15
+
 
 export function useBiometriaLogin(): UseBiometriaLoginResult {
   const [status, setStatus] = useState<BiometriaStatus>('idle')
@@ -42,6 +43,13 @@ export function useBiometriaLogin(): UseBiometriaLoginResult {
   }, [])
 
   const cancelar = useCallback(() => {
+    if (correlationIdRef.current) {
+      fetch('/api/biometria/login/cancelar', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ correlationId: correlationIdRef.current }),
+      }).catch(() => {})
+    }
     pararPolling()
     correlationIdRef.current = null
     attemptsRef.current = 0
@@ -86,6 +94,7 @@ export function useBiometriaLogin(): UseBiometriaLoginResult {
 
           if (statusData.status === 'autenticado') {
             pararPolling()
+            correlationIdRef.current = null
             setUserData({
               userId: statusData.userId,
               nome: statusData.nome,
@@ -95,6 +104,7 @@ export function useBiometriaLogin(): UseBiometriaLoginResult {
             setMensagem(`Bem-vindo, ${statusData.nome}!`)
           } else if (attemptsRef.current >= MAX_POLL_ATTEMPTS) {
             pararPolling()
+            correlationIdRef.current = null
             setStatus('timeout')
             setMensagem('Tempo excedido. Tente novamente.')
           }
@@ -117,16 +127,26 @@ export function useBiometriaLogin(): UseBiometriaLoginResult {
   return { status, mensagem, userData, iniciarLoginBiometria, cancelar }
 }
 
+
 export function useBiometriaRegisto(): UseBiometriaRegistoResult {
   const [status, setStatus] = useState<BiometriaStatus>('idle')
   const [mensagem, setMensagem] = useState('')
   const statusRef = useRef<BiometriaStatus>('idle')
+  const userIdRef = useRef<number | null>(null)
 
   useEffect(() => {
     statusRef.current = status
   }, [status])
 
   const cancelar = useCallback(() => {
+    if (userIdRef.current !== null) {
+      fetch('/api/biometria/registar/cancelar', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: userIdRef.current }),
+      }).catch(() => {})
+    }
+    userIdRef.current = null
     setStatus('idle')
     setMensagem('')
   }, [])
@@ -136,6 +156,7 @@ export function useBiometriaRegisto(): UseBiometriaRegistoResult {
       return
     }
 
+    userIdRef.current = userId
     setStatus('aguardar_dedo')
     setMensagem('Coloque o dedo no sensor de impressão digital para registo...')
 
@@ -158,6 +179,8 @@ export function useBiometriaRegisto(): UseBiometriaRegistoResult {
     } catch {
       setStatus('erro')
       setMensagem('Erro de comunicação com o servidor')
+    } finally {
+      userIdRef.current = null
     }
   }, [])
 
