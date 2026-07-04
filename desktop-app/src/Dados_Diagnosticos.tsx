@@ -1,5 +1,5 @@
-import React from 'react';
-import { BadgePlus, ClipboardList, CalendarDays, Download, Stethoscope } from 'lucide-react';
+// ...existing code...
+import { BadgePlus, ClipboardList, CalendarDays, Stethoscope } from 'lucide-react';
 
 const diagnostics = [
   { id: '???', patient: '???', date: '???', status: '???' },
@@ -7,10 +7,10 @@ const diagnostics = [
 
 export default function DadosDiagnostico() {
   return (
-    <div className="flex h-full w-full flex-col overflow-hidden rounded-[2rem] bg-[var(--background)] p-3 shadow-inner sm:p-4">
+    <div className="flex h-full w-full flex-col overflow-hidden rounded-4xl bg-(--background) p-3 shadow-inner sm:p-4">
       <div className="flex h-full min-h-0 w-full flex-col gap-3 overflow-hidden">
         <section className="grid gap-3 md:grid-cols-2">
-          <article className="flex items-center justify-between rounded-[1.5rem] border border-[#a9a9a9] bg-[#ececec] px-4 py-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.65)] sm:px-5 sm:py-4">
+          <article className="flex items-center justify-between rounded-3xl border border-[#a9a9a9] bg-[#ececec] px-4 py-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.65)] sm:px-5 sm:py-4">
             <div>
               <p className="text-base font-semibold text-[#565656] sm:text-lg">Pacientes</p>
               <p className="mt-1 text-2xl font-black text-[#111111] sm:text-[2rem]">Número</p>
@@ -21,7 +21,7 @@ export default function DadosDiagnostico() {
             </div>
           </article>
 
-          <article className="flex items-center justify-between rounded-[1.5rem] border border-[#a9a9a9] bg-[#ececec] px-4 py-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.65)] sm:px-5 sm:py-4">
+          <article className="flex items-center justify-between rounded-3xl border border-[#a9a9a9] bg-[#ececec] px-4 py-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.65)] sm:px-5 sm:py-4">
             <div>
               <p className="text-base font-semibold text-[#565656] sm:text-lg">Diagnósticos</p>
               <p className="mt-1 text-2xl font-black text-[#111111] sm:text-[2rem]">Número</p>

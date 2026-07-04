@@ -21,6 +21,9 @@ node_modules/
 *.sh
 *.bat
 
+# Coisas do Fernando
+nodejs.sh
+
 # OS files
 .DS_Store
 Thumbs.db

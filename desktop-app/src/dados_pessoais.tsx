@@ -1,4 +1,4 @@
-import React from 'react'
+// ...existing code...
 
 type DadosPessoaisProps = {
   nomeUtilizador?: string
@@ -36,7 +36,7 @@ export default function DadosPessoais({
   dataNascimento = 'DATA',
 }: DadosPessoaisProps) {
   return (
-    <div className="flex flex-col gap-6 w-full h-full p-6 bg-[#EBEBEB] rounded-[2rem] shadow-inner overflow-y-auto">
+    <div className="flex flex-col gap-6 w-full h-full p-6 bg-[#EBEBEB] rounded-4xl shadow-inner overflow-y-auto">
       <div className="flex flex-col lg:flex-row gap-6 w-full">
         {/* Cartão principal - Informações de contacto */}
         <div className="flex-1 bg-white rounded-2xl border border-gray-300 shadow-sm p-6">
