@@ -3,26 +3,35 @@ import DadosPessoais from './dados_pessoais'
 import DadosCliente from './dados_cliente'
 import Comunicacao from './comunicacao'
 import DadosEquipamentos from './dados_equipamentos'
+import OverviewIcon from "./assets/imagens/infographics.png";
+import DadosDiag from "./assets/imagens/Patient-Profile-59.png";
+import comunicaicon from "./assets/imagens/phone.png";
+import dadosequi from "./assets/imagens/server.png";
+import cruzverde from "./assets/imagens/Untitled design (1).png";
+import datapessoal from "./assets/imagens/personal-information.png";
+import { useBiometriaRegisto } from './hooks/useBiometria'
 
-type View = 'home' | 'dados_pessoais' | 'dados_cliente' | 'comunicacao' | 'dados_equipamentos'
+type View = 'home' | 'dados_diagnostico' | 'comunicacao' | 'dados_equipamentos' | 'dados_pessoais'
 
+// 1. AJUSTE: Adicionado o título para a view dados_pessoais
 const viewTitles: Record<View, string> = {
   home: 'Overview',
-  dados_pessoais: 'Dados Pessoais',
-  dados_cliente: 'Dados Pacientes',
+  dados_diagnostico: 'Dados Diagnósticos',
   comunicacao: 'Comunicação',
   dados_equipamentos: 'Dados Equipamentos',
+  dados_pessoais: 'Dados Pessoais', 
 }
 
 type PaginaInicialProps = {
   userName: string
+  userId: number
   onLogout: () => void
 }
 
 const OverviewDashboard = () => (
   <div className="flex flex-col gap-4 w-full h-full p-6 bg-[#EBEBEB] rounded-[2rem] shadow-inner overflow-y-auto">
     
-    {/* Filtros Superiores*/}
+    {/* Filtros Superiores */}
     <div className="text-xs text-gray-500 font-bold tracking-wider shrink-0">
       DIA | SEMANA | MÊS
     </div>
@@ -94,14 +103,22 @@ const OverviewDashboard = () => (
   </div>
 )
 
-export default function App({ userName, onLogout }: PaginaInicialProps) {
+export default function App({ userName, userId, onLogout }: PaginaInicialProps) {
   const [view, setView] = useState<View>('home')
 
+  const {
+    status: bioStatus,
+    mensagem: bioMensagem,
+    iniciarRegisto,
+    cancelar: bioCancelar,
+  } = useBiometriaRegisto()
+
+  // 2. AJUSTE: Adicionada a verificação para renderizar o componente <DadosPessoais />
   let content: React.ReactNode
-  if (view === 'dados_pessoais') content = <DadosPessoais />
-  else if (view === 'dados_cliente') content = <DadosCliente />
-  else if (view === 'comunicacao') content = <Comunicacao />
+  {/*if (view === 'dados_diagnostico') content = <DadosDiagnostico />*/}
+  if (view === 'comunicacao') content = <Comunicacao />
   else if (view === 'dados_equipamentos') content = <DadosEquipamentos />
+  else if (view === 'dados_pessoais') content = <DadosPessoais />
   else content = <OverviewDashboard />
 
   const NavButton = ({ id, label }: { id: View; label: string }) => {
@@ -134,11 +151,11 @@ export default function App({ userName, onLogout }: PaginaInicialProps) {
           </div>
 
           <nav className="flex flex-col gap-2 overflow-y-auto">
-            <NavButton id="home" label="Overview" />
-            <NavButton id="dados_pessoais" label="Dados Pessoais" />
-            <NavButton id="dados_cliente" label="Dados Pacientes" />
-            <NavButton id="comunicacao" label="Comunicação" />
-            <NavButton id="dados_equipamentos" label="Dados Equipamentos" />
+            {/*<NavButton id="home" label="Overview" icon={OverviewIcon} />
+            <NavButton id="dados_diagnostico" label="Dados Diagnósticos" icon={DadosDiag}/>
+            <NavButton id="comunicacao" label="Comunicação" icon={comunicaicon}/>
+            <NavButton id="dados_equipamentos" label="Dados Equipamentos" icon={dadosequi}/>
+            <NavButton id="dados_pessoais" label="Dados Pessoais" icon={datapessoal} />*/}
           </nav>
         </aside>
 
@@ -149,18 +166,58 @@ export default function App({ userName, onLogout }: PaginaInicialProps) {
           <header className="flex justify-between items-center mb-6 px-2 shrink-0">
             <h1 className="text-3xl font-bold text-gray-700">{viewTitles[view]}</h1>
             
-            <button 
-              onClick={onLogout}
-              className="flex items-center gap-3 hover:opacity-80 transition-opacity"
-              title="Clique para fazer Logout"
-            >
-              <span className="text-xl text-gray-800 font-medium">
-                Bem-vindo, {userName}!
-              </span>
-              <div className="w-10 h-10 bg-gray-500 rounded-full flex items-center justify-center text-white shadow-sm">
-                <div className="w-5 h-5 bg-white rounded-sm" />
-              </div>
-            </button>
+            <div className="flex items-center gap-4">
+              {/* Botão de Impressão Digital */}
+              {bioStatus === 'idle' || bioStatus === 'sucesso' || bioStatus === 'erro' ? (
+                <button
+                  onClick={() => iniciarRegisto(userId)}
+                  disabled={false}
+                  className="flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-xl hover:bg-emerald-700 transition-colors shadow-sm disabled:opacity-60 cursor-pointer"
+                  title="Associar impressão digital a esta conta"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M2 12C2 6.5 6.5 2 12 2s10 4.5 10 10" />
+                    <path d="M5 12C5 8.1 8.1 5 12 5s7 3.1 7 7" />
+                    <path d="M8 12c0-2.2 1.8-4 4-4s4 1.8 4 4" />
+                    <circle cx="12" cy="12" r="2" />
+                    <path d="M2 12h20" />
+                  </svg>
+                  <span className="text-sm font-medium whitespace-nowrap">
+                    {bioStatus === 'idle' ? 'Associar Impressão Digital' :
+                     bioStatus === 'sucesso' ? '✓ Registada' : 'Tentar Novamente'}
+                  </span>
+                </button>
+              ) : null}
+
+              {/* Mensagem biométrica de registo */}
+              {bioStatus !== 'idle' && (
+                <div className={`text-xs px-3 py-1.5 rounded-lg ${
+                  bioStatus === 'aguardar_dedo' || bioStatus === 'a_processar'
+                    ? 'bg-blue-100 text-blue-800'
+                    : bioStatus === 'sucesso'
+                    ? 'bg-green-100 text-green-800'
+                    : 'bg-red-100 text-red-800'
+                }`}>
+                  <span>{bioMensagem}</span>
+                  {(bioStatus === 'aguardar_dedo' || bioStatus === 'a_processar') && (
+                    <button onClick={bioCancelar} className="ml-2 underline">Cancelar</button>
+                  )}
+                </div>
+              )}
+
+              <button 
+                onClick={onLogout}
+                className="flex items-center gap-3 hover:opacity-80 transition-opacity"
+                title="Clique para fazer Logout"
+              >
+                <span className="text-xl text-gray-800 font-medium">
+                  Bem-vindo, {userName}!
+                </span>
+                <div className="w-10 h-10 bg-gray-500 rounded-full flex items-center justify-center text-white shadow-sm">
+                  <div className="w-5 h-5 bg-white rounded-sm" />
+                </div>
+              </button>
+            </div>
           </header>
 
           {/* Conteúdo Dinâmico */}

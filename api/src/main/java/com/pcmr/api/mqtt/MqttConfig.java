@@ -21,8 +21,11 @@ public class MqttConfig {
     @Value("${MQTT_BROKER_URL:tcp://localhost:1883}")
     private String brokerUrl;
 
-    @Value("${MQTT_TOPIC:sensors/#}")
-    private String topic;
+    @Value("${MQTT_TOPIC_SENSORS:sensors/#}")
+    private String topicSensors;
+
+    @Value("${MQTT_TOPIC_BIOMETRIA:casa/biometria/acesso}")
+    private String topicBiometria;
 
     // Factory de ligação ao broker
     @Bean
@@ -42,14 +45,15 @@ public class MqttConfig {
         return new DirectChannel();
     }
 
-    // Adapter que subscreve o tópico
+    // Adapter que subscreve os tópicos (sensors/# + casa/biometria/acesso)
     @Bean
     public MessageProducerSupport mqttInbound() {
         MqttPahoMessageDrivenChannelAdapter adapter =
                 new MqttPahoMessageDrivenChannelAdapter(
                         "spring-client-" + UUID.randomUUID(),
                         mqttClientFactory(),
-                        topic
+                        topicSensors,
+                        topicBiometria
                 );
         adapter.setCompletionTimeout(5000);
         adapter.setConverter(new DefaultPahoMessageConverter());
