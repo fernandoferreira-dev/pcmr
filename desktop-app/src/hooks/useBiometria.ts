@@ -24,13 +24,8 @@ interface UseBiometriaRegistoResult {
 }
 
 const POLL_INTERVAL_MS = 2000
-const MAX_POLL_ATTEMPTS = 15 // 30 segundos
+const MAX_POLL_ATTEMPTS = 15 
 
-/**
- * Hook para login por impressão digital.
- * Faz polling do endpoint /api/biometria/login/status
- * até obter "autenticado" ou timeout.
- */
 export function useBiometriaLogin(): UseBiometriaLoginResult {
   const [status, setStatus] = useState<BiometriaStatus>('idle')
   const [mensagem, setMensagem] = useState('')
@@ -75,7 +70,6 @@ export function useBiometriaLogin(): UseBiometriaLoginResult {
       correlationIdRef.current = data.correlationId
       attemptsRef.current = 0
 
-      // Iniciar polling
       pollingRef.current = setInterval(async () => {
         if (!correlationIdRef.current) {
           pararPolling()
@@ -116,7 +110,6 @@ export function useBiometriaLogin(): UseBiometriaLoginResult {
     }
   }, [cancelar, pararPolling])
 
-  // Cleanup on unmount
   useEffect(() => {
     return () => pararPolling()
   }, [pararPolling])
@@ -124,13 +117,14 @@ export function useBiometriaLogin(): UseBiometriaLoginResult {
   return { status, mensagem, userData, iniciarLoginBiometria, cancelar }
 }
 
-/**
- * Hook para registo de impressão digital.
- * Envia pedido ao backend que fica bloqueado até o ESP32 responder.
- */
 export function useBiometriaRegisto(): UseBiometriaRegistoResult {
   const [status, setStatus] = useState<BiometriaStatus>('idle')
   const [mensagem, setMensagem] = useState('')
+  const statusRef = useRef<BiometriaStatus>('idle')
+
+  useEffect(() => {
+    statusRef.current = status
+  }, [status])
 
   const cancelar = useCallback(() => {
     setStatus('idle')
@@ -138,6 +132,10 @@ export function useBiometriaRegisto(): UseBiometriaRegistoResult {
   }, [])
 
   const iniciarRegisto = useCallback(async (userId: number) => {
+    if (statusRef.current === 'aguardar_dedo' || statusRef.current === 'a_processar') {
+      return
+    }
+
     setStatus('aguardar_dedo')
     setMensagem('Coloque o dedo no sensor de impressão digital para registo...')
 

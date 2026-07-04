@@ -15,7 +15,7 @@ services:
       SPRING_DATASOURCE_URL: "jdbc:postgresql://85.247.43.227:5432/pcmr"
       SPRING_DATASOURCE_USERNAME: diogo
       SPRING_DATASOURCE_PASSWORD: "1234"
-      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+      SPRING_JPA_HIBERNATE_DDL_AUTO: validate
       SPRING_JPA_SHOW_SQL: "true"
       MQTT_BROKER_URL: tcp://mosquitto:1883
       MQTT_TOPIC: sensors/#

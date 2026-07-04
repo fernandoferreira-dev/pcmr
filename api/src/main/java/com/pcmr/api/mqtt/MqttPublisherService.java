@@ -25,9 +25,9 @@ public class MqttPublisherService {
             opts.setAutomaticReconnect(true);
             opts.setCleanSession(true);
             client.connect(opts);
-            System.out.println("✓ MqttPublisherService ligado ao broker: " + brokerUrl);
+            System.out.println("MqttPublisherService ligado ao broker: " + brokerUrl);
         } catch (Exception e) {
-            System.err.println("✗ Erro ao ligar MqttPublisherService: " + e.getMessage());
+            System.err.println("Erro ao ligar MqttPublisherService: " + e.getMessage());
         }
     }
 
@@ -40,9 +40,9 @@ public class MqttPublisherService {
             MqttMessage message = new MqttMessage(payload.getBytes());
             message.setQos(1);
             client.publish(topic, message);
-            System.out.println("✓ Publicado MQTT [" + topic + "]: " + payload);
+            System.out.println("Publicado MQTT [" + topic + "]: " + payload);
         } catch (Exception e) {
-            System.err.println("✗ Erro ao publicar MQTT: " + e.getMessage());
+            System.err.println("Erro ao publicar MQTT: " + e.getMessage());
         }
     }
 
