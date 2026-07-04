@@ -9,6 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import java.time.OffsetDateTime;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
@@ -34,19 +35,30 @@ public class BiometriaService {
     private final Map<Long, CompletableFuture<Boolean>> pendingEnrollments = new ConcurrentHashMap<>();
     private final Map<String, CompletableFuture<Integer>> pendingLogins = new ConcurrentHashMap<>();
 
-
     public CompletableFuture<Boolean> iniciarRegisto(long userId) {
+        CompletableFuture<Boolean> existente = pendingEnrollments.get(userId);
+        if (existente != null && !existente.isDone()) {
+            CompletableFuture<Boolean> falha = new CompletableFuture<>();
+            falha.completeExceptionally(
+                new IllegalStateException("Já existe um registo pendente para este utilizador"));
+            return falha;
+        }
+
         CompletableFuture<Boolean> future = new CompletableFuture<>();
         pendingEnrollments.put(userId, future);
 
         mqttPublisher.publish(topicComando, "{\"modo\": \"enroll\"}");
 
         CompletableFuture.delayedExecutor(30, TimeUnit.SECONDS).execute(() -> {
-            CompletableFuture<Boolean> f = pendingEnrollments.remove(userId);
-            if (f != null && !f.isDone()) {
-                f.completeExceptionally(new RuntimeException("Timeout: Registo excedeu 30s"));
-                mqttPublisher.publish(topicComando, "{\"modo\": \"idle\"}");
-            }
+            pendingEnrollments.computeIfPresent(userId, (id, f) -> {
+                if (f == future && !f.isDone()) {
+                    f.completeExceptionally(new java.util.concurrent.TimeoutException(
+                        "Registo excedeu 30s"));
+                    mqttPublisher.publish(topicComando, "{\"modo\": \"idle\"}");
+                    return null;
+                }
+                return f;
+            });
         });
 
         return future;
@@ -54,26 +66,50 @@ public class BiometriaService {
 
     public void completarRegisto(int fingerprintId, boolean sucesso) {
         Long userId = null;
+        CompletableFuture<Boolean> futureCompletada = null;
+
         for (Map.Entry<Long, CompletableFuture<Boolean>> entry : pendingEnrollments.entrySet()) {
             if (!entry.getValue().isDone()) {
                 userId = entry.getKey();
-                entry.getValue().complete(sucesso);
-                pendingEnrollments.remove(userId);
+                futureCompletada = entry.getValue();
                 break;
             }
         }
 
-        if (sucesso && userId != null) {
-            AcessoBiometrico novoAcesso = new AcessoBiometrico();
-            novoAcesso.setImpAcesso(String.valueOf(fingerprintId));
-            
-            Utilizador user = userRepository.findById(userId)
-                    .orElseThrow(() -> new RuntimeException("Utilizador não encontrado"));
-            
-            novoAcesso.setUtilizador(user);
-            acessoBiometricoRepository.save(novoAcesso);
-            
-            System.out.println("✓ Utilizador " + userId + " associado ao ID biométrico " + fingerprintId);
+        if (userId == null) {
+            System.out.println("Resposta de enroll recebida sem registo pendente correspondente.");
+            return;
+        }
+
+        if (sucesso) {
+            try {
+                Utilizador user = userRepository.findById(userId)
+                        .orElseThrow(() -> new RuntimeException("Utilizador não encontrado"));
+
+                AcessoBiometrico acesso = acessoBiometricoRepository
+                        .findByUtilizador_IdUtilizador(userId)
+                        .orElseGet(AcessoBiometrico::new);
+
+                acesso.setUtilizador(user);
+                acesso.setImpAcesso(String.valueOf(fingerprintId));
+                acesso.setDataRegisto(OffsetDateTime.now());
+
+                acessoBiometricoRepository.save(acesso);
+
+                System.out.println("Utilizador " + userId + " associado ao ID biométrico " + fingerprintId);
+
+                pendingEnrollments.remove(userId);
+                futureCompletada.complete(true);
+            } catch (Exception e) {
+                System.err.println("Erro ao gravar registo biométrico: " + e.getMessage());
+                pendingEnrollments.remove(userId);
+                futureCompletada.complete(false);
+            } finally {
+                mqttPublisher.publish(topicComando, "{\"modo\": \"idle\"}");
+            }
+        } else {
+            pendingEnrollments.remove(userId);
+            futureCompletada.complete(false);
             mqttPublisher.publish(topicComando, "{\"modo\": \"idle\"}");
         }
     }
@@ -83,10 +119,13 @@ public class BiometriaService {
         CompletableFuture<Integer> future = new CompletableFuture<>();
         pendingLogins.put(correlationId, future);
 
+        mqttPublisher.publish(topicComando, "{\"modo\": \"login\"}");
+
         CompletableFuture.delayedExecutor(30, TimeUnit.SECONDS).execute(() -> {
             CompletableFuture<Integer> f = pendingLogins.remove(correlationId);
             if (f != null && !f.isDone()) {
                 f.completeExceptionally(new RuntimeException("Timeout: Leitura de impressão digital excedeu 30s"));
+                mqttPublisher.publish(topicComando, "{\"modo\": \"idle\"}");
             }
         });
 
@@ -101,14 +140,17 @@ public class BiometriaService {
             int fingerprintId = future.get();
             pendingLogins.remove(correlationId);
 
-            Optional<AcessoBiometrico> bioAcesso = acessoBiometricoRepository.findByImpAcesso(String.valueOf(fingerprintId));
-            
+            Optional<AcessoBiometrico> bioAcesso =
+                    acessoBiometricoRepository.findByImpAcesso(String.valueOf(fingerprintId));
+
+            mqttPublisher.publish(topicComando, "{\"modo\": \"idle\"}");
+
             if (bioAcesso.isPresent()) {
                 Utilizador user = bioAcesso.get().getUtilizador();
-                System.out.println("✓ Login biométrico efetuado por: " + user.getUsername());
+                System.out.println("Login biométrico efetuado por: " + user.getUsername());
                 return Optional.of(user);
             } else {
-                System.out.println("✗ ID " + fingerprintId + " sem utilizador associado.");
+                System.out.println("ID " + fingerprintId + " sem utilizador associado.");
                 return Optional.empty();
             }
         } catch (Exception e) {

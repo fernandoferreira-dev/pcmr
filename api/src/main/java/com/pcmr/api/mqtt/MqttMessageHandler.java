@@ -4,7 +4,6 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.pcmr.api.dto.SensorReadingDTO;
 import com.pcmr.api.service.BiometriaService;
-import com.pcmr.api.service.MedicaoService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.integration.annotation.ServiceActivator;
 import org.springframework.messaging.Message;
@@ -13,8 +12,6 @@ import org.springframework.stereotype.Component;
 @Component
 public class MqttMessageHandler {
 
-    @Autowired
-    private MedicaoService medicaoService;
 
     @Autowired
     private BiometriaService biometriaService;
@@ -45,7 +42,6 @@ public class MqttMessageHandler {
                 JsonNode json = objectMapper.readTree(payload);
                 int idSensor = json.get("id_sensor").asInt();
                 
-                
                 biometriaService.completarRegisto(idSensor, true);
                 return;
             }
@@ -53,7 +49,8 @@ public class MqttMessageHandler {
             String deviceId = extrairDeviceId(topic);
             if (deviceId != null) {
                 SensorReadingDTO leitura = objectMapper.readValue(payload, SensorReadingDTO.class);
-                medicaoService.processarLeitura(deviceId, leitura);
+                
+                System.out.println("Leitura recebida do dispositivo " + deviceId + ", mas processamento está pausado.");
             }
             
         } catch (Exception e) {

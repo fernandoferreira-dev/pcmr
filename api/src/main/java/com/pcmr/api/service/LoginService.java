@@ -5,7 +5,6 @@ import com.pcmr.api.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
-
 import java.util.Optional;
 
 @Service
@@ -14,25 +13,33 @@ public class LoginService {
     @Autowired
     private UserRepository userRepository;
 
-    // Instancia o encoder do BCrypt
     private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 
-    // Nome alterado para "authenticate" e retorno para Optional<Utilizador> para casar com o Controller
     public Optional<Utilizador> authenticate(String username, String passwordInseridaPeloUtilizador) {
-        // 1. Procura o utilizador na Base de Dados
-        Optional<Utilizador> userOpt = userRepository.findByUsername(username); 
+    System.out.println("\n>>> 1. INICIAR AUTENTICAÇÃO PARA: '" + username + "'");
+    Optional<Utilizador> userOpt = userRepository.findByUsername(username); 
+    
+    if (userOpt.isPresent()) {
+        Utilizador user = userOpt.get();
+        String passwordEncriptadaNaBD = user.getPassword(); 
         
-        if (userOpt.isPresent()) {
-            Utilizador user = userOpt.get();
-            
-            String passwordEncriptadaNaBD = user.getPassword(); // O "$2y$10$..."
-            
-            // O BCrypt valida de forma segura o "1234" contra o hash
-            if (passwordEncoder.matches(passwordInseridaPeloUtilizador, passwordEncriptadaNaBD)) {
-                return userOpt; // Password correta, devolve o utilizador
-            }
+        System.out.println(">>> 2. PASSWORD RAW RECEBIDA DO FRONTEND: '" + passwordInseridaPeloUtilizador + "'");
+        System.out.println(">>> 3. HASH LIDO DA BD: '" + passwordEncriptadaNaBD + "'");
+        
+        if (passwordEncriptadaNaBD != null && passwordEncriptadaNaBD.startsWith("$2y$")) {
+            passwordEncriptadaNaBD = passwordEncriptadaNaBD.replaceFirst("\\$2y\\$", "\\$2a\\$");
+            System.out.println(">>> 4. HASH CORRIGIDO PARA $2a$: '" + passwordEncriptadaNaBD + "'");
         }
-        
-        return Optional.empty(); // Falhou a autenticação, devolve vazio
+        if (passwordEncoder.matches(passwordInseridaPeloUtilizador, passwordEncriptadaNaBD)) {
+            System.out.println(">>> 5. SUCESSO: As passwords coincidem!\n");
+            return userOpt; 
+        } else {
+            System.out.println(">>> 5. FALHA: O Spring diz que as passwords NÃO coincidem.\n");
+        }
+    } else {
+        System.out.println(">>> FALHA: Utilizador '" + username + "' não encontrado na BD.\n");
     }
+    
+    return Optional.empty(); 
+}
 }

@@ -11,7 +11,9 @@ import org.springframework.web.bind.annotation.*;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 @RestController
 @RequestMapping("/api/biometria")
@@ -35,9 +37,16 @@ public class BiometriaController {
             return ResponseEntity.badRequest().body(Map.of("erro", "Utilizador não encontrado"));
         }
 
+        Utilizador user = userOpt.get();
+        if (!"Medico".equals(user.getTipoUtilizador().getNome())) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of(
+                    "sucesso", false,
+                    "mensagem", "Apenas utilizadores do tipo Médico podem registar biometria"
+            ));
+        }
+
         try {
             CompletableFuture<Boolean> future = biometriaService.iniciarRegisto(userId);
-            
             Boolean resultado = future.get(35, TimeUnit.SECONDS);
 
             if (Boolean.TRUE.equals(resultado)) {
@@ -46,20 +55,38 @@ public class BiometriaController {
                         "mensagem", "Impressão digital registada com sucesso!"
                 ));
             } else {
-                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of(
+                return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY).body(Map.of(
                         "sucesso", false,
                         "mensagem", "Falha ao registar impressão digital. Tente novamente."
                 ));
             }
-        } catch (java.util.concurrent.TimeoutException e) {
+        } catch (TimeoutException e) {
             return ResponseEntity.status(HttpStatus.REQUEST_TIMEOUT).body(Map.of(
                     "sucesso", false,
                     "mensagem", "Tempo excedido. Não detetámos o seu dedo a tempo."
             ));
+        } catch (ExecutionException e) {
+            Throwable causa = e.getCause();
+            if (causa instanceof IllegalStateException) {
+                return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of(
+                        "sucesso", false,
+                        "mensagem", causa.getMessage()
+                ));
+            }
+            if (causa instanceof TimeoutException) {
+                return ResponseEntity.status(HttpStatus.REQUEST_TIMEOUT).body(Map.of(
+                        "sucesso", false,
+                        "mensagem", "Tempo excedido. Não detetámos o seu dedo a tempo."
+                ));
+            }
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of(
+                    "sucesso", false,
+                    "mensagem", "Erro interno ao processar o registo biométrico."
+            ));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of(
                     "sucesso", false,
-                    "mensagem", e.getMessage() != null ? e.getMessage() : "Erro desconhecido"
+                    "mensagem", "Erro desconhecido"
             ));
         }
     }
@@ -83,12 +110,11 @@ public class BiometriaController {
 
         if (userOpt.isPresent()) {
             Utilizador user = userOpt.get();
-
-           return ResponseEntity.ok(Map.of(
-            "status", "autenticado",
-            "userId", user.getIdUtilizador(),   
-            "nome", user.getUsername()          
-        ));
+            return ResponseEntity.ok(Map.of(
+                    "status", "autenticado",
+                    "userId", user.getIdUtilizador(),
+                    "nome", user.getUsername()
+            ));
         }
 
         return ResponseEntity.ok(Map.of("status", "pendente"));
