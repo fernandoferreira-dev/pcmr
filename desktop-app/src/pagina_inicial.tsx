@@ -4,6 +4,8 @@ import DadosDiagnostico from './Dados_Diagnosticos'
 import Comunicacao from './comunicacao'
 import DadosEquipamentos from './dados_equipamentos'
 import { useBiometriaRegisto } from './hooks/useBiometria'
+// Importar o componente do Modal
+import DiagnosticoRapidoModal from './DiagnosticoRapidoModal' 
 
 const OverviewIcon = new URL("./assets/imagens/infographics.png", import.meta.url).href
 const DadosDiag = new URL("./assets/imagens/Patient-Profile-59.png", import.meta.url).href
@@ -44,7 +46,6 @@ function NavButton({ id, label, icon, isActive, onClick }: NavButtonProps) {
   )
 }
 
-// 1. AJUSTE: Adicionado o título para a view dados_pessoais
 const viewTitles: Record<View, string> = {
   home: 'Overview',
   dados_diagnostico: 'Dados Diagnósticos',
@@ -59,7 +60,11 @@ type PaginaInicialProps = {
   onLogout: () => void
 }
 
-const OverviewDashboard = () => (
+type OverviewDashboardProps = {
+  onAbrirConsulta: () => void;
+}
+
+const OverviewDashboard = ({ onAbrirConsulta }: OverviewDashboardProps) => (
   <div className="flex flex-col gap-4 w-full h-full p-6 bg-[#EBEBEB] rounded-4xl shadow-inner overflow-y-auto">
     
     {/* Filtros Superiores */}
@@ -118,15 +123,19 @@ const OverviewDashboard = () => (
         <div className="text-xs text-gray-500 uppercase mt-1">???</div>
       </div>
 
-      {/* Diagnóstico Rápido */}
+      {}
       <div className="flex-1 bg-white rounded-xl border border-gray-300 p-4 shadow-sm flex flex-col">
-        <div className="text-sm font-bold text-gray-600 mb-2">Diagnóstico Rápido</div>
+        <div className="text-sm font-bold text-gray-600 mb-2">Consulta Rápida</div>
         <div className="flex-1 bg-[#AAB99F] rounded-xl border border-[#91a086] p-4 flex flex-col justify-between">
           <div className="w-10 h-10 bg-white/70 rounded-full flex items-center justify-center text-[#AAB99F] text-3xl font-bold shadow-sm">
             <img src={cruzverde} alt="Diagnóstico" className="w-6 h-6 object-contain"/>
           </div>
-          <button className="w-full py-2 bg-white/40 rounded-full text-white font-medium hover:bg-white/50 transition-colors shadow-sm">
-            Iniciar Diagnóstico
+          {}
+          <button 
+            onClick={onAbrirConsulta} 
+            className="w-full py-2 bg-white/40 rounded-full text-white font-medium hover:bg-white/50 transition-colors shadow-sm cursor-pointer"
+          >
+            Iniciar Consulta
           </button>
         </div>
       </div>
@@ -136,6 +145,8 @@ const OverviewDashboard = () => (
 
 export default function App({ userName, userId, onLogout }: PaginaInicialProps) {
   const [view, setView] = useState<View>('home')
+  
+  const [modalAberto, setModalAberto] = useState(false) 
 
   const {
     status: bioStatus,
@@ -144,16 +155,15 @@ export default function App({ userName, userId, onLogout }: PaginaInicialProps) 
     cancelar: bioCancelar,
   } = useBiometriaRegisto()
 
-  // 2. AJUSTE: Adicionada a verificação para renderizar o componente <DadosPessoais />
   let content: ReactNode
   if (view === 'dados_diagnostico') content = <DadosDiagnostico />
   else if (view === 'comunicacao') content = <Comunicacao />
   else if (view === 'dados_equipamentos') content = <DadosEquipamentos />
   else if (view === 'dados_pessoais') content = <DadosPessoais />
-  else content = <OverviewDashboard />
+  else content = <OverviewDashboard onAbrirConsulta={() => setModalAberto(true)} />
 
   return (
-    <div className="h-screen w-screen bg-(--background) flex flex-col font-sans overflow-hidden">
+    <div className="h-screen w-screen bg-(--background) flex flex-col font-sans overflow-hidden relative">
       
       <div className="flex-1 flex p-4 gap-6 overflow-hidden"> 
         
@@ -214,14 +224,14 @@ export default function App({ userName, userId, onLogout }: PaginaInicialProps) 
                 }`}>
                   <span>{bioMensagem}</span>
                   {(bioStatus === 'aguardar_dedo' || bioStatus === 'a_processar') && (
-                    <button onClick={bioCancelar} className="ml-2 underline">Cancelar</button>
+                    <button onClick={bioCancelar} className="ml-2 underline cursor-pointer">Cancelar</button>
                   )}
                 </div>
               )}
 
               <button 
                 onClick={onLogout}
-                className="flex items-center gap-3 hover:opacity-80 transition-opacity"
+                className="flex items-center gap-3 hover:opacity-80 transition-opacity cursor-pointer"
                 title="Clique para fazer Logout"
               >
                 <span className="text-xl text-gray-800 font-medium">
@@ -244,6 +254,10 @@ export default function App({ userName, userId, onLogout }: PaginaInicialProps) 
       <footer className="shrink-0 bg-[#333333] text-gray-400 text-xs py-2 px-6 tracking-wide">
         © 2026 Diogo Rocha - Fernando Ferreira - Jaime Quaresma - João Santos
       </footer>
+
+    {modalAberto && (
+    <DiagnosticoRapidoModal onClose={() => setModalAberto(false)} idMedico={userId} />
+    )}
     </div>
   )
 }

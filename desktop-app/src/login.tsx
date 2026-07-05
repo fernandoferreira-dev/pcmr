@@ -176,7 +176,7 @@ export default function App() {
   const handleLoginTeste = () => {
     const testSession = {
       userName: 'Utilizador Teste',
-      userId: 0,
+      userId: 1,
       expiresAt: Date.now() + AUTH_SESSION_DURATION_MS,
     }
     window.localStorage.setItem(AUTH_SESSION_KEY, JSON.stringify(testSession))
