@@ -32,19 +32,28 @@ public class LoginController {
 
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody LoginRequest request) {
-        if (request.username == null || request.password == null) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("username and password required");
+        return authenticate(request.username, request.password);
+    }
+
+    @GetMapping("/login")
+    public ResponseEntity<?> loginGet(@RequestParam String username, @RequestParam String password) {
+        return authenticate(username, password);
+    }
+
+    private ResponseEntity<?> authenticate(String username, String password) {
+        if (username == null || username.isBlank() || password == null || password.isBlank()) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Parametros inválidos");
         }
 
-        // Alterado de LoginModel para Utilizador
-        Optional<Utilizador> userOpt = loginService.authenticate(request.username, request.password);
+         // Alterado de LoginModel para Utilizador
+        Optional<Utilizador> userOpt = loginService.authenticate(username, password);
 
         if (userOpt.isPresent()) {
             Utilizador user = userOpt.get();
             // Retorna o username e o ID correto do Utilizador
             return ResponseEntity.ok(new LoginResponse(user.getUsername(), user.getIdUtilizador()));
         } else {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid username or password");
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Parametros inválidos");
         }
     }
 }

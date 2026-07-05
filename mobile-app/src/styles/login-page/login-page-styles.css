@@ -7,6 +7,11 @@
     border-radius: 1rem;
 }
 
+.btn:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+
 .registerbtn {
     position: fixed;
     bottom: 0;
@@ -48,6 +53,15 @@
     border: 1px solid #6C757D;
     background-color: #CFCDCD;
     border-radius: 1rem;
+}
+
+.error-message {
+  align-self: center;
+  color: #b42318;
+  font-size: 0.95rem;
+  font-weight: 600;
+  margin-top: 0.25rem;
+  min-height: 1.25rem;
 }
 
 .footer {
