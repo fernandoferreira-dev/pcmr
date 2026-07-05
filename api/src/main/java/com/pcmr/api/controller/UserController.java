@@ -3,6 +3,7 @@ package com.pcmr.api.controller;
 import com.pcmr.api.model.Pessoa;
 import com.pcmr.api.model.TipoUtilizador;
 import com.pcmr.api.model.Utilizador;
+import com.pcmr.api.repository.TipoUtilizadorRepository;
 import com.pcmr.api.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -16,6 +17,9 @@ public class UserController {
 
     @Autowired
     private UserRepository userRepository;
+
+    @Autowired
+    private TipoUtilizadorRepository tipoUtilizadorRepository;
 
     // Instancia o encoder aqui também
     private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
@@ -42,9 +46,13 @@ public class UserController {
             pessoa.setEmail(email);
             n.setPessoa(pessoa);
 
-            TipoUtilizador tipoUtilizador = new TipoUtilizador();
-            tipoUtilizador.setNome("utilizador");
-            tipoUtilizador.setDescricao("Conta criada via registo");
+            TipoUtilizador tipoUtilizador = tipoUtilizadorRepository.findByNome("utilizador")
+                    .orElseGet(() -> {
+                        TipoUtilizador novoTipo = new TipoUtilizador();
+                        novoTipo.setNome("utilizador");
+                        novoTipo.setDescricao("Conta criada via registo");
+                        return tipoUtilizadorRepository.save(novoTipo);
+                    });
             n.setTipoUtilizador(tipoUtilizador);
 
             userRepository.save(n);
