@@ -48,6 +48,7 @@ export default function MainPage() {
           </div>
         </div>
       </div>
+      <h1>Bem vindo, Admin</h1>
       {renderView()}
       <NavBarComponent onNavigate={setView} />
     </>

@@ -28,7 +28,6 @@ export default function AdminDashboardComponent() {
     <>
       <div className="main-page">
         { /* Admin deverá ser o username do utilizador */ }
-        <h1>Bem vindo, Admin</h1>
         <div className="mainbox">
           <DiagnosticButtonComponent />
           <div className="main-page-states">
