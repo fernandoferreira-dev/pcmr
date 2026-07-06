@@ -57,7 +57,9 @@ export default function CreateAccountComponent() {
       setSelectedOption("opcao-pt");
     } catch (error) {
       console.error("Registration request failed", error);
-      setFeedback(error instanceof Error ? error.message : "Erro ao criar conta");
+      setFeedback(
+        error instanceof Error ? error.message : "Erro ao criar conta",
+      );
     } finally {
       setIsSubmitting(false);
     }
@@ -66,113 +68,111 @@ export default function CreateAccountComponent() {
   return (
     <>
       {/*Nome Numero Email Data de Nascimento e Preferencia de Idioma*/}
-      <div className="settings-container">
-        <button
-          type="button"
-          onClick={(e) => {
-            e.preventDefault();
-            setIsOpen(true);
-          }}
-          className="btn"
-        >
-          Criar Conta
-        </button>
+      <button
+        type="button"
+        onClick={(e) => {
+          e.preventDefault();
+          setIsOpen(true);
+        }}
+        className="btn"
+      >
+        Criar Conta
+      </button>
 
-        {isOpen && (
-          <div className="overlay">
-            <div className="modal">
-              <p>Criação de Conta</p>
-              <div className="settings">
-                <form onSubmit={handleSubmit}>
-                  <div>
-                    <label className="option-container">
-                      Nome de Utilizador:
-                      <input
-                        className="input"
-                        value={username}
-                        onChange={(e) => setUsername(e.target.value)}
-                        required
-                      />
-                    </label>
-                  </div>
-                  <div>
-                    <label className="option-container">
-                      Número de Telemóvel:
-                      <input
-                        className="input"
-                        value={phoneNumber}
-                        onChange={(e) => setPhoneNumber(e.target.value)}
-                      />
-                    </label>
-                  </div>
-                  <div>
-                    <label className="option-container">
-                      Email:
-                      <input
-                        className="input"
-                        type="email"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        required
-                      />
-                    </label>
-                  </div>
-                  <div>
-                    <label className="option-container">
-                      Palavra-passe:
-                      <input
-                        className="input"
-                        type="password"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        required
-                      />
-                    </label>
-                  </div>
-                  <div>
-                    <label className="option-container">
-                      Data de Nascimento:
-                      <input
-                        type="date"
-                        min="1950-01-01"
-                        max={maxDate}
-                        value={birthDate}
-                        onChange={(e) => setBirthDate(e.target.value)}
-                      />
-                    </label>
-                  </div>
-                  <div>
-                    <label className="option-container">
-                      Preferência de Idioma:
-                      <select
-                        value={selectedOption}
-                        onChange={(e) => setSelectedOption(e.target.value)}
-                      >
-                        <option value="opcao-pt">Português</option>
-                        <option value="opcao-ing">Inglês</option>
-                        <option value="opcao-esp">Espanhol</option>
-                      </select>
-                    </label>
-                  </div>
-                  {feedback && <p>{feedback}</p>}
-                  <button type="submit" disabled={isSubmitting}>
-                    {isSubmitting ? "A criar..." : "Criar Conta"}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      setIsOpen(false);
-                    }}
-                  >
-                    Close
-                  </button>
-                </form>
-              </div>
+      {isOpen && (
+        <div className="overlay">
+          <div className="modal">
+            <p>Criação de Conta</p>
+            <div className="settings">
+              <form onSubmit={handleSubmit}>
+                <div>
+                  <label className="option-container">
+                    Nome de Utilizador:
+                    <input
+                      className="input"
+                      value={username}
+                      onChange={(e) => setUsername(e.target.value)}
+                      required
+                    />
+                  </label>
+                </div>
+                <div>
+                  <label className="option-container">
+                    Número de Telemóvel:
+                    <input
+                      className="input"
+                      value={phoneNumber}
+                      onChange={(e) => setPhoneNumber(e.target.value)}
+                    />
+                  </label>
+                </div>
+                <div>
+                  <label className="option-container">
+                    Email:
+                    <input
+                      className="input"
+                      type="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      required
+                    />
+                  </label>
+                </div>
+                <div>
+                  <label className="option-container">
+                    Palavra-passe:
+                    <input
+                      className="input"
+                      type="password"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      required
+                    />
+                  </label>
+                </div>
+                <div>
+                  <label className="option-container">
+                    Data de Nascimento:
+                    <input
+                      type="date"
+                      min="1950-01-01"
+                      max={maxDate}
+                      value={birthDate}
+                      onChange={(e) => setBirthDate(e.target.value)}
+                    />
+                  </label>
+                </div>
+                <div>
+                  <label className="option-container">
+                    Preferência de Idioma:
+                    <select
+                      value={selectedOption}
+                      onChange={(e) => setSelectedOption(e.target.value)}
+                    >
+                      <option value="opcao-pt">Português</option>
+                      <option value="opcao-ing">Inglês</option>
+                      <option value="opcao-esp">Espanhol</option>
+                    </select>
+                  </label>
+                </div>
+                {feedback && <p>{feedback}</p>}
+                <button type="submit" disabled={isSubmitting}>
+                  {isSubmitting ? "A criar..." : "Criar Conta"}
+                </button>
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    setIsOpen(false);
+                  }}
+                >
+                  Close
+                </button>
+              </form>
             </div>
           </div>
-        )}
-      </div>
+        </div>
+      )}
     </>
   );
 }

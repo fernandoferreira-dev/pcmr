@@ -5,6 +5,26 @@
     padding: 0.5rem 1rem;
     border: 3px solid #B2C8B2;
     border-radius: 1rem;
+    text-align: center;
+    width: 12vh;
+}
+
+.login-wrapper{
+    display: flex;
+    flex-direction: column;
+    background-color: #FFFFFF;
+    border: 3px solid #B2C8B2;
+    border-radius: 2.4rem;
+    width: auto;
+    height: auto;
+    align-self: center;
+}
+
+.app-logo {
+    display: flex;
+    width: 40vh;
+    border: 6px solid #B2C8B2;
+    border-radius: 2rem;
 }
 
 .btn:disabled {

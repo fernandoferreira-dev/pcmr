@@ -1,15 +1,19 @@
 package com.pcmr.api.controller;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
 import com.pcmr.api.model.Pessoa;
 import com.pcmr.api.model.TipoUtilizador;
 import com.pcmr.api.model.Utilizador;
 import com.pcmr.api.repository.TipoUtilizadorRepository;
 import com.pcmr.api.repository.UserRepository;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/users")
@@ -26,16 +30,17 @@ public class UserController {
 
     @PostMapping("/register")
     public ResponseEntity<String> registerUser(@RequestParam String name,
-                                               @RequestParam String email,
-                                               @RequestParam String password) {
+            @RequestParam String email,
+            @RequestParam String password) {
         if (name == null || name.isBlank() || email == null || email.isBlank() || password == null || password.isBlank()) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("name, email and password are required");
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Todos os parametros são obrigatórios");
         }
 
-        if (userRepository.findByUsername(name).isPresent()) {
-            return ResponseEntity.status(HttpStatus.CONFLICT).body("username already exists");
+        if (userRepository.findByUsername(name).isPresent() || userRepository.findByPessoaEmail(email).isPresent()) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).body("nome de utlizador já existe");
+        } else if (userRepository.findByPessoaEmail(email).isPresent()) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).body("Este email já está vinculado a uma conta");
         }
-
         try {
             Utilizador n = new Utilizador();
             n.setUsername(name);
