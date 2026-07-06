@@ -6,9 +6,21 @@ import appImage from "../assets/medycist_logo.png";
 import RegisterButtonComponent from "../components/login-page/register-button-component";
 import CreateAccountComponent from "../components/login-page/create-account-btn-component";
 
-type Props = { onLogin: () => void };
+type UserProfile = {
+  username: string;
+  phoneNumber: string;
+  email: string;
+  birthDate: string;
+  selectedOption: string;
+  userId?: number | null;
+};
 
-export default function LoginPage({ onLogin }: Props) {
+type Props = {
+  onLogin: (profile: UserProfile) => void;
+  onAccountCreated?: (profile: UserProfile) => void;
+};
+
+export default function LoginPage({ onLogin, onAccountCreated }: Props) {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
@@ -39,7 +51,21 @@ export default function LoginPage({ onLogin }: Props) {
         throw new Error(responseText || "Parametros inválidos");
       }
 
-      onLogin();
+      let loginData: { nome?: string; userId?: number } | null = null;
+      try {
+        loginData = JSON.parse(responseText) as { nome?: string; userId?: number };
+      } catch {
+        loginData = null;
+      }
+
+      onLogin({
+        username: loginData?.nome || username.trim(),
+        phoneNumber: "",
+        email: "",
+        birthDate: "",
+        selectedOption: "opcao-pt",
+        userId: loginData?.userId ?? null,
+      });
     } catch (error) {
       setErrorMessage(error instanceof Error ? error.message : "Login Falhou");
     } finally {
@@ -83,7 +109,7 @@ export default function LoginPage({ onLogin }: Props) {
               disabled={isSubmitting}
               label={isSubmitting ? "A Entrar..." : "Login"}
             />
-            <CreateAccountComponent />
+            <CreateAccountComponent onAccountCreated={onAccountCreated} />
           </div>
           <RegisterButtonComponent />
           {errorMessage && (

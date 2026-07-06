@@ -9,7 +9,9 @@ import SettingsButtonComponent from "../components/misc/settings-button-componen
 import SendEmailButtonComponent from "../components/misc/send-email-btn";
 import "../styles/misc/header-styles.css";
 
-export default function MainPage() {
+type Props = { username: string; phonenumber: string; email: string; birthDate: string; selectedOption: string };
+
+export default function MainPage({ username, phonenumber, email, birthDate, selectedOption }: Props) {
   const [view, setView] = useState<
     "home" | "comms" | "status" | "doctor" | "records"
   >("home");
@@ -29,7 +31,15 @@ export default function MainPage() {
       case "status":
         return <StatusPage />;
       case "doctor":
-        return <InfoPage />;
+        return (
+          <InfoPage
+            username={username}
+            phonenumber={phonenumber}
+            email={email}
+            birthDate={birthDate}
+            selectedOption={selectedOption}
+          />
+        );
       case "records":
         return <ClientInfoPage />;
       default:
@@ -48,7 +58,7 @@ export default function MainPage() {
           </div>
         </div>
       </div>
-      <h1>Bem vindo, Admin</h1>
+      <h1>Bem vindo, {username || "Admin"}</h1>
       {renderView()}
       <NavBarComponent onNavigate={setView} />
     </>

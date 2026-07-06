@@ -4,6 +4,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -27,6 +29,32 @@ public class UserController {
 
     // Instancia o encoder aqui também
     private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
+
+    public static class UserProfileResponse {
+        public String username;
+        public String phoneNumber;
+        public String email;
+        public String birthDate;
+        public String selectedOption;
+
+        public UserProfileResponse(String username, String email) {
+            this.username = username;
+            this.phoneNumber = "";
+            this.email = email;
+            this.birthDate = "";
+            this.selectedOption = "opcao-pt";
+        }
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<?> getUserProfile(@PathVariable Long id) {
+    return userRepository.findById(id)
+            .<ResponseEntity<?>>map(user -> {
+                String email = user.getPessoa() != null ? user.getPessoa().getEmail() : "";
+                return ResponseEntity.ok(new UserProfileResponse(user.getUsername(), email));
+            })
+            .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND).body("User not found"));
+    }
 
     @PostMapping("/register")
     public ResponseEntity<String> registerUser(@RequestParam String name,

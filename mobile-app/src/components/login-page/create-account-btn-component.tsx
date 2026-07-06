@@ -2,7 +2,19 @@ import { useState, type FormEvent } from "react";
 import "../../styles/login-page/login-page-styles.css";
 import "../../styles/misc/settings-btn-styles.css";
 
-export default function CreateAccountComponent() {
+type UserProfile = {
+  username: string;
+  phoneNumber: string;
+  email: string;
+  birthDate: string;
+  selectedOption: string;
+};
+
+type Props = {
+  onAccountCreated?: (profile: UserProfile) => void;
+};
+
+export default function CreateAccountComponent({ onAccountCreated }: Props) {
   const [isOpen, setIsOpen] = useState(false);
   const [selectedOption, setSelectedOption] = useState("opcao-pt");
   const [username, setUsername] = useState("");
@@ -47,6 +59,13 @@ export default function CreateAccountComponent() {
       }
 
       console.log("Account created successfully", { username, email });
+      onAccountCreated?.({
+        username,
+        phoneNumber,
+        email,
+        birthDate,
+        selectedOption,
+      });
       setFeedback("Conta criada com sucesso!");
       setIsOpen(false);
       setUsername("");
