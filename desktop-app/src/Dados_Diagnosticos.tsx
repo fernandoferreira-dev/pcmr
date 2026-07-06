@@ -1,4 +1,3 @@
-// ...existing code...
 import { BadgePlus, ClipboardList, CalendarDays, Stethoscope } from 'lucide-react';
 
 const diagnostics = [
