@@ -61,7 +61,7 @@ public class UserController {
             @RequestParam String email,
             @RequestParam String password) {
         if (name == null || name.isBlank() || email == null || email.isBlank() || password == null || password.isBlank()) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Todos os parametros são obrigatórios");
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Nome, email e password são obrigatórios");
         }
 
         if (userRepository.findByUsername(name).isPresent() || userRepository.findByPessoaEmail(email).isPresent()) {
@@ -73,7 +73,7 @@ public class UserController {
             Utilizador n = new Utilizador();
             n.setUsername(name);
             n.setPassword(passwordEncoder.encode(password));
-
+            
             Pessoa pessoa = new Pessoa();
             pessoa.setNome(name);
             pessoa.setEmail(email);
