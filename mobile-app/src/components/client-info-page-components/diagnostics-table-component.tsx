@@ -55,8 +55,7 @@ export default function DiagnosticsTableComponent() {
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
                 />
-
-                <button className="search-button">Buscar</button>
+                <button className="search-button">Atualizar</button>
             </div>
 
             <div className="tableContainer">
