@@ -35,3 +35,31 @@
 .data-container h2 {
     color: #000000;
 }
+
+.search-container {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+}
+
+.search-bar {
+    display: block;
+    width: 50%;
+    padding: 0.6rem 0.8rem;
+    color: #000000;
+    border: 1px solid #6C757D;
+    background-color: #CFCDCD;
+    border-radius: 1rem;
+}
+
+.search-button {
+    padding: 0.6rem 1.2rem;
+    color: #000000;
+    font-weight: bold;
+    border: 1px solid #B2C8B2;
+    background-color: #FFFFFF;
+    border-radius: 1rem;
+    cursor: pointer;
+}
