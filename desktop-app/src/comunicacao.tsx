@@ -1,391 +1,205 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useRef } from 'react'
+import NovaMensagemModal from './NovaMensagemModal'
 
-interface PerfilUtilizador {
-  username: string;
-  nome: string;
-  email: string;
-  telemovel: string | null;
-  dataNascimento: string | null;
-  tipoUtilizador: string;
+const avatarPlaceholder = new URL('./assets/imagens/infographics.png', import.meta.url).href
+
+interface Mensagem {
+  idMensagem: number
+  idRemetente: number
+  nomeRemetente: string
+  emailRemetente: string
+  assunto: string
+  corpo: string | null
+  dataEnvio: string
+  lida: boolean
 }
 
-const InfoRow = ({
-  label,
-  value,
-  icon,
-}: {
-  label: string;
-  value: string;
-  icon: React.ReactNode;
-}) => (
-  <div className="flex items-center gap-4 py-4 border-b border-gray-200 last:border-b-0">
-    <div className="w-12 h-12 rounded-full bg-[#AAB99F] flex items-center justify-center shrink-0 shadow-sm text-white">
-      {icon}
-    </div>
-    <div className="flex flex-col">
-      <span className="text-xs uppercase tracking-wide text-gray-500 font-medium">
-        {label}
-      </span>
-      <span className="text-lg font-semibold text-gray-800">{value}</span>
-    </div>
-  </div>
-);
-
-// Novo componente para renderizar os campos em modo de edição
-const EditRow = ({
-  label,
-  name,
-  type = "text",
-  value,
-  onChange,
-  icon,
-}: {
-  label: string;
-  name: string;
-  type?: string;
-  value: string;
-  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  icon: React.ReactNode;
-}) => (
-  <div className="flex items-center gap-4 py-4 border-b border-gray-200 last:border-b-0">
-    <div className="w-12 h-12 rounded-full bg-[#AAB99F] flex items-center justify-center shrink-0 shadow-sm text-white">
-      {icon}
-    </div>
-    <div className="flex flex-col w-full">
-      <label
-        htmlFor={name}
-        className="text-xs uppercase tracking-wide text-gray-500 font-medium mb-1"
-      >
-        {label}
-      </label>
-      <input
-        id={name}
-        name={name}
-        type={type}
-        value={value}
-        onChange={onChange}
-        className="w-full text-lg font-semibold text-gray-800 bg-gray-50 border border-gray-300 rounded-lg px-3 py-1 focus:outline-none focus:ring-2 focus:ring-[#AAB99F]"
-      />
-    </div>
-  </div>
-);
-
-function formatarData(dataISO: string | null): string {
-  if (!dataISO) return "Não definida";
-  const data = new Date(dataISO);
-  return data.toLocaleDateString("pt-PT");
+function formatarDataHora(iso: string): string {
+  const data = new Date(iso)
+  return data.toLocaleString('pt-PT', {
+    day: '2-digit',
+    month: '2-digit',
+    year: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+  })
 }
 
-// Helper para converter data para o input type="date"
-function paraDataInput(dataISO: string | null): string {
-  if (!dataISO) return "";
-  return dataISO.split("T")[0];
-}
+export default function Comunicacao({ userId }: { userId: number }) {
+  const [mensagens, setMensagens] = useState<Mensagem[]>([])
+  const [pesquisa, setPesquisa] = useState('')
+  const [erro, setErro] = useState<string | null>(null)
+  const [mostrarNovaMensagem, setMostrarNovaMensagem] = useState(false)
+  const [mensagemExpandida, setMensagemExpandida] = useState<number | null>(null)
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
-export default function DadosPessoais({ userId }: { userId: number }) {
-  const [perfil, setPerfil] = useState<PerfilUtilizador | null>(null);
-  const [erro, setErro] = useState<string | null>(null);
-
-  // Novos estados para a edição
-  const [isEditing, setIsEditing] = useState(false);
-  const [formData, setFormData] = useState<Partial<PerfilUtilizador>>({});
-  const [isSaving, setIsSaving] = useState(false);
+  const carregarMensagens = useCallback(async (termo: string) => {
+    try {
+      const url = `/api/mensagens/recebidas?userId=${userId}${termo ? `&pesquisa=${encodeURIComponent(termo)}` : ''}`
+      const res = await fetch(url)
+      if (!res.ok) {
+        setErro('Não foi possível carregar as mensagens.')
+        return
+      }
+      const data: Mensagem[] = await res.json()
+      setMensagens(data)
+      setErro(null)
+    } catch {
+      setErro('Erro de comunicação com o servidor.')
+    }
+  }, [userId])
 
   useEffect(() => {
-    const carregarPerfil = async () => {
+    carregarMensagens('')
+  }, [carregarMensagens])
+
+  useEffect(() => {
+    if (debounceRef.current) clearTimeout(debounceRef.current)
+    debounceRef.current = setTimeout(() => {
+      carregarMensagens(pesquisa)
+    }, 300)
+    return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current)
+    }
+  }, [pesquisa, carregarMensagens])
+
+  const abrirMensagem = async (mensagem: Mensagem) => {
+    setMensagemExpandida(mensagemExpandida === mensagem.idMensagem ? null : mensagem.idMensagem)
+
+    if (!mensagem.lida) {
       try {
-        const res = await fetch(`/api/utilizadores/${userId}/perfil`);
-        if (!res.ok) {
-          setErro("Não foi possível carregar os dados pessoais.");
-          return;
-        }
-        const data: PerfilUtilizador = await res.json();
-        setPerfil(data);
-        setErro(null);
+        await fetch(`/api/mensagens/${mensagem.idMensagem}/lida?userId=${userId}`, {
+          method: 'PATCH',
+        })
+        setMensagens((prev) =>
+          prev.map((m) => (m.idMensagem === mensagem.idMensagem ? { ...m, lida: true } : m))
+        )
       } catch {
-        setErro("Erro de comunicação com o servidor.");
+        // falha silenciosa; o estado local não muda, o utilizador pode tentar reabrir
       }
-    };
-
-    if (userId > 0) {
-      carregarPerfil();
-    } else {
-      setErro("Utilizador de teste sem perfil associado.");
     }
-  }, [userId]);
+  }
 
-  // Modo de edição
-  const handleEdit = () => {
-    setFormData(perfil || {});
-    setIsEditing(true);
-    setErro(null);
-  };
-
-  // Cancelar a edição
-  const handleCancel = () => {
-    setIsEditing(false);
-    setFormData({});
-    setErro(null);
-  };
-
-  // Atualizar o estado do formulário
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]:
-        value === "" && name !== "username" && name !== "email" ? null : value,
-    }));
-  };
-
-  // Gravar os dados na Base de Dados
-  const handleSave = async () => {
-    setIsSaving(true);
-    setErro(null);
-
+  const apagarMensagem = async (idMensagem: number, e: React.MouseEvent) => {
+    e.stopPropagation()
     try {
-      const res = await fetch(`/api/utilizadores/${userId}/perfil`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(formData),
-      });
-
-      if (!res.ok) {
-        throw new Error("Falha ao gravar as alterações.");
+      const res = await fetch(`/api/mensagens/${idMensagem}?userId=${userId}`, {
+        method: 'DELETE',
+      })
+      if (res.ok) {
+        setMensagens((prev) => prev.filter((m) => m.idMensagem !== idMensagem))
       }
-
-      // Atualiza o estado principal com os novos dados recebidos do servidor
-      const dataAtualizada: PerfilUtilizador = await res.json();
-      setPerfil(dataAtualizada);
-      setIsEditing(false);
-    } catch (err) {
-      setErro("Erro ao gravar os dados. Tenta novamente.");
-    } finally {
-      setIsSaving(false);
+    } catch {
+      // falha silenciosa
     }
-  };
+  }
 
   return (
-    <div className="flex flex-col gap-6 w-full h-full p-6 bg-[#EBEBEB] rounded-4xl shadow-inner overflow-y-auto">
+    <div className="relative flex flex-col w-full h-full p-6 bg-[#EBEBEB] rounded-4xl shadow-inner">
+      {/* Pesquisa */}
+      <div className="relative mb-4 shrink-0">
+        <svg
+          xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"
+          fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+          className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"
+        >
+          <circle cx="11" cy="11" r="8" />
+          <path d="m21 21-4.3-4.3" />
+        </svg>
+        <input
+          value={pesquisa}
+          onChange={(e) => setPesquisa(e.target.value)}
+          placeholder="Pesquisar por nome..."
+          className="w-full pl-11 pr-4 py-3 bg-white rounded-full border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-[#AAB99F]"
+        />
+      </div>
+
       {erro && (
-        <div className="bg-yellow-50 border border-yellow-300 text-yellow-700 rounded-2xl px-4 py-3 text-sm">
+        <div className="mb-4 bg-yellow-50 border border-yellow-300 text-yellow-700 rounded-2xl px-4 py-3 text-sm shrink-0">
           {erro}
         </div>
       )}
 
-      <div className="flex flex-col lg:flex-row gap-6 w-full">
-        {/* Cartão principal - Informações de contacto */}
-        <div className="flex-1 bg-white rounded-2xl border border-gray-300 shadow-sm p-6">
-          <div className="text-sm font-bold text-gray-600 mb-2 tracking-wide uppercase flex justify-between items-center">
-            Informações de Contacto
-            {isEditing && (
-              <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-full">
-                Modo de Edição
+      {/* Lista de mensagens */}
+      <div className="flex-1 overflow-y-auto flex flex-col gap-4 pr-2">
+        {mensagens.length === 0 && !erro && (
+          <div className="flex-1 flex items-center justify-center text-sm text-gray-400">
+            Sem mensagens recebidas.
+          </div>
+        )}
+
+        {mensagens.map((m) => (
+          <div
+            key={m.idMensagem}
+            onClick={() => abrirMensagem(m)}
+            className="rounded-2xl border border-gray-300 overflow-hidden shadow-sm cursor-pointer bg-white"
+          >
+            <div className="flex items-center justify-between bg-[#AAB99F] px-4 py-3">
+              <div className="flex items-center gap-3">
+                <img
+                  src={avatarPlaceholder}
+                  alt={m.nomeRemetente}
+                  className="w-9 h-9 rounded-full bg-white object-cover shrink-0"
+                />
+                <span className="font-bold text-gray-800">{m.nomeRemetente}</span>
+              </div>
+              <span className="text-sm text-gray-700">{formatarDataHora(m.dataEnvio)}</span>
+            </div>
+
+            <div className="flex items-center justify-between px-4 py-3">
+              <span className="text-sm text-gray-600 truncate pr-4">
+                Assunto: {m.assunto}
               </span>
+
+              <div className="flex items-center gap-3 shrink-0">
+                <button
+                  onClick={(e) => apagarMensagem(m.idMensagem, e)}
+                  className="text-gray-400 hover:text-red-500 transition-colors cursor-pointer"
+                  title="Apagar mensagem"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M3 6h18" />
+                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                  </svg>
+                </button>
+                <span
+                  className={`w-3 h-3 rounded-full shrink-0 ${m.lida ? 'bg-green-500' : 'bg-red-500'}`}
+                  title={m.lida ? 'Lida' : 'Não lida'}
+                />
+              </div>
+            </div>
+
+            {mensagemExpandida === m.idMensagem && (
+              <div className="px-4 pb-4 pt-1 border-t border-gray-200 text-sm text-gray-700 whitespace-pre-wrap">
+                {m.corpo || 'Sem conteúdo.'}
+              </div>
             )}
           </div>
-
-          {!isEditing ? (
-            <>
-              <InfoRow
-                label="Nome de utilizador"
-                value={perfil?.username ?? "—"}
-                icon={
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="20"
-                    height="20"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-                    <circle cx="12" cy="7" r="4" />
-                  </svg>
-                }
-              />
-              <InfoRow
-                label="Número de Telemóvel"
-                value={perfil?.telemovel ?? "Não definido"}
-                icon={
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="20"
-                    height="20"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z" />
-                  </svg>
-                }
-              />
-              <InfoRow
-                label="Email"
-                value={perfil?.email ?? "—"}
-                icon={
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="20"
-                    height="20"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <rect x="2" y="4" width="20" height="16" rx="2" />
-                    <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" />
-                  </svg>
-                }
-              />
-            </>
-          ) : (
-            // Formatos Editáveis
-            <>
-              <EditRow
-                label="Nome de utilizador"
-                name="username"
-                value={formData.username ?? ""}
-                onChange={handleChange}
-                icon={
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="20"
-                    height="20"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-                    <circle cx="12" cy="7" r="4" />
-                  </svg>
-                }
-              />
-              <EditRow
-                label="Número de Telemóvel"
-                name="telemovel"
-                type="tel"
-                value={formData.telemovel ?? ""}
-                onChange={handleChange}
-                icon={
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="20"
-                    height="20"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z" />
-                  </svg>
-                }
-              />
-              <EditRow
-                label="Email"
-                name="email"
-                type="email"
-                value={formData.email ?? ""}
-                onChange={handleChange}
-                icon={
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="20"
-                    height="20"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <rect x="2" y="4" width="20" height="16" rx="2" />
-                    <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" />
-                  </svg>
-                }
-              />
-            </>
-          )}
-        </div>
-
-        {/* Cartão lateral - Resumo da conta */}
-        <div className="w-full lg:w-80 flex flex-col gap-4 shrink-0">
-          <div className="bg-white rounded-2xl border border-gray-300 shadow-sm p-6 flex flex-col gap-4">
-            <div className="text-sm font-bold text-gray-600 tracking-wide uppercase">
-              Resumo da conta
-            </div>
-
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-gray-500 font-medium">Estado</span>
-              <span className="px-3 py-1 rounded-full bg-[#AAB99F]/30 text-[#5c6b56] text-sm font-semibold">
-                {perfil?.tipoUtilizador ?? "—"}
-              </span>
-            </div>
-
-            <div className="flex flex-col gap-1 mt-2">
-              <span className="text-sm text-gray-500 font-medium">
-                Data de Nascimento
-              </span>
-
-              {!isEditing ? (
-                <span className="text-sm font-semibold text-gray-800">
-                  {formatarData(perfil?.dataNascimento ?? null)}
-                </span>
-              ) : (
-                <input
-                  type="date"
-                  name="dataNascimento"
-                  value={paraDataInput(formData.dataNascimento ?? null)}
-                  onChange={handleChange}
-                  className="w-full text-sm font-semibold text-gray-800 bg-gray-50 border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#AAB99F]"
-                />
-              )}
-            </div>
-          </div>
-
-          {/* Botões de Ação */}
-          {!isEditing ? (
-            <button
-              onClick={handleEdit}
-              className="w-full py-3 bg-[#AAB99F] hover:bg-[#9CB39E] transition-colors rounded-xl text-white font-medium shadow-sm"
-            >
-              Editar Dados
-            </button>
-          ) : (
-            <div className="flex flex-col gap-2">
-              <button
-                onClick={handleSave}
-                disabled={isSaving}
-                className="w-full py-3 bg-[#AAB99F] hover:bg-[#9CB39E] transition-colors rounded-xl text-white font-medium shadow-sm disabled:opacity-50 disabled:cursor-not-allowed flex justify-center items-center gap-2"
-              >
-                {isSaving ? "A guardar..." : "Guardar Alterações"}
-              </button>
-              <button
-                onClick={handleCancel}
-                disabled={isSaving}
-                className="w-full py-3 bg-white hover:bg-gray-50 border border-gray-300 transition-colors rounded-xl text-gray-700 font-medium shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                Cancelar
-              </button>
-            </div>
-          )}
-        </div>
+        ))}
       </div>
+
+      {/* Botão flutuante de nova mensagem */}
+      <button
+        onClick={() => setMostrarNovaMensagem(true)}
+        className="absolute bottom-6 right-6 w-14 h-14 rounded-full bg-white border border-gray-300 shadow-md flex items-center justify-center hover:bg-gray-50 transition-colors cursor-pointer"
+        title="Nova mensagem"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#5c6b56" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="m22 2-7 20-4-9-9-4Z" />
+          <path d="M22 2 11 13" />
+        </svg>
+      </button>
+
+      {mostrarNovaMensagem && (
+        <NovaMensagemModal
+          idRemetente={userId}
+          onClose={() => setMostrarNovaMensagem(false)}
+          onEnviada={() => {
+            setMostrarNovaMensagem(false)
+            carregarMensagens(pesquisa)
+          }}
+        />
+      )}
     </div>
-  );
+  )
 }
