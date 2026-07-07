@@ -37,23 +37,30 @@ export default function LoginPage({ onLogin, onAccountCreated }: Props) {
     setIsSubmitting(true);
 
     try {
-      const params = new URLSearchParams({ username, password });
       const response = await fetch(
-        `http://localhost:8080/api/auth/login?${params.toString()}`,
+        "http://localhost:8080/api/auth/login",
         {
-          method: "GET",
-        },
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            username: username.trim(),
+            password: password,
+          }),
+        }
       );
 
       const responseText = await response.text();
 
       if (!response.ok) {
-        throw new Error(responseText || "Parametros inválidos");
+        throw new Error(responseText || "Parâmetros inválidos");
       }
 
       let loginData: { nome?: string; userId?: number } | null = null;
+
       try {
-        loginData = JSON.parse(responseText) as { nome?: string; userId?: number };
+        loginData = JSON.parse(responseText);
       } catch {
         loginData = null;
       }
@@ -78,7 +85,11 @@ export default function LoginPage({ onLogin, onAccountCreated }: Props) {
       <h1 style={{ color: "#4E5452" }}>Medycist</h1>
       <div className="login-wrapper">
         <div>
-          <img src={appImage} alt="Illustrative image" className="app-logo" />
+          <img
+            src={appImage}
+            alt="Illustrative image"
+            className="app-logo"
+          />
         </div>
         <div className="login-page">
           <label htmlFor="username" style={{ marginTop: "1rem" }}>
@@ -92,7 +103,6 @@ export default function LoginPage({ onLogin, onAccountCreated }: Props) {
             value={username}
             onChange={(event) => setUsername(event.target.value)}
           />
-
           <label htmlFor="password">Password</label>
           <input
             className="input"
@@ -102,14 +112,15 @@ export default function LoginPage({ onLogin, onAccountCreated }: Props) {
             value={password}
             onChange={(event) => setPassword(event.target.value)}
           />
-
           <div className="button-row">
             <LoginButtonComponent
               onClick={handleLogin}
               disabled={isSubmitting}
               label={isSubmitting ? "A Entrar..." : "Login"}
             />
-            <CreateAccountComponent onAccountCreated={onAccountCreated} />
+            <CreateAccountComponent
+              onAccountCreated={onAccountCreated}
+            />
           </div>
           <RegisterButtonComponent />
           {errorMessage && (
