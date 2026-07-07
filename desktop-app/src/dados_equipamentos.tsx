@@ -1,9 +1,9 @@
-import { useState, useMemo } from 'react';
-import { Settings, Search } from 'lucide-react';
+import { useState, useMemo } from "react";
+import { Settings, Search } from "lucide-react";
 
 interface DiagnosticItem {
   id: number;
-  status: 'ok' | 'warning' | 'error' | string; // widen if status can be other values
+  status: "ok" | "warning" | "error" | string; // widen if status can be other values
   nome: string;
   tipo: string;
   tempoResposta: string;
@@ -11,36 +11,36 @@ interface DiagnosticItem {
 }
 
 export default function DadosEquipamentos() {
-  const [searchTerm, setSearchTerm] = useState('');
+  const [searchTerm, setSearchTerm] = useState("");
 
   // Sample diagnostic data
   const [diagnosticData] = useState<DiagnosticItem[]>([
     {
       id: 1,
-      status: '???',
-      nome: '???',
-      tipo: '???',
-      tempoResposta: '???',
-      uptime: '???'
-    }
+      status: "???",
+      nome: "???",
+      tipo: "???",
+      tempoResposta: "???",
+      uptime: "???",
+    },
   ]);
 
   const filteredData = useMemo(() => {
-    return diagnosticData.filter(item =>
-      item.nome.toLowerCase().includes(searchTerm.toLowerCase())
+    return diagnosticData.filter((item) =>
+      item.nome.toLowerCase().includes(searchTerm.toLowerCase()),
     );
   }, [searchTerm, diagnosticData]);
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'ok':
-        return 'bg-green-500';
-      case 'warning':
-        return 'bg-yellow-500';
-      case 'error':
-        return 'bg-red-500';
+      case "ok":
+        return "bg-green-500";
+      case "warning":
+        return "bg-yellow-500";
+      case "error":
+        return "bg-red-500";
       default:
-        return 'bg-gray-400';
+        return "bg-gray-400";
     }
   };
 
@@ -49,7 +49,9 @@ export default function DadosEquipamentos() {
       {/* Header */}
       <div className="flex items-center justify-between mb-8">
         <div className="flex items-center gap-3">
-          <h1 className="text-xl font-semibold text-gray-900">Testar Conexão</h1>
+          <h1 className="text-xl font-semibold text-gray-900">
+            Testar Conexão
+          </h1>
           <button
             className="p-2 hover:bg-white rounded-full transition-colors"
             title="Settings"
@@ -85,11 +87,21 @@ export default function DadosEquipamentos() {
               <th className="w-12 px-4 py-3">
                 <input type="checkbox" className="rounded" />
               </th>
-              <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Estado</th>
-              <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Nome</th>
-              <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Tipo</th>
-              <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Tempo de Resposta</th>
-              <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">UPTime</th>
+              <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">
+                Estado
+              </th>
+              <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">
+                Nome
+              </th>
+              <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">
+                Tipo
+              </th>
+              <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">
+                Tempo de Resposta
+              </th>
+              <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">
+                UPTime
+              </th>
             </tr>
           </thead>
           <tbody>
@@ -103,12 +115,22 @@ export default function DadosEquipamentos() {
                     <input type="checkbox" className="rounded" />
                   </td>
                   <td className="px-4 py-3">
-                    <div className={`w-3 h-3 rounded-full ${getStatusColor(item.status)}`}></div>
+                    <div
+                      className={`w-3 h-3 rounded-full ${getStatusColor(item.status)}`}
+                    ></div>
                   </td>
-                  <td className="px-4 py-3 text-sm text-gray-900">{item.nome}</td>
-                  <td className="px-4 py-3 text-sm text-gray-600">{item.tipo}</td>
-                  <td className="px-4 py-3 text-sm text-gray-600">{item.tempoResposta}</td>
-                  <td className="px-4 py-3 text-sm text-gray-600">{item.uptime}</td>
+                  <td className="px-4 py-3 text-sm text-gray-900">
+                    {item.nome}
+                  </td>
+                  <td className="px-4 py-3 text-sm text-gray-600">
+                    {item.tipo}
+                  </td>
+                  <td className="px-4 py-3 text-sm text-gray-600">
+                    {item.tempoResposta}
+                  </td>
+                  <td className="px-4 py-3 text-sm text-gray-600">
+                    {item.uptime}
+                  </td>
                 </tr>
               ))
             ) : (

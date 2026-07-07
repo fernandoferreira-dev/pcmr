@@ -1,19 +1,19 @@
-import { useState } from 'react'
-import DiagnosticoLiveView from './DiagnosticoLiveView'
+import { useState } from "react";
+import DiagnosticoLiveView from "./DiagnosticoLiveView";
 
-type Passo = 'confirmar' | 'ao_vivo'
+type Passo = "confirmar" | "ao_vivo";
 
 export default function DiagnosticoRapidoModal({
   onClose,
   idMedico,
 }: {
-  onClose: () => void
-  idMedico: number
+  onClose: () => void;
+  idMedico: number;
 }) {
-  const [passo, setPasso] = useState<Passo>('confirmar')
+  const [passo, setPasso] = useState<Passo>("confirmar");
 
-  if (passo === 'ao_vivo') {
-    return <DiagnosticoLiveView onClose={onClose} idMedico={idMedico} />
+  if (passo === "ao_vivo") {
+    return <DiagnosticoLiveView onClose={onClose} idMedico={idMedico} />;
   }
 
   return (
@@ -27,7 +27,9 @@ export default function DiagnosticoRapidoModal({
           ✕
         </button>
 
-        <h2 className="text-xl font-bold text-gray-800 mb-4">Consulta Rápida</h2>
+        <h2 className="text-xl font-bold text-gray-800 mb-4">
+          Consulta Rápida
+        </h2>
 
         <div className="flex flex-col gap-6">
           <p className="text-sm text-gray-600">
@@ -42,7 +44,7 @@ export default function DiagnosticoRapidoModal({
               Não
             </button>
             <button
-              onClick={() => setPasso('ao_vivo')}
+              onClick={() => setPasso("ao_vivo")}
               className="flex-1 py-2 bg-[#AAB99F] hover:bg-[#9CB39E] rounded-full text-white font-medium transition-colors shadow-sm"
             >
               Sim
@@ -51,5 +53,5 @@ export default function DiagnosticoRapidoModal({
         </div>
       </div>
     </div>
-  )
+  );
 }
