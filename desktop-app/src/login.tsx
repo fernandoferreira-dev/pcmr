@@ -1,11 +1,12 @@
-import React, { useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import PaginaInicial from './pagina_inicial'
-import viewImg from './assets/imagens/view.png'
-import hideImg from './assets/imagens/hide.png'
 import { useBiometriaLogin } from './hooks/useBiometria'
 
 const AUTH_SESSION_KEY = 'pcmr-auth-session'
 const AUTH_SESSION_DURATION_MS = 60 * 60 * 1000
+
+const viewImg = new URL('./assets/imagens/view.png', import.meta.url).href
+const hideImg = new URL('./assets/imagens/hide.png', import.meta.url).href
 
 type AuthSession = {
   userName: string
@@ -69,6 +70,7 @@ export default function App() {
         expiresAt: Date.now() + AUTH_SESSION_DURATION_MS,
       }
       window.localStorage.setItem(AUTH_SESSION_KEY, JSON.stringify(nextSession))
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setSession(nextSession)
     }
   }, [bioStatus, bioUserData])
@@ -79,6 +81,7 @@ export default function App() {
     const msUntilExpiry = session.expiresAt - Date.now()
     if (msUntilExpiry <= 0) {
       window.localStorage.removeItem(AUTH_SESSION_KEY)
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setSession(null)
       return
     }
@@ -163,7 +166,7 @@ export default function App() {
         const text = await res.text()
         setError(text || 'Erro no servidor')
       }
-    } catch (e) {
+    } catch {
       setError('Não foi possível contactar o servidor')
     } finally {
       setLoading(false)
@@ -173,7 +176,7 @@ export default function App() {
   const handleLoginTeste = () => {
     const testSession = {
       userName: 'Utilizador Teste',
-      userId: 0,
+      userId: 1,
       expiresAt: Date.now() + AUTH_SESSION_DURATION_MS,
     }
     window.localStorage.setItem(AUTH_SESSION_KEY, JSON.stringify(testSession))
@@ -259,38 +262,42 @@ export default function App() {
               </button>
             </div>
 
-            <div className="text-right text-xs text-gray-500 mb-6">Esqueceu-se da palavra-passe?</div>
+            <div className="text-right text-xs text-gray-500 mb-4">Esqueceu-se da palavra-passe?</div>
 
-            {error && <div className="text-sm text-red-600 mb-4">{error}</div>}
-
-            {/* Mensagem biométrica */}
-            {bioStatus !== 'idle' && (
-              <div className={`text-sm mb-4 p-3 rounded-xl ${
-                bioStatus === 'aguardar_dedo' || bioStatus === 'a_processar'
-                  ? 'bg-blue-50 text-blue-700'
-                  : bioStatus === 'sucesso'
-                  ? 'bg-green-50 text-green-700'
-                  : bioStatus === 'timeout'
-                  ? 'bg-yellow-50 text-yellow-700'
-                  : 'bg-red-50 text-red-700'
-              }`}>
-                {bioMensagem}
-                {(bioStatus === 'aguardar_dedo' || bioStatus === 'a_processar') && (
-                  <button
-                    onClick={bioCancelar}
-                    className="ml-2 text-xs underline hover:no-underline"
-                  >
-                    Cancelar
-                  </button>
-                )}
+            <div className="mb-4 min-h-24 flex flex-col gap-3">
+              <div className="min-h-5 text-sm text-red-600">
+                {error ?? <span className="invisible">placeholder</span>}
               </div>
-            )}
+
+              {/* Mensagem biométrica */}
+              {bioStatus !== 'idle' && (
+                <div className={`text-sm p-3 rounded-xl ${
+                  bioStatus === 'aguardar_dedo' || bioStatus === 'a_processar'
+                    ? 'bg-blue-50 text-blue-700'
+                    : bioStatus === 'sucesso'
+                    ? 'bg-green-50 text-green-700'
+                    : bioStatus === 'timeout'
+                    ? 'bg-yellow-50 text-yellow-700'
+                    : 'bg-red-50 text-red-700'
+                }`}>
+                  {bioMensagem}
+                  {(bioStatus === 'aguardar_dedo' || bioStatus === 'a_processar') && (
+                    <button
+                      onClick={bioCancelar}
+                      className="ml-2 text-xs underline hover:no-underline"
+                    >
+                      Cancelar
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
           </div>
 
           <button
             onClick={handleLogin}
             disabled={loading || bioStatus === 'aguardar_dedo' || bioStatus === 'a_processar'}
-            className="mt-4 cursor-pointer disabled:opacity-60 text-white font-semibold py-4 rounded-full text-lg shadow-md w-full bg-gradient-to-r from-green-400 to-green-600"
+            className="mt-4 cursor-pointer disabled:opacity-60 text-white font-semibold py-4 rounded-full text-lg shadow-md w-full bg-linear-to-r from-green-400 to-green-600 transition-all duration-200 ease-out hover:from-green-200 hover:to-green-500 hover:brightness-110 hover:shadow-lg hover:-translate-y-0.5"
           >
             {loading ? 'A processar...' : 'ENTRAR'}
           </button>
@@ -299,7 +306,7 @@ export default function App() {
           <button
             onClick={bioLogin}
             disabled={loading || bioStatus === 'aguardar_dedo' || bioStatus === 'a_processar'}
-            className="mt-3 cursor-pointer disabled:opacity-60 text-white font-semibold py-4 rounded-full text-lg shadow-md w-full bg-gradient-to-r from-emerald-500 to-teal-600 flex items-center justify-center gap-2"
+            className="mt-3 cursor-pointer disabled:opacity-60 text-white font-semibold py-4 rounded-full text-lg shadow-md w-full bg-linear-to-r from-emerald-500 to-teal-600 flex items-center justify-center gap-2 transition-all duration-200 ease-out hover:from-emerald-300 hover:to-teal-500 hover:brightness-110 hover:shadow-lg hover:-translate-y-0.5"
           >
             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M2 12C2 6.5 6.5 2 12 2s10 4.5 10 10" />
@@ -314,7 +321,7 @@ export default function App() {
           <button
             onClick={handleLoginTeste}
             disabled={loading || bioStatus === 'aguardar_dedo' || bioStatus === 'a_processar'}
-            className="mt-3 cursor-pointer disabled:opacity-60 text-white font-semibold py-4 rounded-full text-lg shadow-md w-full bg-gradient-to-r from-green-400 to-green-600"
+            className="mt-3 cursor-pointer disabled:opacity-60 text-white font-semibold py-4 rounded-full text-lg shadow-md w-full bg-linear-to-r from-green-400 to-green-600 transition-all duration-200 ease-out hover:from-green-200 hover:to-green-500 hover:brightness-110 hover:shadow-lg hover:-translate-y-0.5"
           >
             Entrar (Teste)
           </button>
@@ -326,3 +333,4 @@ export default function App() {
     </div>
   )
 }
+

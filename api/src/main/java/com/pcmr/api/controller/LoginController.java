@@ -14,11 +14,13 @@ public class LoginController {
 
     public static class LoginResponse {
         public String nome;
-        public Long userId; // Alterado para Long para alinhar com a base de dados
+        public Long userId;
+        public String tipo; 
 
-        public LoginResponse(String nome, Long userId) {
+        public LoginResponse(String nome, Long userId, String tipo) {
             this.nome = nome;
             this.userId = userId;
+            this.tipo = tipo;
         }
     }
 
@@ -50,8 +52,10 @@ public class LoginController {
 
         if (userOpt.isPresent()) {
             Utilizador user = userOpt.get();
-            // Retorna o username e o ID correto do Utilizador
-            return ResponseEntity.ok(new LoginResponse(user.getUsername(), user.getIdUtilizador()));
+            
+            String tipoUtilizador = user.getTipoUtilizador() != null ? user.getTipoUtilizador().getNome() : "Desconhecido";
+
+            return ResponseEntity.ok(new LoginResponse(user.getUsername(), user.getIdUtilizador(), tipoUtilizador));
         } else {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Parametros inválidos");
         }

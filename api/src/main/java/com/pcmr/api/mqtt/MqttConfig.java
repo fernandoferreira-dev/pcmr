@@ -27,7 +27,6 @@ public class MqttConfig {
     @Value("${MQTT_TOPIC_BIOMETRIA:casa/biometria/acesso}")
     private String topicBiometria;
 
-    // Factory de ligação ao broker
     @Bean
     public MqttPahoClientFactory mqttClientFactory() {
         DefaultMqttPahoClientFactory factory = new DefaultMqttPahoClientFactory();
@@ -39,13 +38,11 @@ public class MqttConfig {
         return factory;
     }
 
-    // Canal onde as mensagens chegam
     @Bean
     public MessageChannel mqttInputChannel() {
         return new DirectChannel();
     }
 
-    // Adapter que subscreve os tópicos (sensors/# + casa/biometria/acesso)
     @Bean
     public MessageProducerSupport mqttInbound() {
         MqttPahoMessageDrivenChannelAdapter adapter =
@@ -53,7 +50,9 @@ public class MqttConfig {
                         "spring-client-" + UUID.randomUUID(),
                         mqttClientFactory(),
                         topicSensors,
-                        topicBiometria
+                        topicBiometria,
+                        "sensor/login",   
+                        "sensor/enroll"   
                 );
         adapter.setCompletionTimeout(5000);
         adapter.setConverter(new DefaultPahoMessageConverter());

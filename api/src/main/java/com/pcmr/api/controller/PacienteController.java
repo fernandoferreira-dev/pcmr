@@ -1,32 +1,25 @@
 package com.pcmr.api.controller;
 
-import com.pcmr.api.model.Paciente;
-import com.pcmr.api.repository.PacienteRepository;
+import com.pcmr.api.model.Pessoa;
+import com.pcmr.api.repository.PessoaRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/pacientes")
 public class PacienteController {
 
     @Autowired
-    private PacienteRepository pacienteRepository;
+    private PessoaRepository pessoaRepository;
 
-    @GetMapping
-    public Iterable<Paciente> listar() {
-        return pacienteRepository.findAll();
-    }
-
-    public static class CriarPacienteRequest {
-        public String nome;
-        public String numeroProcesso;
-    }
-
-    @PostMapping
-    public Paciente criar(@RequestBody CriarPacienteRequest request) {
-        Paciente paciente = new Paciente();
-        paciente.setNome(request.nome);
-        paciente.setNumeroProcesso(request.numeroProcesso);
-        return pacienteRepository.save(paciente);
+    @GetMapping("/procurar")
+    public ResponseEntity<List<Pessoa>> procurar(@RequestParam(required = false) String nome) {
+        if (nome == null || nome.isBlank()) {
+            return ResponseEntity.ok(pessoaRepository.findAll());
+        }
+        return ResponseEntity.ok(pessoaRepository.findByNomeContainingIgnoreCase(nome));
     }
 }

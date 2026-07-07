@@ -1,16 +1,24 @@
 package com.pcmr.api.dto;
 
 public class SensorReadingDTO {
-    private Double bpm;
-    private Double temperatura;
-    private Double humidade;
+    private double temperatura;
+    private int bpm;
+    private double magnitudeG;
+    private int fallState;
+    private boolean alertaQuedaAtivo;
 
-    public Double getBpm() { return bpm; }
-    public void setBpm(Double bpm) { this.bpm = bpm; }
+    public double getTemperatura() { return temperatura; }
+    public void setTemperatura(double temperatura) { this.temperatura = temperatura; }
 
-    public Double getTemperatura() { return temperatura; }
-    public void setTemperatura(Double temperatura) { this.temperatura = temperatura; }
+    public int getBpm() { return bpm; }
+    public void setBpm(int bpm) { this.bpm = bpm; }
 
-    public Double getHumidade() { return humidade; }
-    public void setHumidade(Double humidade) { this.humidade = humidade; }
+    public double getMagnitudeG() { return magnitudeG; }
+    public void setMagnitudeG(double magnitudeG) { this.magnitudeG = magnitudeG; }
+
+    public int getFallState() { return fallState; }
+    public void setFallState(int fallState) { this.fallState = fallState; }
+
+    public boolean isAlertaQuedaAtivo() { return alertaQuedaAtivo; }
+    public void setAlertaQuedaAtivo(boolean alertaQuedaAtivo) { this.alertaQuedaAtivo = alertaQuedaAtivo; }
 }

@@ -24,13 +24,9 @@ interface UseBiometriaRegistoResult {
 }
 
 const POLL_INTERVAL_MS = 2000
-const MAX_POLL_ATTEMPTS = 15 // 30 segundos
+const MAX_POLL_ATTEMPTS = 15
 
-/**
- * Hook para login por impressão digital.
- * Faz polling do endpoint /api/biometria/login/status
- * até obter "autenticado" ou timeout.
- */
+
 export function useBiometriaLogin(): UseBiometriaLoginResult {
   const [status, setStatus] = useState<BiometriaStatus>('idle')
   const [mensagem, setMensagem] = useState('')
@@ -47,6 +43,13 @@ export function useBiometriaLogin(): UseBiometriaLoginResult {
   }, [])
 
   const cancelar = useCallback(() => {
+    if (correlationIdRef.current) {
+      fetch('/api/biometria/login/cancelar', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ correlationId: correlationIdRef.current }),
+      }).catch(() => {})
+    }
     pararPolling()
     correlationIdRef.current = null
     attemptsRef.current = 0
@@ -75,7 +78,6 @@ export function useBiometriaLogin(): UseBiometriaLoginResult {
       correlationIdRef.current = data.correlationId
       attemptsRef.current = 0
 
-      // Iniciar polling
       pollingRef.current = setInterval(async () => {
         if (!correlationIdRef.current) {
           pararPolling()
@@ -92,6 +94,7 @@ export function useBiometriaLogin(): UseBiometriaLoginResult {
 
           if (statusData.status === 'autenticado') {
             pararPolling()
+            correlationIdRef.current = null
             setUserData({
               userId: statusData.userId,
               nome: statusData.nome,
@@ -101,6 +104,7 @@ export function useBiometriaLogin(): UseBiometriaLoginResult {
             setMensagem(`Bem-vindo, ${statusData.nome}!`)
           } else if (attemptsRef.current >= MAX_POLL_ATTEMPTS) {
             pararPolling()
+            correlationIdRef.current = null
             setStatus('timeout')
             setMensagem('Tempo excedido. Tente novamente.')
           }
@@ -116,7 +120,6 @@ export function useBiometriaLogin(): UseBiometriaLoginResult {
     }
   }, [cancelar, pararPolling])
 
-  // Cleanup on unmount
   useEffect(() => {
     return () => pararPolling()
   }, [pararPolling])
@@ -124,20 +127,36 @@ export function useBiometriaLogin(): UseBiometriaLoginResult {
   return { status, mensagem, userData, iniciarLoginBiometria, cancelar }
 }
 
-/**
- * Hook para registo de impressão digital.
- * Envia pedido ao backend que fica bloqueado até o ESP32 responder.
- */
+
 export function useBiometriaRegisto(): UseBiometriaRegistoResult {
   const [status, setStatus] = useState<BiometriaStatus>('idle')
   const [mensagem, setMensagem] = useState('')
+  const statusRef = useRef<BiometriaStatus>('idle')
+  const userIdRef = useRef<number | null>(null)
+
+  useEffect(() => {
+    statusRef.current = status
+  }, [status])
 
   const cancelar = useCallback(() => {
+    if (userIdRef.current !== null) {
+      fetch('/api/biometria/registar/cancelar', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: userIdRef.current }),
+      }).catch(() => {})
+    }
+    userIdRef.current = null
     setStatus('idle')
     setMensagem('')
   }, [])
 
   const iniciarRegisto = useCallback(async (userId: number) => {
+    if (statusRef.current === 'aguardar_dedo' || statusRef.current === 'a_processar') {
+      return
+    }
+
+    userIdRef.current = userId
     setStatus('aguardar_dedo')
     setMensagem('Coloque o dedo no sensor de impressão digital para registo...')
 
@@ -160,6 +179,8 @@ export function useBiometriaRegisto(): UseBiometriaRegistoResult {
     } catch {
       setStatus('erro')
       setMensagem('Erro de comunicação com o servidor')
+    } finally {
+      userIdRef.current = null
     }
   }, [])
 
