@@ -34,8 +34,8 @@ services:
     ports:
       - "3000:80"
     volumes:
-      - ./desktop-app/src:/app/src  # 🔥 Adicione isto
-      - ./desktop-app/index.html:/app/index.html  # Se precisar
+      - ./desktop-app/src:/app/src  
+      - ./desktop-app/index.html:/app/index.html  
     depends_on:
       - spring-app
       - mqtt5
@@ -52,8 +52,8 @@ services:
     ports:
       - "3001:80"
     volumes:
-      - ./mobile-app/src:/app/src  # 🔥 Adicione isto
-      - ./mobile-app/index.html:/app/index.html  # Se precisar
+      - ./mobile-app/src:/app/src  
+      - ./mobile-app/index.html:/app/index.html  
     depends_on:
       - spring-app
       - mqtt5

@@ -1,12 +1,20 @@
-import { type ReactNode, useState } from 'react'
+import { type ReactNode, useState, useEffect } from 'react'
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+} from 'recharts'
 import DadosPessoais from './dados_pessoais'
 import DadosDiagnostico from './Dados_Diagnosticos'
 import Comunicacao from './comunicacao'
 import DadosEquipamentos from './dados_equipamentos'
 import { useBiometriaRegisto } from './hooks/useBiometria'
-// Importar o componente do Modal
-import DiagnosticoRapidoModal from './DiagnosticoRapidoModal' 
-
+import DiagnosticoRapidoModal from './DiagnosticoRapidoModal'
+const userId = 1; 
 const OverviewIcon = new URL("./assets/imagens/infographics.png", import.meta.url).href
 const DadosDiag = new URL("./assets/imagens/Patient-Profile-59.png", import.meta.url).href
 const comunicaicon = new URL("./assets/imagens/phone.png", import.meta.url).href
@@ -51,7 +59,7 @@ const viewTitles: Record<View, string> = {
   dados_diagnostico: 'Dados Diagnósticos',
   comunicacao: 'Comunicação',
   dados_equipamentos: 'Dados Equipamentos',
-  dados_pessoais: 'Dados Pessoais', 
+  dados_pessoais: 'Dados Pessoais',
 }
 
 type PaginaInicialProps = {
@@ -61,92 +69,167 @@ type PaginaInicialProps = {
 }
 
 type OverviewDashboardProps = {
-  onAbrirConsulta: () => void;
+  onAbrirConsulta: () => void
 }
 
-const OverviewDashboard = ({ onAbrirConsulta }: OverviewDashboardProps) => (
-  <div className="flex flex-col gap-4 w-full h-full p-6 bg-[#EBEBEB] rounded-4xl shadow-inner overflow-y-auto">
-    
-    {/* Filtros Superiores */}
-    <div className="text-xs text-gray-500 font-bold tracking-wider shrink-0">
-      DIA | SEMANA | MÊS
-    </div>
+interface DiagnosticosPorMes {
+  mes: string
+  quantidade: number
+}
 
-    {/* Linha de Estatísticas */}
-    <div className="flex shrink-0 bg-white rounded-xl border border-gray-300 overflow-hidden shadow-sm">
-      <div className="flex-1 p-4 flex justify-between items-center border-r border-gray-300">
-        <div>
-          <div className="font-bold text-gray-800 text-sm">Diagnósticos</div>
-          <div className="text-xs text-gray-600">NÚMERO</div>
-          <div className="text-xs text-gray-600">PERCENTAGEM</div>
-        </div>
-        <div className="w-8 h-8 bg-red-500 rounded-full shrink-0 shadow-sm" />
+interface EstatisticasOverview {
+  totalDiagnosticos: number
+  totalPacientes: number
+  diagnosticosPorMes: DiagnosticosPorMes[]
+}
+
+function formatarMesLabel(mesISO: string): string {
+  const [ano, mes] = mesISO.split('-')
+  const nomesMeses = [
+    'Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun',
+    'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez',
+  ]
+  const indice = parseInt(mes, 10) - 1
+  return `${nomesMeses[indice] ?? mes}/${ano.slice(2)}`
+}
+
+const OverviewDashboard = ({ onAbrirConsulta }: OverviewDashboardProps) => {
+  const [stats, setStats] = useState<EstatisticasOverview | null>(null)
+  const [erroStats, setErroStats] = useState<string | null>(null)
+
+  useEffect(() => {
+    const carregarEstatisticas = async () => {
+      try {
+        const res = await fetch('/api/estatisticas/overview')
+        if (!res.ok) {
+          setErroStats('Não foi possível carregar as estatísticas.')
+          return
+        }
+        const data: EstatisticasOverview = await res.json()
+        setStats(data)
+        setErroStats(null)
+      } catch {
+        setErroStats('Erro de comunicação com o servidor.')
+      }
+    }
+
+    carregarEstatisticas()
+  }, [])
+
+  const dadosGrafico =
+    stats?.diagnosticosPorMes.map((p) => ({
+      mes: formatarMesLabel(p.mes),
+      quantidade: p.quantidade,
+    })) ?? []
+
+  return (
+    <div className="flex flex-col gap-4 w-full h-full p-6 bg-[#EBEBEB] rounded-4xl shadow-inner overflow-y-auto">
+
+      {/* Filtros Superiores */}
+      <div className="text-xs text-gray-500 font-bold tracking-wider shrink-0">
+        DIA | SEMANA | MÊS
       </div>
 
-      <div className="flex-1 p-4 flex justify-between items-center border-r border-gray-300">
-        <div>
-          <div className="font-bold text-gray-800 text-sm">Pacientes</div>
-          <div className="text-xs text-gray-600">NÚMERO</div>
-          <div className="text-xs text-gray-600">PERCENTAGEM</div>
-        </div>
-        <div className="w-8 h-8 bg-red-500 rounded-full shrink-0 shadow-sm" />
-      </div>
-
-      <div className="flex-1 p-4 flex justify-between items-center border-r border-gray-300">
-        <div>
-          <div className="font-bold text-gray-800 text-sm">Nó Sensor</div>
-          <div className="text-xs text-gray-600">Estado</div>
-        </div>
-        <div className="w-8 h-8 bg-red-500 rounded-full shrink-0 shadow-sm" />
-      </div>
-
-      <div className="flex-1 p-4 flex justify-between items-center">
-        <div>
-          <div className="font-bold text-gray-800 text-sm">Servidor</div>
-          <div className="text-xs text-gray-600">Estado</div>
-        </div>
-        <div className="w-8 h-8 bg-red-500 rounded-full shrink-0 shadow-sm" />
-      </div>
-    </div>
-
-    <div className="flex flex-col flex-1 min-h-37.5 bg-white rounded-xl border border-gray-300 p-4 shadow-sm">
-      <div className="text-sm font-semibold text-gray-500">Diagnósticos Totais</div>
-      <div className="flex-1 flex items-center justify-center text-3xl font-medium text-gray-800">
-        Gráfico
-      </div>
-    </div>
-
-    <div className="flex flex-col sm:flex-row gap-4 shrink-0 h-auto sm:h-48">
-      <div className="flex-1 bg-white rounded-xl border border-gray-300 p-4 shadow-sm">
-        <div className="text-sm font-bold text-gray-600 mb-2">Notificações</div>
-        <div className="text-xs text-gray-500 uppercase">???</div>
-        <div className="text-xs text-gray-500 uppercase mt-1">???</div>
-      </div>
-
-      {}
-      <div className="flex-1 bg-white rounded-xl border border-gray-300 p-4 shadow-sm flex flex-col">
-        <div className="text-sm font-bold text-gray-600 mb-2">Consulta Rápida</div>
-        <div className="flex-1 bg-[#AAB99F] rounded-xl border border-[#91a086] p-4 flex flex-col justify-between">
-          <div className="w-10 h-10 bg-white/70 rounded-full flex items-center justify-center text-[#AAB99F] text-3xl font-bold shadow-sm">
-            <img src={cruzverde} alt="Diagnóstico" className="w-6 h-6 object-contain"/>
+      {/* Linha de Estatísticas */}
+      <div className="flex shrink-0 bg-white rounded-xl border border-gray-300 overflow-hidden shadow-sm">
+        <div className="flex-1 p-4 flex justify-between items-center border-r border-gray-300">
+          <div>
+            <div className="font-bold text-gray-800 text-sm">Diagnósticos</div>
+            <div className="text-xs text-gray-600">
+              {stats ? stats.totalDiagnosticos : '—'}
+            </div>
           </div>
-          {}
-          <button 
-            onClick={onAbrirConsulta} 
-            className="w-full py-2 bg-white/40 rounded-full text-white font-medium hover:bg-white/50 transition-colors shadow-sm cursor-pointer"
-          >
-            Iniciar Consulta
-          </button>
+          <div className="w-8 h-8 bg-red-500 rounded-full shrink-0 shadow-sm" />
+        </div>
+
+        <div className="flex-1 p-4 flex justify-between items-center border-r border-gray-300">
+          <div>
+            <div className="font-bold text-gray-800 text-sm">Pacientes</div>
+            <div className="text-xs text-gray-600">
+              {stats ? stats.totalPacientes : '—'}
+            </div>
+          </div>
+          <div className="w-8 h-8 bg-red-500 rounded-full shrink-0 shadow-sm" />
+        </div>
+
+        <div className="flex-1 p-4 flex justify-between items-center border-r border-gray-300">
+          <div>
+            <div className="font-bold text-gray-800 text-sm">Nó Sensor</div>
+            <div className="text-xs text-gray-600">Estado</div>
+          </div>
+          <div className="w-8 h-8 bg-red-500 rounded-full shrink-0 shadow-sm" />
+        </div>
+
+        <div className="flex-1 p-4 flex justify-between items-center">
+          <div>
+            <div className="font-bold text-gray-800 text-sm">Servidor</div>
+            <div className="text-xs text-gray-600">Estado</div>
+          </div>
+          <div className="w-8 h-8 bg-red-500 rounded-full shrink-0 shadow-sm" />
+        </div>
+      </div>
+
+      <div className="flex flex-col flex-1 min-h-37.5 bg-white rounded-xl border border-gray-300 p-4 shadow-sm">
+        <div className="text-sm font-semibold text-gray-500 mb-2">
+          Diagnósticos Totais (por mês)
+        </div>
+
+        {erroStats && (
+          <div className="flex-1 flex items-center justify-center text-sm text-red-500">
+            {erroStats}
+          </div>
+        )}
+
+        {!erroStats && dadosGrafico.length === 0 && (
+          <div className="flex-1 flex items-center justify-center text-sm text-gray-400">
+            {stats ? 'Ainda não há diagnósticos registados.' : 'A carregar...'}
+          </div>
+        )}
+
+        {!erroStats && dadosGrafico.length > 0 && (
+          <div className="flex-1 min-h-0">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={dadosGrafico} margin={{ top: 5, right: 10, bottom: 5, left: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                <XAxis dataKey="mes" tick={{ fontSize: 11 }} />
+                <YAxis tick={{ fontSize: 11 }} width={30} allowDecimals={false} />
+                <Tooltip />
+                <Bar dataKey="quantidade" name="Diagnósticos" fill="#AAB99F" radius={[4, 4, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        )}
+      </div>
+
+      <div className="flex flex-col sm:flex-row gap-4 shrink-0 h-auto sm:h-48">
+        <div className="flex-1 bg-white rounded-xl border border-gray-300 p-4 shadow-sm">
+          <div className="text-sm font-bold text-gray-600 mb-2">Notificações</div>
+          <div className="text-xs text-gray-500 uppercase">???</div>
+          <div className="text-xs text-gray-500 uppercase mt-1">???</div>
+        </div>
+
+        <div className="flex-1 bg-white rounded-xl border border-gray-300 p-4 shadow-sm flex flex-col">
+          <div className="text-sm font-bold text-gray-600 mb-2">Consulta Rápida</div>
+          <div className="flex-1 bg-[#AAB99F] rounded-xl border border-[#91a086] p-4 flex flex-col justify-between">
+            <div className="w-10 h-10 bg-white/70 rounded-full flex items-center justify-center text-[#AAB99F] text-3xl font-bold shadow-sm">
+              <img src={cruzverde} alt="Diagnóstico" className="w-6 h-6 object-contain"/>
+            </div>
+            <button
+              onClick={onAbrirConsulta}
+              className="w-full py-2 bg-white/40 rounded-full text-white font-medium hover:bg-white/50 transition-colors shadow-sm cursor-pointer"
+            >
+              Iniciar Consulta
+            </button>
+          </div>
         </div>
       </div>
     </div>
-  </div>
-)
+  )
+}
 
 export default function App({ userName, userId, onLogout }: PaginaInicialProps) {
   const [view, setView] = useState<View>('home')
-  
-  const [modalAberto, setModalAberto] = useState(false) 
+  const [modalAberto, setModalAberto] = useState(false)
 
   const {
     status: bioStatus,
@@ -157,16 +240,16 @@ export default function App({ userName, userId, onLogout }: PaginaInicialProps) 
 
   let content: ReactNode
   if (view === 'dados_diagnostico') content = <DadosDiagnostico />
-  else if (view === 'comunicacao') content = <Comunicacao />
+  else if (view === 'comunicacao') content = <Comunicacao userId={userId} />
   else if (view === 'dados_equipamentos') content = <DadosEquipamentos />
-  else if (view === 'dados_pessoais') content = <DadosPessoais />
+  else if (view === 'dados_pessoais') content = <DadosPessoais userId={userId} />
   else content = <OverviewDashboard onAbrirConsulta={() => setModalAberto(true)} />
 
   return (
     <div className="h-screen w-screen bg-(--background) flex flex-col font-sans overflow-hidden relative">
-      
-      <div className="flex-1 flex p-4 gap-6 overflow-hidden"> 
-        
+
+      <div className="flex-1 flex p-4 gap-6 overflow-hidden">
+
         {/* Barra Lateral */}
         <aside className="w-72 h-full bg-[#AAB99F] rounded-4xl p-6 shadow-md flex flex-col">
           <div className="flex items-center gap-3 mb-10 mt-2">
@@ -185,11 +268,11 @@ export default function App({ userName, userId, onLogout }: PaginaInicialProps) 
 
         {/* Área Principal */}
         <main className="flex-1 flex flex-col min-w-0 pr-4 pt-2 pb-4 overflow-hidden bg-(--background)">
-          
+
           {/* Cabeçalho */}
           <header className="flex justify-between items-center mb-6 px-2 shrink-0">
             <h1 className="text-3xl font-bold text-gray-700">{viewTitles[view]}</h1>
-            
+
             <div className="flex items-center gap-4">
               {/* Botão de Impressão Digital */}
               {bioStatus === 'idle' || bioStatus === 'sucesso' || bioStatus === 'erro' ? (
@@ -229,7 +312,7 @@ export default function App({ userName, userId, onLogout }: PaginaInicialProps) 
                 </div>
               )}
 
-              <button 
+              <button
                 onClick={onLogout}
                 className="flex items-center gap-3 hover:opacity-80 transition-opacity cursor-pointer"
                 title="Clique para fazer Logout"
@@ -250,14 +333,14 @@ export default function App({ userName, userId, onLogout }: PaginaInicialProps) 
           </div>
         </main>
       </div>
-      
+
       <footer className="shrink-0 bg-[#333333] text-gray-400 text-xs py-2 px-6 tracking-wide">
         © 2026 Diogo Rocha - Fernando Ferreira - Jaime Quaresma - João Santos
       </footer>
 
-    {modalAberto && (
-    <DiagnosticoRapidoModal onClose={() => setModalAberto(false)} idMedico={userId} />
-    )}
+      {modalAberto && (
+        <DiagnosticoRapidoModal onClose={() => setModalAberto(false)} idMedico={userId} />
+      )}
     </div>
   )
 }
