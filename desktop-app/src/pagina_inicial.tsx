@@ -6,6 +6,7 @@ import DadosEquipamentos from './dados_equipamentos'
 import { useBiometriaRegisto } from './hooks/useBiometria'
 // Importar o componente do Modal
 import DiagnosticoRapidoModal from './DiagnosticoRapidoModal' 
+import DadosDiagnostico from './Dados_Diagnosticos'
 
 const OverviewIcon = new URL("./assets/imagens/infographics.png", import.meta.url).href
 const DadosDiag = new URL("./assets/imagens/Patient-Profile-59.png", import.meta.url).href
