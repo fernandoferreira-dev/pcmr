@@ -1,7 +1,8 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import NovaMensagemModal from './NovaMensagemModal'
 
-const avatarPlaceholder = new URL('./assets/imagens/infographics.png', import.meta.url).href
+const avatarPlaceholder = new URL('./assets/imagens/image.png', import.meta.url).href
+const maoIcon = new URL('./assets/imagens/maozedong.png', import.meta.url).href
 
 interface Mensagem {
   idMensagem: number
@@ -137,7 +138,7 @@ export default function Comunicacao({ userId }: { userId: number }) {
             <div className="flex items-center justify-between bg-[#AAB99F] px-4 py-3">
               <div className="flex items-center gap-3">
                 <img
-                  src={avatarPlaceholder}
+                  src={maoIcon}
                   alt={m.nomeRemetente}
                   className="w-9 h-9 rounded-full bg-white object-cover shrink-0"
                 />
