@@ -1,6 +1,9 @@
 package com.pcmr.api.service;
 
 import java.time.OffsetDateTime;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import org.springframework.stereotype.Service;
@@ -9,7 +12,6 @@ import org.springframework.stereotype.Service;
 public class LeituraSensorService {
 
     public static class LeituraAtual {
-
         public double temperatura;
         public int bpm;
         public double magnitudeG;
@@ -17,33 +19,15 @@ public class LeituraSensorService {
         public boolean alertaQuedaAtivo;
         public OffsetDateTime atualizadoEm;
 
-        public double getTemperatura() {
-            return temperatura;
-        }
-
-        public int getBpm() {
-            return bpm;
-        }
-
-        public double getMagnitudeG() {
-            return magnitudeG;
-        }
-
-        public int getFallState() {
-            return fallState;
-        }
-
-        public boolean isAlertaQuedaAtivo() {
-            return alertaQuedaAtivo;
-        }
-
-        public OffsetDateTime getAtualizadoEm() {
-            return atualizadoEm;
-        }
+        public double getTemperatura() { return temperatura; }
+        public int getBpm() { return bpm; }
+        public double getMagnitudeG() { return magnitudeG; }
+        public int getFallState() { return fallState; }
+        public boolean isAlertaQuedaAtivo() { return alertaQuedaAtivo; }
+        public OffsetDateTime getAtualizadoEm() { return atualizadoEm; }
     }
 
     public static class SensorReadingDTOWrapper {
-
         public double temperatura;
         public int bpm;
         public double magnitudeG;
@@ -52,7 +36,6 @@ public class LeituraSensorService {
     }
 
     public static class MediaLeituras {
-
         public double temperaturaMedia;
         public int bpmMedio;
         public double magnitudeGMedia;
@@ -60,15 +43,20 @@ public class LeituraSensorService {
         public boolean alertaQuedaOcorreu;
     }
 
-    // Acumulador thread-safe: guarda somas + contagem (valores numéricos),
-    // e uma flag à parte para quedas (não entra na média)
-    private static class Acumulador {
+    public static class PontoHistoricoMemory {
+        public double temperatura;
+        public int bpm;
+        public double magnitudeG;
+        public OffsetDateTime gdhLeitura;
+    }
 
+    private static class Acumulador {
         private double somaTemperatura;
         private long somaBpm;
         private double somaMagnitudeG;
         private int contagem;
         private boolean alertaQuedaOcorreu;
+        private final List<PontoHistoricoMemory> historico = new ArrayList<>();
 
         synchronized void adicionar(SensorReadingDTOWrapper l) {
             somaTemperatura += l.temperatura;
@@ -76,6 +64,13 @@ public class LeituraSensorService {
             somaMagnitudeG += l.magnitudeG;
             contagem++;
             if (l.alertaQuedaAtivo) alertaQuedaOcorreu = true;
+
+            PontoHistoricoMemory ponto = new PontoHistoricoMemory();
+            ponto.temperatura = l.temperatura;
+            ponto.bpm = l.bpm;
+            ponto.magnitudeG = l.magnitudeG;
+            ponto.gdhLeitura = OffsetDateTime.now();
+            historico.add(ponto);
         }
 
         synchronized MediaLeituras calcularMedia() {
@@ -88,17 +83,16 @@ public class LeituraSensorService {
             m.alertaQuedaOcorreu = alertaQuedaOcorreu;
             return m;
         }
+
+        synchronized List<PontoHistoricoMemory> getHistorico() {
+            return new ArrayList<>(historico);
+        }
     }
 
-    private final Map<String, LeituraAtual> leiturasPorDispositivo =
-        new ConcurrentHashMap<>();
-    private final Map<String, Acumulador> acumuladoresPorDispositivo =
-        new ConcurrentHashMap<>();
+    private final Map<String, LeituraAtual> leiturasPorDispositivo = new ConcurrentHashMap<>();
+    private final Map<String, Acumulador> acumuladoresPorDispositivo = new ConcurrentHashMap<>();
 
-    public void registarLeitura(
-        String deviceId,
-        SensorReadingDTOWrapper leitura
-    ) {
+    public void registarLeitura(String deviceId, SensorReadingDTOWrapper leitura) {
         LeituraAtual atual = new LeituraAtual();
         atual.temperatura = leitura.temperatura;
         atual.bpm = leitura.bpm;
@@ -106,11 +100,11 @@ public class LeituraSensorService {
         atual.fallState = leitura.fallState;
         atual.alertaQuedaAtivo = leitura.alertaQuedaAtivo;
         atual.atualizadoEm = OffsetDateTime.now();
-        leiturasPorDispositivo.put(deviceId, atual); // continua a servir o live view
+        leiturasPorDispositivo.put(deviceId, atual);
 
         acumuladoresPorDispositivo
-            .computeIfAbsent(deviceId, id -> new Acumulador())
-            .adicionar(leitura);
+                .computeIfAbsent(deviceId, id -> new Acumulador())
+                .adicionar(leitura);
     }
 
     public LeituraAtual getUltimaLeitura(String deviceId) {
@@ -120,6 +114,11 @@ public class LeituraSensorService {
     public MediaLeituras getMediaLeituras(String deviceId) {
         Acumulador acumulador = acumuladoresPorDispositivo.get(deviceId);
         return acumulador != null ? acumulador.calcularMedia() : null;
+    }
+
+    public List<PontoHistoricoMemory> getLeiturasBrutas(String deviceId) {
+        Acumulador acumulador = acumuladoresPorDispositivo.get(deviceId);
+        return acumulador != null ? acumulador.getHistorico() : Collections.emptyList();
     }
 
     public void limparAcumulador(String deviceId) {

@@ -166,13 +166,16 @@ export default function DadosDiagnostico() {
                       className="grid grid-cols-[0.9fr_1.2fr_1fr_0.8fr] items-center gap-3 px-4 py-3 text-sm text-[#505050]"
                     >
                       <div className="flex items-center gap-2">
-                        <button className="inline-flex h-8 items-center rounded-full border border-[#a5a5a5] bg-[#e8e8e8] px-3 text-xs font-semibold text-[#4d4d4d] shadow-sm transition hover:bg-[#e1e1e1]">
-                          Exportar
-                        </button>
-                        <span className="font-semibold text-[#404040]">
-                          #{item.id}
-                        </span>
-                      </div>
+  <button 
+    onClick={() => window.open(`http://localhost:8080/api/diagnosticos/${item.id}/exportar`, "_blank")}
+    className="inline-flex h-8 items-center rounded-full border border-[#a5a5a5] bg-[#e8e8e8] px-3 text-xs font-semibold text-[#4d4d4d] shadow-sm transition hover:bg-[#e1e1e1] cursor-pointer"
+  >
+    Exportar
+  </button>
+  <span className="font-semibold text-[#404040]">
+    #{item.id}
+  </span>
+</div>
                       <span>{item.patient}</span>
                       <span>{formatarData(item.date)}</span>
                       <span className="truncate" title={item.status}>

@@ -1,51 +1,49 @@
 package com.pcmr.api.controller;
 
-import org.springframework.web.bind.annotation.CrossOrigin;
+import com.pcmr.api.dto.DiagnosticoResponseDTO;
 import com.pcmr.api.model.Diagnostico;
 import com.pcmr.api.repository.DiagnosticoRepository;
-import com.pcmr.api.repository.PessoaRepository;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/diagnosticos")
-@CrossOrigin(origins = {"http://localhost:3000", "http://localhost:3001"})
+@CrossOrigin(origins = "*")
 public class DiagnosticoController {
 
     @Autowired
     private DiagnosticoRepository diagnosticoRepository;
 
-    @Autowired
-    private PessoaRepository pessoaRepository;
+    @GetMapping
+    public List<DiagnosticoResponseDTO> listarTodos() {
+        List<Diagnostico> diagnosticos = diagnosticoRepository.findAll();
 
-    @GetMapping("/dashboard")
-    public ResponseEntity<?> getDashboardData() {
-        // Conta o número total de registos
-        long totalPacientes = pessoaRepository.count();
-        long totalDiagnosticos = diagnosticoRepository.count();
+        return diagnosticos.stream().map(diag -> {
+            DiagnosticoResponseDTO dto = new DiagnosticoResponseDTO();
+            
+            dto.setId(diag.getIdDiagnostico());
+            dto.setDate(diag.getGdhDiagnostico());
+            dto.setTemperatura(diag.getTemperatura());
+            dto.setBpm(diag.getBpm());
+            dto.setMagnitudeG(diag.getMagnitudeG());
+            dto.setRelacaoCausaEfeito(diag.getRelacaoCausaEfeito());
 
-        // Vai buscar todos os diagnósticos e mapeia para um formato amigável para o frontend
-        List<Map<String, Object>> diagnosticosList = diagnosticoRepository.findAll().stream().map(d -> {
-            return Map.<String, Object>of(
-                "id", d.getIdDiagnostico(),
-                "patient", d.getConsulta().getPaciente().getNome(),
-                "date", d.getGdhDiagnostico().toString(),
-                "status", d.getRelacaoCausaEfeito() != null ? d.getRelacaoCausaEfeito() : "Sem Observações"
-            );
+            if (diag.getConsulta() != null) {
+                dto.setStatus(diag.getConsulta().getObservacoes());
+                
+                if (diag.getConsulta().getPaciente() != null) {
+                    dto.setPatient(diag.getConsulta().getPaciente().getNome());
+                } else {
+                    dto.setPatient("Paciente não associado");
+                }
+            } else {
+                dto.setStatus("Sem observações");
+                dto.setPatient("Sem consulta associada");
+            }
+            return dto;
         }).collect(Collectors.toList());
-
-        // Devolve tudo num único objeto JSON
-        return ResponseEntity.ok(Map.of(
-            "totalPacientes", totalPacientes,
-            "totalDiagnosticos", totalDiagnosticos,
-            "diagnosticos", diagnosticosList
-        ));
     }
 }
