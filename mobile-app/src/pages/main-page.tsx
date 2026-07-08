@@ -43,12 +43,12 @@ export default function MainPage({ username, phonenumber, email, birthDate, sele
       case "records":
         return <ClientInfoPage />;
       default:
-        return <AdminDashboardComponent />;
-    }
-  };
-
-  return (
-    <>
+        return <AdminDashboardComponent username={username} />;
+      }
+    };
+    
+    return (
+      <>
       <div className="header-container">
         <div className="header-row">
           <h1 className="header-page-title">{pageTitles[view]}</h1>
@@ -58,7 +58,6 @@ export default function MainPage({ username, phonenumber, email, birthDate, sele
           </div>
         </div>
       </div>
-      <h1>Bem vindo, {username || "Admin"}</h1>
       {renderView()}
       <NavBarComponent onNavigate={setView} />
     </>

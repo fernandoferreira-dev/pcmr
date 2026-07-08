@@ -3,7 +3,9 @@ import '../../styles/dashboard-styles/dashboard-styles.css';
 import '../../styles/dashboard-styles/notification-box.css';
 import NotificationBoxComponent from './notifications-box-component';
 
-export default function AdminDashboardComponent() {
+type Props = { username: string };
+
+export default function AdminDashboardComponent({ username }: Props) {
   const isServerOk = true;
   const isSensorOk = true;
 
@@ -28,6 +30,7 @@ export default function AdminDashboardComponent() {
     <>
       <div className="main-page">
         { /* Admin deverá ser o username do utilizador */ }
+        <h1>Bem vindo, {username || "Admin"}</h1>
         <div className="mainbox">
           <DiagnosticButtonComponent />
           <div className="main-page-states">
