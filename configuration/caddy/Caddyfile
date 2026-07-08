@@ -1,0 +1,3 @@
+app.fernandoferreira.dev {
+    reverse_proxy desktop-app:80
+}
