@@ -26,16 +26,22 @@ export default function DadosDiagnostico() {
     diagnosticos: [],
   });
   const [loading, setLoading] = useState(true);
+  const [erro, setErro] = useState<string | null>(null);
 
   useEffect(() => {
-    fetch("http://localhost:8080/api/diagnosticos/dashboard")
-      .then((response) => response.json())
+    fetch("/api/diagnosticos/dashboard")
+      .then((response) => {
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        return response.json();
+      })
       .then((result: DashboardData) => {
         setData(result);
+        setErro(null);
         setLoading(false);
       })
       .catch((error) => {
         console.error("Erro ao buscar dados do dashboard:", error);
+        setErro("Não foi possível carregar os dados de diagnóstico.");
         setLoading(false);
       });
   }, []);
@@ -55,6 +61,13 @@ export default function DadosDiagnostico() {
   return (
     <div className="flex h-full w-full flex-col overflow-hidden rounded-4xl bg-(--background) p-3 shadow-inner sm:p-4">
       <div className="flex h-full min-h-0 w-full flex-col gap-3 overflow-hidden">
+
+        {erro && (
+          <div className="bg-yellow-50 border border-yellow-300 text-yellow-700 rounded-2xl px-4 py-3 text-sm">
+            {erro}
+          </div>
+        )}
+
         <section className="grid gap-3 md:grid-cols-2">
           {/* Card: Pacientes */}
           <article className="flex items-center justify-between rounded-3xl border border-[#a9a9a9] bg-[#ececec] px-4 py-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.65)] sm:px-5 sm:py-4">
@@ -89,7 +102,6 @@ export default function DadosDiagnostico() {
           </article>
         </section>
 
-        {/* ... Secção de Filtros mantém-se inalterada ... */}
         <section className="rounded-[1.6rem] border border-[#a9a9a9] bg-[#dedede] px-4 py-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.7)] sm:px-5 sm:py-4">
           <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
             <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:gap-3">
@@ -166,16 +178,13 @@ export default function DadosDiagnostico() {
                       className="grid grid-cols-[0.9fr_1.2fr_1fr_0.8fr] items-center gap-3 px-4 py-3 text-sm text-[#505050]"
                     >
                       <div className="flex items-center gap-2">
-  <button 
-    onClick={() => window.open(`http://localhost:8080/api/diagnosticos/${item.id}/exportar`, "_blank")}
-    className="inline-flex h-8 items-center rounded-full border border-[#a5a5a5] bg-[#e8e8e8] px-3 text-xs font-semibold text-[#4d4d4d] shadow-sm transition hover:bg-[#e1e1e1] cursor-pointer"
-  >
-    Exportar
-  </button>
-  <span className="font-semibold text-[#404040]">
-    #{item.id}
-  </span>
-</div>
+                        <button className="inline-flex h-8 items-center rounded-full border border-[#a5a5a5] bg-[#e8e8e8] px-3 text-xs font-semibold text-[#4d4d4d] shadow-sm transition hover:bg-[#e1e1e1]">
+                          Exportar
+                        </button>
+                        <span className="font-semibold text-[#404040]">
+                          #{item.id}
+                        </span>
+                      </div>
                       <span>{item.patient}</span>
                       <span>{formatarData(item.date)}</span>
                       <span className="truncate" title={item.status}>

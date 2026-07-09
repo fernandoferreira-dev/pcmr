@@ -31,6 +31,8 @@ services:
       context: ./desktop-app
       dockerfile: Dockerfile
     container_name: desktop_app_container
+    ports:
+      - "3000:80"
     expose:
       - "80"
     volumes:
@@ -77,12 +79,13 @@ services:
     restart: unless-stopped
 
   # HTTPS Reverse Proxy
+  # HTTPS Reverse Proxy
   caddy:
     image: caddy:latest
     container_name: caddy
     restart: unless-stopped
     ports:
-      - "80:80"
+      - "80:80"   # <--- Add this line
       - "443:443"
     volumes:
       - ./configuration/caddy/Caddyfile:/etc/caddy/Caddyfile:ro

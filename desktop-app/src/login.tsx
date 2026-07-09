@@ -292,17 +292,13 @@ export default function App() {
                 </button>
               </div>
 
-              <div className="text-right text-xs text-gray-500 mb-2">
-                Esqueceu-se da palavra-passe?
-              </div>
+             <div className="text-right text-xs text-gray-500 mb-4">Esqueceu-se da palavra-passe?</div>
 
               {/* Bloco de Mensagens dinâmico (sem min-h fixo) */}
-              <div className="flex flex-col gap-2 mb-2">
-                {error && (
-                  <div className="text-sm text-red-600">
-                    {error}
-                  </div>
-                )}
+              <div className="mb-4 min-h-24 flex flex-col gap-3">
+              <div className="min-h-5 text-sm text-red-600">
+                {error ?? <span className="invisible">placeholder</span>}
+              </div>
 
                 {/* Mensagem biométrica */}
                 {bioStatus !== "idle" && (

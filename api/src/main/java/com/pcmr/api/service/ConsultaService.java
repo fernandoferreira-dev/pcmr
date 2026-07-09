@@ -6,6 +6,7 @@ import com.pcmr.api.repository.*;
 import java.math.BigDecimal;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -28,7 +29,7 @@ public class ConsultaService {
     private LeituraSensorService leituraSensorService;
 
     @Autowired
-    private HistoricoSensorRepository historicoSensorRepository;
+    private JdbcTemplate jdbcTemplate;
 
     @Transactional
     public Diagnostico finalizarConsulta(FinalizarConsultaRequestDTO req) {
@@ -76,24 +77,30 @@ public class ConsultaService {
 
         Diagnostico guardado = diagnosticoRepository.save(diagnostico);
 
-        // PERSISTÊNCIA DO HISTÓRICO TEMPORAL DA RAM PARA A BD
-        List<LeituraSensorService.PontoHistoricoMemory> leiturasRam = leituraSensorService.getLeiturasBrutas(req.getDeviceId());
+        List<LeituraSensorService.PontoHistoricoMemory> leiturasRam =
+                leituraSensorService.getLeiturasBrutas(req.getDeviceId());
+
         if (leiturasRam != null && !leiturasRam.isEmpty()) {
-            List<HistoricoSensor> historicoDb = leiturasRam.stream().map(pontoRam -> {
-                HistoricoSensor pontoDb = new HistoricoSensor();
-                pontoDb.setDiagnostico(guardado);
-                pontoDb.setTemperatura(BigDecimal.valueOf(pontoRam.temperatura));
-                pontoDb.setBpm(pontoRam.bpm);
-                pontoDb.setMagnitudeG(BigDecimal.valueOf(pontoRam.magnitudeG));
-                pontoDb.setGdhLeitura(pontoRam.gdhLeitura);
-                return pontoDb;
-            }).toList();
-            
-            historicoSensorRepository.saveAll(historicoDb);
+            inserirHistoricoEmLote(guardado.getIdDiagnostico(), leiturasRam);
         }
 
         leituraSensorService.limparAcumulador(req.getDeviceId());
         return guardado;
+    }
+
+    private void inserirHistoricoEmLote(Long idDiagnostico, List<LeituraSensorService.PontoHistoricoMemory> leituras) {
+        String sql = """
+            INSERT INTO historico_sensor (id_diagnostico, gdh_leitura, temperatura, bpm, magnitude_g)
+            VALUES (?, ?, ?, ?, ?)
+            """;
+
+        jdbcTemplate.batchUpdate(sql, leituras, 100, (ps, ponto) -> {
+            ps.setLong(1, idDiagnostico);
+            ps.setObject(2, ponto.gdhLeitura);
+            ps.setBigDecimal(3, BigDecimal.valueOf(ponto.temperatura));
+            ps.setInt(4, ponto.bpm);
+            ps.setBigDecimal(5, BigDecimal.valueOf(ponto.magnitudeG));
+        });
     }
 
     private Pessoa resolverPaciente(FinalizarConsultaRequestDTO req) {
