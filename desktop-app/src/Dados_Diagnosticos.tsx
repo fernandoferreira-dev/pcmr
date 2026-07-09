@@ -4,7 +4,18 @@ import {
   CalendarDays,
   Stethoscope,
 } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+} from "recharts";
+import jsPDF from "jspdf";
+import html2canvas from "html2canvas";
 
 interface Diagnostico {
   id: number;
@@ -19,6 +30,20 @@ interface DashboardData {
   diagnosticos: Diagnostico[];
 }
 
+interface PontoHistorico {
+  gdhLeitura: string;
+  temperatura: number;
+  bpm: number;
+  magnitudeG: number;
+}
+
+interface PontoGraficoExport {
+  hora: string;
+  temperatura: number;
+  bpm: number;
+  magnitudeG: number;
+}
+
 export default function DadosDiagnostico() {
   const [data, setData] = useState<DashboardData>({
     totalPacientes: 0,
@@ -27,6 +52,11 @@ export default function DadosDiagnostico() {
   });
   const [loading, setLoading] = useState(true);
   const [erro, setErro] = useState<string | null>(null);
+
+  const [exportandoId, setExportandoId] = useState<number | null>(null);
+  const [dadosExport, setDadosExport] = useState<PontoGraficoExport[] | null>(null);
+  const [diagnosticoExport, setDiagnosticoExport] = useState<Diagnostico | null>(null);
+  const chartRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     fetch("/api/diagnosticos/dashboard")
@@ -57,6 +87,93 @@ export default function DadosDiagnostico() {
       })
     );
   };
+
+  const iniciarExportacao = async (item: Diagnostico) => {
+    setExportandoId(item.id);
+    setDiagnosticoExport(item);
+    setDadosExport(null);
+
+    try {
+      const res = await fetch(`/api/diagnosticos/${item.id}/historico`);
+      if (!res.ok) {
+        alert("Não foi possível obter o histórico deste diagnóstico.");
+        setExportandoId(null);
+        return;
+      }
+
+      const pontos: PontoHistorico[] = await res.json();
+
+      const dadosFormatados: PontoGraficoExport[] = pontos.map((p) => ({
+        hora: new Date(p.gdhLeitura).toLocaleTimeString("pt-PT"),
+        temperatura: p.temperatura,
+        bpm: p.bpm,
+        magnitudeG: p.magnitudeG,
+      }));
+
+      setDadosExport(dadosFormatados);
+    } catch (error) {
+      console.error("Erro ao carregar histórico:", error);
+      alert("Erro de comunicação ao carregar o histórico.");
+      setExportandoId(null);
+    }
+  };
+
+  // Assim que o gráfico oculto tiver dados e estiver montado no DOM,
+  // captura-o como imagem e gera o PDF.
+  useEffect(() => {
+    if (!dadosExport || !diagnosticoExport || !chartRef.current) return;
+
+    const gerarPdf = async () => {
+      // pequena espera para garantir que o recharts terminou de desenhar
+      await new Promise((resolve) => setTimeout(resolve, 300));
+
+      try {
+        const canvas = await html2canvas(chartRef.current!, {
+          backgroundColor: "#ffffff",
+          scale: 2,
+        });
+        const imagemGrafico = canvas.toDataURL("image/png");
+
+        const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
+
+        doc.setFontSize(18);
+        doc.text("Relatório de Diagnóstico", 15, 20);
+
+        doc.setFontSize(11);
+        doc.text(`Diagnóstico #${diagnosticoExport.id}`, 15, 30);
+        doc.text(`Paciente: ${diagnosticoExport.patient}`, 15, 37);
+        doc.text(`Data: ${formatarData(diagnosticoExport.date)}`, 15, 44);
+
+        doc.setFontSize(12);
+        doc.text("Observações:", 15, 55);
+        doc.setFontSize(10);
+        const observacoesTexto = diagnosticoExport.status || "Sem observações";
+        const linhasObservacoes = doc.splitTextToSize(observacoesTexto, 180);
+        doc.text(linhasObservacoes, 15, 62);
+
+        const alturaObservacoes = linhasObservacoes.length * 5;
+        const yGrafico = 62 + alturaObservacoes + 10;
+
+        doc.setFontSize(12);
+        doc.text("Evolução dos Sensores durante a Consulta:", 15, yGrafico);
+
+        const larguraImagem = 180;
+        const alturaImagem = (canvas.height / canvas.width) * larguraImagem;
+        doc.addImage(imagemGrafico, "PNG", 15, yGrafico + 5, larguraImagem, alturaImagem);
+
+        doc.save(`diagnostico_${diagnosticoExport.id}.pdf`);
+      } catch (error) {
+        console.error("Erro ao gerar PDF:", error);
+        alert("Erro ao gerar o PDF.");
+      } finally {
+        setExportandoId(null);
+        setDadosExport(null);
+        setDiagnosticoExport(null);
+      }
+    };
+
+    gerarPdf();
+  }, [dadosExport, diagnosticoExport]);
 
   return (
     <div className="flex h-full w-full flex-col overflow-hidden rounded-4xl bg-(--background) p-3 shadow-inner sm:p-4">
@@ -178,8 +295,12 @@ export default function DadosDiagnostico() {
                       className="grid grid-cols-[0.9fr_1.2fr_1fr_0.8fr] items-center gap-3 px-4 py-3 text-sm text-[#505050]"
                     >
                       <div className="flex items-center gap-2">
-                        <button className="inline-flex h-8 items-center rounded-full border border-[#a5a5a5] bg-[#e8e8e8] px-3 text-xs font-semibold text-[#4d4d4d] shadow-sm transition hover:bg-[#e1e1e1]">
-                          Exportar
+                        <button
+                          onClick={() => iniciarExportacao(item)}
+                          disabled={exportandoId !== null}
+                          className="inline-flex h-8 items-center rounded-full border border-[#a5a5a5] bg-[#e8e8e8] px-3 text-xs font-semibold text-[#4d4d4d] shadow-sm transition hover:bg-[#e1e1e1] disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          {exportandoId === item.id ? "A exportar..." : "Exportar"}
                         </button>
                         <span className="font-semibold text-[#404040]">
                           #{item.id}
@@ -198,6 +319,56 @@ export default function DadosDiagnostico() {
           </div>
         </section>
       </div>
+
+      {/* Gráfico oculto, usado apenas como fonte de captura para o PDF.
+          Fica fora do ecrã em vez de display:none, porque html2canvas
+          não consegue capturar corretamente elementos com display:none. */}
+      {dadosExport && (
+        <div
+          style={{ position: "fixed", top: "-9999px", left: "-9999px" }}
+        >
+          <div ref={chartRef} style={{ width: 700, height: 350, backgroundColor: "#ffffff", padding: 16 }}>
+            <LineChart width={668} height={318} data={dadosExport}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+              <XAxis dataKey="hora" tick={{ fontSize: 11 }} />
+              <YAxis yAxisId="temp" tick={{ fontSize: 11 }} width={40} />
+              <YAxis yAxisId="bpm" orientation="right" tick={{ fontSize: 11 }} width={40} />
+              <Tooltip />
+              <Legend wrapperStyle={{ fontSize: 12 }} />
+              <Line
+                yAxisId="temp"
+                type="monotone"
+                dataKey="temperatura"
+                name="Temperatura (°C)"
+                stroke="#f97316"
+                strokeWidth={2}
+                dot={false}
+                isAnimationActive={false}
+              />
+              <Line
+                yAxisId="bpm"
+                type="monotone"
+                dataKey="bpm"
+                name="BPM"
+                stroke="#dc2626"
+                strokeWidth={2}
+                dot={false}
+                isAnimationActive={false}
+              />
+              <Line
+                yAxisId="temp"
+                type="monotone"
+                dataKey="magnitudeG"
+                name="Magnitude (G)"
+                stroke="#2563eb"
+                strokeWidth={2}
+                dot={false}
+                isAnimationActive={false}
+              />
+            </LineChart>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

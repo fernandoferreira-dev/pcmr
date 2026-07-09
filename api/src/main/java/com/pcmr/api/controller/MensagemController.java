@@ -33,6 +33,14 @@ public class MensagemController {
         return ResponseEntity.ok(mensagemService.listarRecebidas(userId, pesquisa));
     }
 
+    @GetMapping("/enviadas")
+    public ResponseEntity<List<MensagemDTO>> enviadas(
+            @RequestParam Long userId,
+            @RequestParam(required = false) String pesquisa
+    ) {
+        return ResponseEntity.ok(mensagemService.listarEnviadas(userId, pesquisa));
+    }
+
     @PostMapping
     public ResponseEntity<?> enviar(@RequestBody NovaMensagemRequestDTO req) {
         try {
