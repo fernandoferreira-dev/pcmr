@@ -200,13 +200,15 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-green-50 flex items-center justify-center p-4 sm:p-6">
+    <div className="min-h-screen bg-green-50 flex items-center justify-center p-4">
       <div className="w-full flex flex-col items-center">
-        <div className="w-full max-w-6xl bg-white rounded-3xl shadow-2xl p-6 sm:p-8 flex flex-col md:flex-row gap-6">
-          {/* Esquerda */}
-          <div className="hidden md:flex flex-1 bg-green-100 rounded-xl p-6 items-center justify-center">
+        {/* Adicionado items-stretch para as colunas terem a mesma altura */}
+        <div className="w-full max-w-5xl bg-white rounded-3xl shadow-2xl p-5 sm:p-7 flex flex-col md:flex-row gap-6 items-stretch">
+          
+          {/* Esquerda - O container verde com p-3 cria uma moldura fina */}
+          <div className="hidden md:flex flex-1 bg-green-100 rounded-2xl p-3">
             <div
-              className="w-full h-48 sm:h-72 md:h-96 rounded-2xl bg-white shadow-inner overflow-hidden flex items-center justify-center"
+              className="w-full h-full rounded-xl bg-white shadow-inner overflow-hidden flex items-center justify-center min-h-[350px]"
               style={{ filter: "brightness(1.03) saturate(1.08) sepia(0.04)" }}
             >
               <img
@@ -218,13 +220,13 @@ export default function App() {
           </div>
 
           {/* Direita */}
-          <div className="w-full md:w-96 bg-white rounded-xl p-6 sm:p-8 flex flex-col justify-between">
+          <div className="w-full md:w-96 bg-white rounded-xl flex flex-col justify-center py-2">
             <div>
-              <h2 className="text-2xl sm:text-3xl font-semibold text-gray-700 mb-6 text-center">
+              <h2 className="text-2xl sm:text-3xl font-semibold text-gray-700 mb-5 text-center">
                 MedyCist
               </h2>
 
-              <label className="block text-base sm:text-lg text-gray-600 mb-2">
+              <label className="block text-sm sm:text-base text-gray-600 mb-1">
                 Utilizador
               </label>
               <div className="relative mb-4">
@@ -240,7 +242,7 @@ export default function App() {
                   }}
                   className={
                     `w-full mb-0 pl-4 pr-4 py-3 bg-gray-100 placeholder-gray-500 text-gray-700 rounded-xl focus:outline-none ` +
-                    `focus:ring-2 focus:ring-green-300 ` +
+                    `focus:ring-2 focus:ring-green-300 transition-all ` +
                     (usernameError
                       ? "ring-4 ring-red-500 border-red-500"
                       : "border border-transparent")
@@ -249,7 +251,7 @@ export default function App() {
                 />
               </div>
 
-              <label className="block text-base sm:text-lg text-gray-600 mb-2">
+              <label className="block text-sm sm:text-base text-gray-600 mb-1">
                 Palavra-passe
               </label>
               <div className="relative mb-2">
@@ -266,7 +268,7 @@ export default function App() {
                   type={showPassword ? "text" : "password"}
                   className={
                     `w-full mb-0 pl-4 pr-12 py-3 bg-gray-100 placeholder-gray-500 text-gray-700 rounded-xl focus:outline-none ` +
-                    `focus:ring-2 focus:ring-green-300 ` +
+                    `focus:ring-2 focus:ring-green-300 transition-all ` +
                     (passwordError
                       ? "ring-4 ring-red-500 border-red-500"
                       : "border border-transparent")
@@ -292,18 +294,22 @@ export default function App() {
                 </button>
               </div>
 
-             <div className="text-right text-xs text-gray-500 mb-4">Esqueceu-se da palavra-passe?</div>
-
-              {/* Bloco de Mensagens dinâmico (sem min-h fixo) */}
-              <div className="mb-4 min-h-24 flex flex-col gap-3">
-              <div className="min-h-5 text-sm text-red-600">
-                {error ?? <span className="invisible">placeholder</span>}
+              <div className="text-right text-xs text-gray-500 mb-2 hover:text-green-600 cursor-pointer">
+                 Esqueceu-se da palavra-passe?
               </div>
+              
+              {/* Bloco de Mensagens dinâmico - agora afeta o layout da página */}
+              <div className="flex flex-col gap-2 mb-3">
+                {error && (
+                  <div className="text-sm text-red-600 font-medium transition-all">
+                    {error}
+                  </div>
+                )}
 
                 {/* Mensagem biométrica */}
                 {bioStatus !== "idle" && (
                   <div
-                    className={`text-sm p-3 rounded-xl ${
+                    className={`text-xs p-2.5 rounded-xl transition-all ${
                       bioStatus === "aguardar_dedo" ||
                       bioStatus === "a_processar"
                         ? "bg-blue-50 text-blue-700"
@@ -319,7 +325,7 @@ export default function App() {
                       bioStatus === "a_processar") && (
                       <button
                         onClick={bioCancelar}
-                        className="ml-2 text-xs underline hover:no-underline"
+                        className="ml-2 text-xs font-semibold underline hover:no-underline"
                       >
                         Cancelar
                       </button>
@@ -329,63 +335,65 @@ export default function App() {
               </div>
             </div>
 
-            <button
-              onClick={handleLogin}
-              disabled={
-                loading ||
-                bioStatus === "aguardar_dedo" ||
-                bioStatus === "a_processar"
-              }
-              className="mt-2 cursor-pointer disabled:opacity-60 text-white font-semibold py-4 rounded-full text-lg shadow-md w-full bg-linear-to-r from-green-400 to-green-600 transition-all duration-200 ease-out hover:from-green-200 hover:to-green-500 hover:brightness-110 hover:shadow-lg hover:-translate-y-0.5"
-            >
-              {loading ? "A processar..." : "ENTRAR"}
-            </button>
-
-            {/* Botão de Impressão Digital */}
-            <button
-              onClick={bioLogin}
-              disabled={
-                loading ||
-                bioStatus === "aguardar_dedo" ||
-                bioStatus === "a_processar"
-              }
-              className="mt-3 cursor-pointer disabled:opacity-60 text-white font-semibold py-4 rounded-full text-lg shadow-md w-full bg-linear-to-r from-emerald-500 to-teal-600 flex items-center justify-center gap-2 transition-all duration-200 ease-out hover:from-emerald-300 hover:to-teal-500 hover:brightness-110 hover:shadow-lg hover:-translate-y-0.5"
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="24"
-                height="24"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
+            <div className="flex flex-col gap-3">
+              <button
+                onClick={handleLogin}
+                disabled={
+                  loading ||
+                  bioStatus === "aguardar_dedo" ||
+                  bioStatus === "a_processar"
+                }
+                className="cursor-pointer disabled:opacity-60 text-white font-semibold py-3.5 rounded-full text-base sm:text-lg shadow-md w-full bg-linear-to-r from-green-400 to-green-600 transition-all duration-200 ease-out hover:from-green-200 hover:to-green-500 hover:brightness-110 hover:shadow-lg hover:-translate-y-0.5"
               >
-                <path d="M2 12C2 6.5 6.5 2 12 2s10 4.5 10 10" />
-                <path d="M5 12C5 8.1 8.1 5 12 5s7 3.1 7 7" />
-                <path d="M8 12c0-2.2 1.8-4 4-4s4 1.8 4 4" />
-                <circle cx="12" cy="12" r="2" />
-                <path d="M2 12h20" />
-              </svg>
-              Entrar com Impressão Digital
-            </button>
+                {loading ? "A processar..." : "ENTRAR"}
+              </button>
 
-            <button
-              onClick={handleLoginTeste}
-              disabled={
-                loading ||
-                bioStatus === "aguardar_dedo" ||
-                bioStatus === "a_processar"
-              }
-              className="mt-3 cursor-pointer disabled:opacity-60 text-white font-semibold py-4 rounded-full text-lg shadow-md w-full bg-linear-to-r from-green-400 to-green-600 transition-all duration-200 ease-out hover:from-green-200 hover:to-green-500 hover:brightness-110 hover:shadow-lg hover:-translate-y-0.5"
-            >
-              Entrar (Teste)
-            </button>
+              {/* Botão de Impressão Digital */}
+              <button
+                onClick={bioLogin}
+                disabled={
+                  loading ||
+                  bioStatus === "aguardar_dedo" ||
+                  bioStatus === "a_processar"
+                }
+                className="cursor-pointer disabled:opacity-60 text-white font-semibold py-3.5 rounded-full text-base sm:text-lg shadow-md w-full bg-linear-to-r from-emerald-500 to-teal-600 flex items-center justify-center gap-2 transition-all duration-200 ease-out hover:from-emerald-300 hover:to-teal-500 hover:brightness-110 hover:shadow-lg hover:-translate-y-0.5"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="20"
+                  height="20"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d="M2 12C2 6.5 6.5 2 12 2s10 4.5 10 10" />
+                  <path d="M5 12C5 8.1 8.1 5 12 5s7 3.1 7 7" />
+                  <path d="M8 12c0-2.2 1.8-4 4-4s4 1.8 4 4" />
+                  <circle cx="12" cy="12" r="2" />
+                  <path d="M2 12h20" />
+                </svg>
+                Entrar com Impressão Digital
+              </button>
+
+              <button
+                onClick={handleLoginTeste}
+                disabled={
+                  loading ||
+                  bioStatus === "aguardar_dedo" ||
+                  bioStatus === "a_processar"
+                }
+                className="cursor-pointer disabled:opacity-60 text-white font-semibold py-3.5 rounded-full text-base sm:text-lg shadow-md w-full bg-linear-to-r from-green-400 to-green-600 transition-all duration-200 ease-out hover:from-green-200 hover:to-green-500 hover:brightness-110 hover:shadow-lg hover:-translate-y-0.5"
+              >
+                Entrar (Teste)
+              </button>
+            </div>
           </div>
         </div>
 
-        <footer className="w-full max-w-6xl mt-6 text-center text-sm text-gray-500">
+        <footer className="w-full max-w-5xl mt-5 text-center text-xs text-gray-500">
           © {new Date().getFullYear()} Diogo Rocha - Fernando Ferreira - Jaime
           Quaresma - João Santos.
         </footer>

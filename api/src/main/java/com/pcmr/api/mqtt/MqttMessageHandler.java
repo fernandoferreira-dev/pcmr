@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.pcmr.api.dto.SensorReadingDTO;
 import com.pcmr.api.service.BiometriaService;
 import com.pcmr.api.service.LeituraSensorService;
+import com.pcmr.api.service.PresencaService; // Certifica-te que este import corresponde ao teu projeto
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.integration.annotation.ServiceActivator;
 import org.springframework.messaging.Message;
@@ -19,6 +20,9 @@ public class MqttMessageHandler {
     @Autowired
     private BiometriaService biometriaService;
 
+    @Autowired
+    private PresencaService presencaService;
+
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     @ServiceActivator(inputChannel = "mqttInputChannel")
@@ -29,6 +33,15 @@ public class MqttMessageHandler {
         if (topic == null) return;
 
         try {
+            // Nova melhoria: Deteção de Presença
+            if (topic.equals("sensors/node1/presenca")) {
+                JsonNode json = objectMapper.readTree(payload);
+                boolean presente = json.get("presente").asBoolean();
+                presencaService.atualizarPresenca(presente);
+                System.out.println((presente ? "✓ Paciente presente" : "✗ Paciente ausente") + " (Nó 1)");
+                return;
+            }
+
             if (topic.equals("sensor/login")) {
                 JsonNode json = objectMapper.readTree(payload);
                 int idSensor = json.get("id_sensor").asInt();
