@@ -1,8 +1,0 @@
-:root {
-  --accent-outline: #B2C8B2;
-  --unknown: #A8B8A0;
-  --popup-message: #6C757D;
-  --text: #4E5452;
-  --background: #E8E8E8;
-  --footer-background: #535353;
-}

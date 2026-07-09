@@ -33,6 +33,8 @@ services:
     container_name: desktop_app_container
     ports:
       - "3000:80"
+    expose:
+      - "80"
     volumes:
       - ./desktop-app/src:/app/src
       - ./desktop-app/index.html:/app/index.html
@@ -69,16 +71,36 @@ services:
       - "1883:1883"
       - "9001:9001"
     volumes:
-      - ./configuration/mqtt5/config:/mosquitto/config
+      - ./configuration/mqtt5:/mosquitto/config
       - mqtt-data:/mosquitto/data
       - mqtt-log:/mosquitto/log
     networks:
       - pcmr-network
     restart: unless-stopped
 
+  # HTTPS Reverse Proxy
+  # HTTPS Reverse Proxy
+  caddy:
+    image: caddy:latest
+    container_name: caddy
+    restart: unless-stopped
+    ports:
+      - "80:80"   # <--- Add this line
+      - "443:443"
+    volumes:
+      - ./configuration/caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - desktop-app
+    networks:
+      - pcmr-network
+
 volumes:
   mqtt-data:
   mqtt-log:
+  caddy_data:
+  caddy_config:
 
 networks:
   pcmr-network:

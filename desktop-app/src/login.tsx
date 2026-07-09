@@ -292,14 +292,13 @@ export default function App() {
                 </button>
               </div>
 
-              <div className="text-right text-xs text-gray-500 mb-4">
-                Esqueceu-se da palavra-passe?
-              </div>
+             <div className="text-right text-xs text-gray-500 mb-4">Esqueceu-se da palavra-passe?</div>
 
+              {/* Bloco de Mensagens dinâmico (sem min-h fixo) */}
               <div className="mb-4 min-h-24 flex flex-col gap-3">
-                <div className="min-h-5 text-sm text-red-600">
-                  {error ?? <span className="invisible">placeholder</span>}
-                </div>
+              <div className="min-h-5 text-sm text-red-600">
+                {error ?? <span className="invisible">placeholder</span>}
+              </div>
 
                 {/* Mensagem biométrica */}
                 {bioStatus !== "idle" && (
@@ -337,7 +336,7 @@ export default function App() {
                 bioStatus === "aguardar_dedo" ||
                 bioStatus === "a_processar"
               }
-              className="mt-4 cursor-pointer disabled:opacity-60 text-white font-semibold py-4 rounded-full text-lg shadow-md w-full bg-linear-to-r from-green-400 to-green-600 transition-all duration-200 ease-out hover:from-green-200 hover:to-green-500 hover:brightness-110 hover:shadow-lg hover:-translate-y-0.5"
+              className="mt-2 cursor-pointer disabled:opacity-60 text-white font-semibold py-4 rounded-full text-lg shadow-md w-full bg-linear-to-r from-green-400 to-green-600 transition-all duration-200 ease-out hover:from-green-200 hover:to-green-500 hover:brightness-110 hover:shadow-lg hover:-translate-y-0.5"
             >
               {loading ? "A processar..." : "ENTRAR"}
             </button>

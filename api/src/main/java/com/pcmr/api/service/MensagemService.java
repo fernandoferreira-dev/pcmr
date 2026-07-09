@@ -29,6 +29,14 @@ public class MensagemService {
         return mensagens.stream().map(this::paraDTO).collect(Collectors.toList());
     }
 
+    public List<MensagemDTO> listarEnviadas(Long idUtilizador, String pesquisa) {
+        List<Mensagem> mensagens = (pesquisa == null || pesquisa.isBlank())
+                ? mensagemRepository.findByRemetente_IdUtilizadorOrderByDataEnvioDesc(idUtilizador)
+                : mensagemRepository.findByRemetente_IdUtilizadorAndDestinatario_Pessoa_NomeContainingIgnoreCaseOrderByDataEnvioDesc(idUtilizador, pesquisa);
+
+        return mensagens.stream().map(this::paraDTO).collect(Collectors.toList());
+    }
+
     public MensagemDTO enviar(NovaMensagemRequestDTO req) {
         if (req.getIdRemetente() == null || req.getIdDestinatario() == null) {
             throw new IllegalArgumentException("Remetente e destinatário são obrigatórios");
@@ -80,9 +88,15 @@ public class MensagemService {
     private MensagemDTO paraDTO(Mensagem m) {
         MensagemDTO dto = new MensagemDTO();
         dto.setIdMensagem(m.getIdMensagem());
+
         dto.setIdRemetente(m.getRemetente().getIdUtilizador());
         dto.setNomeRemetente(m.getRemetente().getPessoa().getNome());
         dto.setEmailRemetente(m.getRemetente().getPessoa().getEmail());
+
+        dto.setIdDestinatario(m.getDestinatario().getIdUtilizador());
+        dto.setNomeDestinatario(m.getDestinatario().getPessoa().getNome());
+        dto.setEmailDestinatario(m.getDestinatario().getPessoa().getEmail());
+
         dto.setAssunto(m.getAssunto());
         dto.setCorpo(m.getCorpo());
         dto.setDataEnvio(m.getDataEnvio().toString());

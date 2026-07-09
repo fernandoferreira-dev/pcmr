@@ -5,9 +5,12 @@ public class MensagemDTO {
     private Long idRemetente;
     private String nomeRemetente;
     private String emailRemetente;
+    private Long idDestinatario;
+    private String nomeDestinatario;
+    private String emailDestinatario;
     private String assunto;
     private String corpo;
-    private String dataEnvio; 
+    private String dataEnvio;
     private boolean lida;
 
     public Long getIdMensagem() { return idMensagem; }
@@ -21,6 +24,15 @@ public class MensagemDTO {
 
     public String getEmailRemetente() { return emailRemetente; }
     public void setEmailRemetente(String emailRemetente) { this.emailRemetente = emailRemetente; }
+
+    public Long getIdDestinatario() { return idDestinatario; }
+    public void setIdDestinatario(Long idDestinatario) { this.idDestinatario = idDestinatario; }
+
+    public String getNomeDestinatario() { return nomeDestinatario; }
+    public void setNomeDestinatario(String nomeDestinatario) { this.nomeDestinatario = nomeDestinatario; }
+
+    public String getEmailDestinatario() { return emailDestinatario; }
+    public void setEmailDestinatario(String emailDestinatario) { this.emailDestinatario = emailDestinatario; }
 
     public String getAssunto() { return assunto; }
     public void setAssunto(String assunto) { this.assunto = assunto; }
