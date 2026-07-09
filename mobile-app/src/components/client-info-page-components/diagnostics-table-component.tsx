@@ -1,7 +1,8 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import "../../styles/diagnostic-data-styles/data-table-styles.css";
 
-interface Diagnostic {
+
+type Diagnostic = {
     patient: string;
     time: string;
     temperature: string;
@@ -11,26 +12,47 @@ interface Diagnostic {
 }
 
 export default function DiagnosticsTableComponent() {
+
+    const [diagnostics, setDiagnostics] = useState<Diagnostic[]>([]);
+    const [patientLoaded, setPatientLoaded] = useState(false);
     const [search, setSearch] = useState("");
 
-    const diagnostics: Diagnostic[] = [
-        {
-            patient: "Paciente1",
-            time: "08:00 - 08:20",
-            temperature: "25°C",
-            bpm: "70 bpm",
-            magnitude: 5.0,
-            cause: "Pressão arterial alta",
-        },
-        {
-            patient: "Paciente2",
-            time: "09:00 - 09:10",
-            temperature: "26°C",
-            bpm: "75 bpm",
-            magnitude: 5.5,
-            cause: "Pressão arterial baixa",
-        },
-    ];
+    const applyPatients = (patients: Diagnostic[]) => {
+        setDiagnostics(patients);
+    };
+
+    const loadDiagnostics = () => {
+        fetch(`http://localhost:8080/api/diagnostics`)
+            .then(async (response) => {
+                if (!response.ok) {
+                    throw new Error("Unable to load patients");
+                }
+
+                const data = (await response.json()) as Diagnostic[];
+
+                const nextPatients: Diagnostic[] = data.map((item) => ({
+                    patient: item.patient || "",
+                    time: item.time || "",
+                    temperature: item.temperature || "",
+                    bpm: item.bpm || "",
+                    magnitude: item.magnitude || 0,
+                    cause: item.cause || "",
+                }));
+
+                applyPatients(nextPatients);
+                sessionStorage.setItem('pacientes', JSON.stringify(nextPatients));
+                setPatientLoaded(true);
+            })
+            .catch(() => {
+                setPatientLoaded(true);
+            });
+
+    }
+
+    useEffect(() => {
+        loadDiagnostics();
+    }, [patientLoaded]);
+
 
     const filteredDiagnostics = diagnostics.filter((diagnostic) => {
         const query = search.toLowerCase();
@@ -55,7 +77,7 @@ export default function DiagnosticsTableComponent() {
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
                 />
-                <button className="search-button">Atualizar</button>
+                <button className="search-button" onClick={loadDiagnostics}>Atualizar</button>
             </div>
 
             <div className="tableContainer">

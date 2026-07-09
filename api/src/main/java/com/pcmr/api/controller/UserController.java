@@ -64,7 +64,7 @@ public class UserController {
              return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Nome, email e password são obrigatórios");
         }
 
-        if (userRepository.findByUsername(name).isPresent() || userRepository.findByPessoaEmail(email).isPresent()) {
+        if (userRepository.findByUsername(name).isPresent()) {
             return ResponseEntity.status(HttpStatus.CONFLICT).body("nome de utlizador já existe");
         } else if (userRepository.findByPessoaEmail(email).isPresent()) {
             return ResponseEntity.status(HttpStatus.CONFLICT).body("Este email já está vinculado a uma conta");
