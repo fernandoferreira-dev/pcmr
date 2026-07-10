@@ -10,7 +10,7 @@
     border: 3px solid #B2C8B2;
     border-radius: 1rem;
     background-color: #E8E8E8;
-    width: 100%;
+    width: fit-content;
     height: fit-content;
     padding: 1.5rem;
     box-sizing: border-box;

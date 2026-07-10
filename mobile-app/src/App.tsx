@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import LoginPage from "./pages/login-page";
 import MainPage from "./pages/main-page";
+import { AuthProvider, useAuth } from "./context/auth-context";
 
 type UserProfile = {
   username: string;
@@ -11,42 +12,26 @@ type UserProfile = {
   userId?: number | null;
 };
 
-function App() {
-  const [page, setPage] = useState<"login" | "dashboard">("login");
-  const [selectedOption, setSelectedOption] = useState("opcao-pt");
-  const [username, setUsername] = useState("");
-  const [phoneNumber, setPhoneNumber] = useState("");
-  const [email, setEmail] = useState("");
-  const [birthDate, setBirthDate] = useState("");
-  const [userId, setUserId] = useState<number | null>(null);
+function AppContent() {
+  const { user, login, isAuthenticated } = useAuth();
   const [profileLoaded, setProfileLoaded] = useState(false);
   const profileLoadAttemptedRef = useRef(false);
 
-  const applyProfile = (profile: UserProfile) => {
-    setUsername(profile.username);
-    setPhoneNumber(profile.phoneNumber);
-    setEmail(profile.email);
-    setBirthDate(profile.birthDate);
-    setSelectedOption(profile.selectedOption);
-    setUserId(profile.userId ?? null);
-  };
-
   useEffect(() => {
-    if (page !== "dashboard" || !userId || profileLoaded) {
+    if (!isAuthenticated || !user?.userId || profileLoaded) {
       return;
     }
-
     if (profileLoadAttemptedRef.current) {
       return;
     }
-
     profileLoadAttemptedRef.current = true;
 
+    const userId = user.userId;
     const cachedProfile = sessionStorage.getItem(`userProfile:${userId}`);
     if (cachedProfile) {
       try {
         const parsedProfile = JSON.parse(cachedProfile) as UserProfile;
-        applyProfile(parsedProfile);
+        login(parsedProfile);
         setProfileLoaded(true);
         return;
       } catch {
@@ -59,52 +44,59 @@ function App() {
         if (!response.ok) {
           throw new Error("Unable to load user profile");
         }
-
         const data = (await response.json()) as UserProfile;
-        const nextProfile = {
-          username: data.username || username,
+        const nextProfile: UserProfile = {
+          username: data.username || user.username,
           phoneNumber: data.phoneNumber || "",
-          email: data.email || email,
+          email: data.email || user.email,
           birthDate: data.birthDate || "",
           selectedOption: data.selectedOption || "opcao-pt",
           userId,
         };
-
-        applyProfile(nextProfile);
+        login(nextProfile);
         sessionStorage.setItem(`userProfile:${userId}`, JSON.stringify(nextProfile));
         setProfileLoaded(true);
       })
       .catch(() => {
         setProfileLoaded(true);
       });
-  }, [page, userId, profileLoaded, username, email]);
+  }, [isAuthenticated, user, profileLoaded, login]);
 
   useEffect(() => {
-    if (page === "login") {
+    if (!isAuthenticated) {
       profileLoadAttemptedRef.current = false;
       setProfileLoaded(false);
     }
-  }, [page]);
+  }, [isAuthenticated]);
 
-  return page === "login" ? (
-    <LoginPage
-      onLogin={(profile) => {
-        applyProfile(profile);
-        setPage("dashboard");
-      }}
-      onAccountCreated={(profile) => {
-        applyProfile(profile);
-      }}
-    />
-  ) : (
+  if (!isAuthenticated || !user) {
+    return (
+      <LoginPage
+        onLogin={(profile) => {
+          login(profile);
+        }}
+        onAccountCreated={(profile) => {
+          sessionStorage.setItem("pendingProfile", JSON.stringify(profile));
+        }}
+      />
+    );
+  }
+
+  return (
     <MainPage
-      username={username}
-      phonenumber={phoneNumber}
-      email={email}
-      birthDate={birthDate}
-      selectedOption={selectedOption}
+      username={user.username}
+      phonenumber={user.phoneNumber}
+      email={user.email}
+      birthDate={user.birthDate}
+      selectedOption={user.selectedOption}
     />
   );
 }
 
-export default App;
+export default function App() {
+  return (
+    <AuthProvider>
+      <AppContent />
+    </AuthProvider>
+  );
+}
