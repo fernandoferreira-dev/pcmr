@@ -1,3 +1,7 @@
 app.fernandoferreira.dev {
-    reverse_proxy desktop-app:80
+    reverse_proxy desktop-app:3000
+}
+
+mobile.fernandoferreira.dev {
+    reverse_proxy mobile-app:3001
 }
