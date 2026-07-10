@@ -1,7 +1,6 @@
 import type { FC } from 'react';
 import '../../styles/dashboard-styles/notification-box.css'
 
-
 interface NotificationBoxComponentProps {}
 
 const NotificationBoxComponent: FC<NotificationBoxComponentProps> = () => (
@@ -23,7 +22,6 @@ const NotificationBoxComponent: FC<NotificationBoxComponentProps> = () => (
       <h2>Nome do utilizador place holder</h2>
       <h3>Corpo da notificação place holder</h3>
     </div>
-    
   </div>
 );
 
