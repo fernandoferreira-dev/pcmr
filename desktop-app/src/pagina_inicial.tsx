@@ -65,6 +65,7 @@ const viewTitles: Record<View, string> = {
 type PaginaInicialProps = {
   userName: string
   userId: number
+  tipo: string 
   onLogout: () => void
 }
 
@@ -124,7 +125,6 @@ const OverviewDashboard = ({ onAbrirConsulta }: OverviewDashboardProps) => {
 
   return (
     <div className="flex flex-col gap-4 w-full h-full p-6 bg-[#EBEBEB] rounded-4xl shadow-inner overflow-y-auto">
-
       <div className="text-xs text-gray-500 font-bold tracking-wider shrink-0">
         DIA | SEMANA | MÊS
       </div>
@@ -133,9 +133,7 @@ const OverviewDashboard = ({ onAbrirConsulta }: OverviewDashboardProps) => {
         <div className="flex-1 p-4 flex justify-between items-center border-r border-gray-300">
           <div>
             <div className="font-bold text-gray-800 text-sm">Diagnósticos</div>
-            <div className="text-xs text-gray-600">
-              {stats ? stats.totalDiagnosticos : '—'}
-            </div>
+            <div className="text-xs text-gray-600">{stats ? stats.totalDiagnosticos : '—'}</div>
           </div>
           <div className="w-8 h-8 bg-red-500 rounded-full shrink-0 shadow-sm" />
         </div>
@@ -143,9 +141,7 @@ const OverviewDashboard = ({ onAbrirConsulta }: OverviewDashboardProps) => {
         <div className="flex-1 p-4 flex justify-between items-center border-r border-gray-300">
           <div>
             <div className="font-bold text-gray-800 text-sm">Pacientes</div>
-            <div className="text-xs text-gray-600">
-              {stats ? stats.totalPacientes : '—'}
-            </div>
+            <div className="text-xs text-gray-600">{stats ? stats.totalPacientes : '—'}</div>
           </div>
           <div className="w-8 h-8 bg-red-500 rounded-full shrink-0 shadow-sm" />
         </div>
@@ -168,22 +164,13 @@ const OverviewDashboard = ({ onAbrirConsulta }: OverviewDashboardProps) => {
       </div>
 
       <div className="flex flex-col flex-1 min-h-37.5 bg-white rounded-xl border border-gray-300 p-4 shadow-sm">
-        <div className="text-sm font-semibold text-gray-500 mb-2">
-          Diagnósticos Totais (por mês)
-        </div>
-
-        {erroStats && (
-          <div className="flex-1 flex items-center justify-center text-sm text-red-500">
-            {erroStats}
-          </div>
-        )}
-
+        <div className="text-sm font-semibold text-gray-500 mb-2">Diagnósticos Totais (por mês)</div>
+        {erroStats && <div className="flex-1 flex items-center justify-center text-sm text-red-500">{erroStats}</div>}
         {!erroStats && dadosGrafico.length === 0 && (
           <div className="flex-1 flex items-center justify-center text-sm text-gray-400">
             {stats ? 'Ainda não há diagnósticos registados.' : 'A carregar...'}
           </div>
         )}
-
         {!erroStats && dadosGrafico.length > 0 && (
           <div className="flex-1 min-h-0">
             <ResponsiveContainer width="100%" height="100%">
@@ -214,7 +201,7 @@ const OverviewDashboard = ({ onAbrirConsulta }: OverviewDashboardProps) => {
             </div>
             <button
               onClick={onAbrirConsulta}
-              className="w-full py-2 bg-white/40 rounded-full text-white font-medium hover:bg-white/50 transition-colors shadow-sm cursor-pointer disabled:cursor-not-allowed"
+              className="w-full py-2 bg-white/40 rounded-full text-white font-medium hover:bg-white/50 transition-colors shadow-sm cursor-pointer"
             >
               Iniciar Consulta
             </button>
@@ -225,10 +212,25 @@ const OverviewDashboard = ({ onAbrirConsulta }: OverviewDashboardProps) => {
   )
 }
 
-export default function App({ userName, userId, onLogout }: PaginaInicialProps) {
+export default function App({ userName, userId, tipo, onLogout }: PaginaInicialProps) {
   const [view, setView] = useState<View>('home')
   const [modalAberto, setModalAberto] = useState(false)
   const [statsRefreshKey, setStatsRefreshKey] = useState(0)
+
+  const tipoNormalizado = (tipo || '')
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .trim();
+
+  const esMedico = tipoNormalizado === 'medico';
+
+  // BARREIRA 1: Bloqueio ativo no estado (Redirecionamento)
+  useEffect(() => {
+    if (esMedico && view === 'dados_equipamentos') {
+      setView('home')
+    }
+  }, [view, esMedico])
 
   const {
     status: bioStatus,
@@ -240,7 +242,7 @@ export default function App({ userName, userId, onLogout }: PaginaInicialProps) 
   let content: ReactNode
   if (view === 'dados_diagnostico') content = <DadosDiagnostico />
   else if (view === 'comunicacao') content = <Comunicacao userId={userId}/>
-  else if (view === 'dados_equipamentos') content = <DadosEquipamentos />
+  else if (view === 'dados_equipamentos' && !esMedico) content = <DadosEquipamentos />
   else if (view === 'dados_pessoais') content = <DadosPessoais userId={userId} />
   else content = (
     <OverviewDashboard
@@ -251,7 +253,6 @@ export default function App({ userName, userId, onLogout }: PaginaInicialProps) 
 
   return (
     <div className="h-screen w-screen bg-(--background) flex flex-col font-sans overflow-hidden relative">
-
       <div className="flex-1 flex p-4 gap-6 overflow-hidden">
 
         {/* Barra Lateral */}
@@ -265,63 +266,49 @@ export default function App({ userName, userId, onLogout }: PaginaInicialProps) 
             <NavButton id="home" label="Overview" icon={OverviewIcon} isActive={view === 'home'} onClick={setView} />
             <NavButton id="dados_diagnostico" label="Dados Diagnósticos" icon={DadosDiag} isActive={view === 'dados_diagnostico'} onClick={setView} />
             <NavButton id="comunicacao" label="Comunicação" icon={comunicaicon} isActive={view === 'comunicacao'} onClick={setView} />
-            <NavButton id="dados_equipamentos" label="Dados Equipamentos" icon={dadosequi} isActive={view === 'dados_equipamentos'} onClick={setView} />
+            
+            {!esMedico && (
+              <NavButton id="dados_equipamentos" label="Dados Equipamentos" icon={dadosequi} isActive={view === 'dados_equipamentos'} onClick={setView} />
+            )}
+            
             <NavButton id="dados_pessoais" label="Dados Pessoais" icon={datapessoal} isActive={view === 'dados_pessoais'} onClick={setView} />
           </nav>
         </aside>
 
         {/* Área Principal */}
         <main className="flex-1 flex flex-col min-w-0 pr-4 pt-2 pb-4 overflow-hidden bg-(--background)">
-
-          {/* Cabeçalho */}
           <header className="flex justify-between items-center mb-6 px-2 shrink-0">
             <h1 className="text-3xl font-bold text-gray-700">{viewTitles[view]}</h1>
 
             <div className="flex items-center gap-4">
-              {bioStatus === 'idle' || bioStatus === 'sucesso' || bioStatus === 'erro' ? (
+              {(bioStatus === 'idle' || bioStatus === 'sucesso' || bioStatus === 'erro') && (
                 <button
                   onClick={() => iniciarRegisto(userId)}
-                  disabled={false}
-                  className="flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-xl hover:bg-emerald-700 transition-colors shadow-sm disabled:opacity-60 cursor-pointer disabled:cursor-not-allowed"
+                  className="flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-xl hover:bg-emerald-700 transition-colors shadow-sm cursor-pointer"
                   title="Associar impressão digital a esta conta"
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M2 12C2 6.5 6.5 2 12 2s10 4.5 10 10" />
-                    <path d="M5 12C5 8.1 8.1 5 12 5s7 3.1 7 7" />
-                    <path d="M8 12c0-2.2 1.8-4 4-4s4 1.8 4 4" />
-                    <circle cx="12" cy="12" r="2" />
-                    <path d="M2 12h20" />
+                    <path d="M2 12C2 6.5 6.5 2 12 2s10 4.5 10 10" /><path d="M5 12C5 8.1 8.1 5 12 5s7 3.1 7 7" /><path d="M8 12c0-2.2 1.8-4 4-4s4 1.8 4 4" /><circle cx="12" cy="12" r="2" /><path d="M2 12h20" />
                   </svg>
                   <span className="text-sm font-medium whitespace-nowrap">
-                    {bioStatus === 'idle' ? 'Associar Impressão Digital' :
-                     bioStatus === 'sucesso' ? '✓ Registada' : 'Tentar Novamente'}
+                    {bioStatus === 'idle' ? 'Associar Impressão Digital' : bioStatus === 'sucesso' ? '✓ Registada' : 'Tentar Novamente'}
                   </span>
                 </button>
-              ) : null}
+              )}
 
               {bioStatus !== 'idle' && (
                 <div className={`text-xs px-3 py-1.5 rounded-lg ${
-                  bioStatus === 'aguardar_dedo' || bioStatus === 'a_processar'
-                    ? 'bg-blue-100 text-blue-800'
-                    : bioStatus === 'sucesso'
-                    ? 'bg-green-100 text-green-800'
-                    : 'bg-red-100 text-red-800'
+                  bioStatus === 'aguardar_dedo' || bioStatus === 'a_processar' ? 'bg-blue-100 text-blue-800' : bioStatus === 'sucesso' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
                 }`}>
                   <span>{bioMensagem}</span>
                   {(bioStatus === 'aguardar_dedo' || bioStatus === 'a_processar') && (
-                    <button onClick={bioCancelar} className="ml-2 underline cursor-pointer disabled:cursor-not-allowed">Cancelar</button>
+                    <button onClick={bioCancelar} className="ml-2 underline cursor-pointer">Cancelar</button>
                   )}
                 </div>
               )}
 
-              <button
-                onClick={onLogout}
-                className="flex items-center gap-3 hover:opacity-80 transition-opacity cursor-pointer disabled:cursor-not-allowed"
-                title="Clique para fazer Logout"
-              >
-                <span className="text-xl text-gray-800 font-medium">
-                  Bem-vindo, {userName}!
-                </span>
+              <button onClick={onLogout} className="flex items-center gap-3 hover:opacity-80 transition-opacity cursor-pointer" title="Clique para fazer Logout">
+                <span className="text-xl text-gray-800 font-medium">Bem-vindo, {userName}! ({tipo})</span>
                 <div className="w-10 h-10 bg-gray-500 rounded-full flex items-center justify-center text-white shadow-sm">
                   <div className="w-5 h-5 bg-white rounded-sm" />
                 </div>
@@ -329,7 +316,6 @@ export default function App({ userName, userId, onLogout }: PaginaInicialProps) 
             </div>
           </header>
 
-          {/* Conteúdo Dinâmico */}
           <div className="flex-1 overflow-hidden bg-(--background)">
             {content}
           </div>

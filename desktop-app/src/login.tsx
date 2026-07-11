@@ -11,6 +11,7 @@ const hideImg = new URL("./assets/imagens/hide.png", import.meta.url).href;
 type AuthSession = {
   userName: string;
   userId: number;
+  tipo: string; 
   expiresAt: number;
 };
 
@@ -25,6 +26,7 @@ function loadStoredSession(): AuthSession | null {
     if (
       typeof parsedSession.userName !== "string" ||
       typeof parsedSession.userId !== "number" ||
+      typeof parsedSession.tipo !== "string" ||
       typeof parsedSession.expiresAt !== "number" ||
       parsedSession.expiresAt <= Date.now()
     ) {
@@ -35,6 +37,7 @@ function loadStoredSession(): AuthSession | null {
     return {
       userName: parsedSession.userName,
       userId: parsedSession.userId,
+      tipo: parsedSession.tipo,
       expiresAt: parsedSession.expiresAt,
     };
   } catch {
@@ -63,19 +66,21 @@ export default function App() {
     cancelar: bioCancelar,
   } = useBiometriaLogin();
 
-  // Quando o login biométrico é bem-sucedido, cria sessão
+  // FIX COMPLETO PARA O TS E DOCKER: Cast temporário para evitar o erro TS2339
   useEffect(() => {
     if (bioStatus === "sucesso" && bioUserData) {
+      const dadosBiometria = bioUserData as Record<string, any>;
+
       const nextSession: AuthSession = {
-        userName: bioUserData.nome,
-        userId: bioUserData.userId,
+        userName: dadosBiometria.nome,
+        userId: dadosBiometria.userId,
+        tipo: dadosBiometria.tipo || "Médico", 
         expiresAt: Date.now() + AUTH_SESSION_DURATION_MS,
       };
       window.localStorage.setItem(
         AUTH_SESSION_KEY,
         JSON.stringify(nextSession),
       );
-      // eslint-disable-next-line react-hooks/set-state-in-effect
       setSession(nextSession);
     }
   }, [bioStatus, bioUserData]);
@@ -86,7 +91,6 @@ export default function App() {
     const msUntilExpiry = session.expiresAt - Date.now();
     if (msUntilExpiry <= 0) {
       window.localStorage.removeItem(AUTH_SESSION_KEY);
-      // eslint-disable-next-line react-hooks/set-state-in-effect
       setSession(null);
       return;
     }
@@ -115,6 +119,7 @@ export default function App() {
       <PaginaInicial
         userName={session.userName}
         userId={session.userId}
+        tipo={session.tipo}
         onLogout={handleLogout}
       />
     );
@@ -149,19 +154,25 @@ export default function App() {
         const contentType = res.headers.get("content-type") || "";
 
         let userId = 0;
+        let tipo = "Desconhecido"; 
+
         if (contentType.includes("application/json")) {
-          const data = (await res.json()) as { nome?: string; userId?: number };
+          const data = (await res.json()) as { nome?: string; userId?: number; tipo?: string };
           if (typeof data.nome === "string" && data.nome.trim()) {
             userName = data.nome.trim();
           }
           if (typeof data.userId === "number" && data.userId > 0) {
             userId = data.userId;
           }
+          if (typeof data.tipo === "string" && data.tipo.trim()) {
+            tipo = data.tipo.trim();
+          }
         }
 
         const nextSession = {
           userName,
           userId,
+          tipo, 
           expiresAt: Date.now() + AUTH_SESSION_DURATION_MS,
         };
 
@@ -191,8 +202,9 @@ export default function App() {
 
   const handleLoginTeste = () => {
     const testSession = {
-      userName: "Utilizador Teste",
+      userName: "Médico Teste",
       userId: 1,
+      tipo: "Médico", 
       expiresAt: Date.now() + AUTH_SESSION_DURATION_MS,
     };
     window.localStorage.setItem(AUTH_SESSION_KEY, JSON.stringify(testSession));
@@ -204,30 +216,17 @@ export default function App() {
       <div className="w-full flex flex-col items-center">
         <div className="w-full max-w-5xl bg-white rounded-3xl shadow-2xl p-5 sm:p-7 flex flex-col md:flex-row gap-6 items-stretch">
           
-          {/* Esquerda */}
           <div className="hidden md:flex flex-1 bg-green-100 rounded-2xl p-3">
-            <div
-              className="w-full h-full rounded-xl bg-white shadow-inner overflow-hidden flex items-center justify-center min-h-[350px]"
-              style={{ filter: "brightness(1.03) saturate(1.08) sepia(0.04)" }}
-            >
-              <img
-                src="https://www.medikal.net/images/altkategori/mobil-ekg-monitorleri.jpg"
-                alt="monitor"
-                className="w-full h-full object-cover"
-              />
+            <div className="w-full h-full rounded-xl bg-white shadow-inner overflow-hidden flex items-center justify-center min-h-[350px]">
+              <img src="https://www.medikal.net/images/altkategori/mobil-ekg-monitorleri.jpg" alt="monitor" className="w-full h-full object-cover" />
             </div>
           </div>
 
-          {/* Direita */}
           <div className="w-full md:w-96 bg-white rounded-xl flex flex-col justify-center py-2">
             <div>
-              <h2 className="text-2xl sm:text-3xl font-semibold text-gray-700 mb-5 text-center">
-                MedyCist
-              </h2>
+              <h2 className="text-2xl sm:text-3xl font-semibold text-gray-700 mb-5 text-center">MedyCist</h2>
 
-              <label className="block text-sm sm:text-base text-gray-600 mb-1">
-                Utilizador
-              </label>
+              <label className="block text-sm sm:text-base text-gray-600 mb-1">Utilizador</label>
               <div className="relative mb-4">
                 <input
                   value={username}
@@ -239,20 +238,14 @@ export default function App() {
                     }
                     if (error) setError(null);
                   }}
-                  className={
-                    `w-full mb-0 pl-4 pr-4 py-3 bg-gray-100 placeholder-gray-500 text-gray-700 rounded-xl focus:outline-none cursor-text ` +
-                    `focus:ring-2 focus:ring-green-300 transition-all ` +
-                    (usernameError
-                      ? "ring-4 ring-red-500 border-red-500"
-                      : "border border-transparent")
-                  }
+                  className={`w-full mb-0 pl-4 pr-4 py-3 bg-gray-100 placeholder-gray-500 text-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-300 transition-all ${
+                    usernameError ? "ring-4 ring-red-500 border-red-500" : "border border-transparent"
+                  }`}
                   placeholder="Introduza o seu utilizador..."
                 />
               </div>
 
-              <label className="block text-sm sm:text-base text-gray-600 mb-1">
-                Palavra-passe
-              </label>
+              <label className="block text-sm sm:text-base text-gray-600 mb-1">Palavra-passe</label>
               <div className="relative mb-2">
                 <input
                   value={password}
@@ -265,13 +258,9 @@ export default function App() {
                     if (error) setError(null);
                   }}
                   type={showPassword ? "text" : "password"}
-                  className={
-                    `w-full mb-0 pl-4 pr-12 py-3 bg-gray-100 placeholder-gray-500 text-gray-700 rounded-xl focus:outline-none cursor-text ` +
-                    `focus:ring-2 focus:ring-green-300 transition-all ` +
-                    (passwordError
-                      ? "ring-4 ring-red-500 border-red-500"
-                      : "border border-transparent")
-                  }
+                  className={`w-full mb-0 pl-4 pr-12 py-3 bg-gray-100 placeholder-gray-500 text-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-300 transition-all ${
+                    passwordError ? "ring-4 ring-red-500 border-red-500" : "border border-transparent"
+                  }`}
                   placeholder="Introduza a sua palavra-passe...."
                 />
 
@@ -279,53 +268,25 @@ export default function App() {
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
                   className="absolute inset-y-0 right-3 flex items-center text-gray-600 cursor-pointer"
-                  aria-label="Toggle password visibility"
                 >
-                  <img
-                    src={showPassword ? hideImg : viewImg}
-                    alt={
-                      showPassword
-                        ? "Esconder palavra-passe"
-                        : "Mostrar palavra-passe"
-                    }
-                    className="h-5 w-5"
-                  />
+                  <img src={showPassword ? hideImg : viewImg} alt={showPassword ? "Esconder" : "Mostrar"} className="h-5 w-5" />
                 </button>
               </div>
 
-              <div className="text-right text-xs text-gray-500 mb-2 hover:text-green-600 cursor-pointer">
-                 Esqueceu-se da palavra-passe?
-              </div>
+              <div className="text-right text-xs text-gray-500 mb-2 hover:text-green-600 cursor-pointer">Esqueceu-se da palavra-passe?</div>
               
               <div className="flex flex-col gap-2 mb-3">
-                {error && (
-                  <div className="text-sm text-red-600 font-medium transition-all">
-                    {error}
-                  </div>
-                )}
+                {error && <div className="text-sm text-red-600 font-medium transition-all">{error}</div>}
 
                 {bioStatus !== "idle" && (
-                  <div
-                    className={`text-xs p-2.5 rounded-xl transition-all ${
-                      bioStatus === "aguardar_dedo" ||
-                      bioStatus === "a_processar"
-                        ? "bg-blue-50 text-blue-700"
-                        : bioStatus === "sucesso"
-                          ? "bg-green-50 text-green-700"
-                          : bioStatus === "timeout"
-                            ? "bg-yellow-50 text-yellow-700"
-                            : "bg-red-50 text-red-700"
-                    }`}
-                  >
+                  <div className={`text-xs p-2.5 rounded-xl transition-all ${
+                    bioStatus === "aguardar_dedo" || bioStatus === "a_processar"
+                      ? "bg-blue-50 text-blue-700"
+                      : bioStatus === "sucesso" ? "bg-green-50 text-green-700" : bioStatus === "timeout" ? "bg-yellow-50 text-yellow-700" : "bg-red-50 text-red-700"
+                  }`}>
                     {bioMensagem}
-                    {(bioStatus === "aguardar_dedo" ||
-                      bioStatus === "a_processar") && (
-                      <button
-                        onClick={bioCancelar}
-                        className="ml-2 text-xs font-semibold underline hover:no-underline cursor-pointer"
-                      >
-                        Cancelar
-                      </button>
+                    {(bioStatus === "aguardar_dedo" || bioStatus === "a_processar") && (
+                      <button onClick={bioCancelar} className="ml-2 text-xs font-semibold underline hover:no-underline cursor-pointer">Cancelar</button>
                     )}
                   </div>
                 )}
@@ -333,66 +294,21 @@ export default function App() {
             </div>
 
             <div className="flex flex-col gap-3">
-              <button
-                onClick={handleLogin}
-                disabled={
-                  loading ||
-                  bioStatus === "aguardar_dedo" ||
-                  bioStatus === "a_processar"
-                }
-                className="cursor-pointer disabled:cursor-not-allowed disabled:opacity-60 text-white font-semibold py-3.5 rounded-full text-base sm:text-lg shadow-md w-full bg-linear-to-r from-green-400 to-green-600 transition-all duration-200 ease-out hover:from-green-200 hover:to-green-500 hover:brightness-110 hover:shadow-lg hover:-translate-y-0.5"
-              >
+              <button onClick={handleLogin} disabled={loading || bioStatus === "aguardar_dedo" || bioStatus === "a_processar"} className="text-white font-semibold py-3.5 rounded-full text-base shadow-md w-full bg-linear-to-r from-green-400 to-green-600 hover:from-green-200 hover:to-green-500 hover:brightness-110 transition-all">
                 {loading ? "A processar..." : "ENTRAR"}
               </button>
 
-              <button
-                onClick={bioLogin}
-                disabled={
-                  loading ||
-                  bioStatus === "aguardar_dedo" ||
-                  bioStatus === "a_processar"
-                }
-                className="cursor-pointer disabled:cursor-not-allowed disabled:opacity-60 text-white font-semibold py-3.5 rounded-full text-base sm:text-lg shadow-md w-full bg-linear-to-r from-emerald-500 to-teal-600 flex items-center justify-center gap-2 transition-all duration-200 ease-out hover:from-emerald-300 hover:to-teal-500 hover:brightness-110 hover:shadow-lg hover:-translate-y-0.5"
-              >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="20"
-                  height="20"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <path d="M2 12C2 6.5 6.5 2 12 2s10 4.5 10 10" />
-                  <path d="M5 12C5 8.1 8.1 5 12 5s7 3.1 7 7" />
-                  <path d="M8 12c0-2.2 1.8-4 4-4s4 1.8 4 4" />
-                  <circle cx="12" cy="12" r="2" />
-                  <path d="M2 12h20" />
-                </svg>
+              <button onClick={bioLogin} disabled={loading || bioStatus === "aguardar_dedo" || bioStatus === "a_processar"} className="text-white font-semibold py-3.5 rounded-full text-base shadow-md w-full bg-linear-to-r from-emerald-500 to-teal-600 flex items-center justify-center gap-2 hover:from-emerald-300 hover:to-teal-500 hover:brightness-110 transition-all">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2 12C2 6.5 6.5 2 12 2s10 4.5 10 10" /><path d="M5 12C5 8.1 8.1 5 12 5s7 3.1 7 7" /><path d="M8 12c0-2.2 1.8-4 4-4s4 1.8 4 4" /><circle cx="12" cy="12" r="2" /><path d="M2 12h20" /></svg>
                 Entrar com Impressão Digital
               </button>
 
-              <button
-                onClick={handleLoginTeste}
-                disabled={
-                  loading ||
-                  bioStatus === "aguardar_dedo" ||
-                  bioStatus === "a_processar"
-                }
-                className="cursor-pointer disabled:cursor-not-allowed disabled:opacity-60 text-white font-semibold py-3.5 rounded-full text-base sm:text-lg shadow-md w-full bg-linear-to-r from-green-400 to-green-600 transition-all duration-200 ease-out hover:from-green-200 hover:to-green-500 hover:brightness-110 hover:shadow-lg hover:-translate-y-0.5"
-              >
-                Entrar (Teste)
+              <button onClick={handleLoginTeste} disabled={loading || bioStatus === "aguardar_dedo" || bioStatus === "a_processar"} className="text-white font-semibold py-3.5 rounded-full text-base shadow-md w-full bg-linear-to-r from-green-400 to-green-600 hover:from-green-200 hover:to-green-500 hover:brightness-110 transition-all">
+                Entrar (Teste Médico)
               </button>
             </div>
           </div>
         </div>
-
-        <footer className="w-full max-w-5xl mt-5 text-center text-xs text-gray-500">
-          © {new Date().getFullYear()} Diogo Rocha - Fernando Ferreira - Jaime
-          Quaresma - João Santos.
-        </footer>
       </div>
     </div>
   );
