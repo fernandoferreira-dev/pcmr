@@ -126,7 +126,7 @@ export default function DadosPessoais({ userId }: { userId: number }) {
   };
 
   const inputClass =
-    "w-full bg-gray-50 border border-gray-300 rounded-xl px-3 py-1.5 text-base font-semibold text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#AAB99F] focus:border-transparent transition-all";
+    "w-full bg-gray-50 border border-gray-300 rounded-xl px-3 py-1.5 text-base font-semibold text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#AAB99F] focus:border-transparent transition-all cursor-text";
 
   return (
     <div className="flex flex-col gap-6 w-full h-full p-6 bg-[#EBEBEB] rounded-4xl shadow-inner overflow-y-auto">
@@ -283,7 +283,7 @@ export default function DadosPessoais({ userId }: { userId: number }) {
 
             <div className="flex items-center justify-between">
               <span className="text-sm text-gray-500 font-medium">Estado</span>
-              <span className="px-3 py-1 rounded-full bg-[#AAB99F]/30 text-[#5c6b56] text-sm font-semibold uppercase">
+              <span className="px-3 py-1 rounded-full bg-[#AAB99F]/30 text-[#5c6b56] text-sm font-semibold uppercase cursor-default">
                 {perfil?.tipoUtilizador ?? "—"}
               </span>
             </div>
@@ -317,7 +317,7 @@ export default function DadosPessoais({ userId }: { userId: number }) {
             <button
               onClick={handleIniciarEdicao}
               disabled={!perfil}
-              className="w-full py-3 bg-[#AAB99F] hover:bg-[#9CB39E] disabled:opacity-50 transition-colors rounded-xl text-white font-medium shadow-sm cursor-pointer"
+              className="w-full py-3 bg-[#AAB99F] hover:bg-[#9CB39E] disabled:opacity-50 disabled:cursor-not-allowed transition-colors rounded-xl text-white font-medium shadow-sm cursor-pointer"
             >
               Editar Dados
             </button>
@@ -326,14 +326,14 @@ export default function DadosPessoais({ userId }: { userId: number }) {
               <button
                 onClick={handleSalvar}
                 disabled={carregando}
-                className="w-full py-3 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 transition-colors rounded-xl text-white font-medium shadow-sm cursor-pointer"
+                className="w-full py-3 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-wait transition-colors rounded-xl text-white font-medium shadow-sm cursor-pointer"
               >
                 {carregando ? "A Gravar..." : "Gravar Alterações"}
               </button>
               <button
                 onClick={handleCancelarEdicao}
                 disabled={carregando}
-                className="w-full py-3 bg-gray-400 hover:bg-gray-500 disabled:opacity-50 transition-colors rounded-xl text-white font-medium shadow-sm cursor-pointer"
+                className="w-full py-3 bg-gray-400 hover:bg-gray-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors rounded-xl text-white font-medium shadow-sm cursor-pointer"
               >
                 Cancelar
               </button>

@@ -202,10 +202,9 @@ export default function App() {
   return (
     <div className="min-h-screen bg-green-50 flex items-center justify-center p-4">
       <div className="w-full flex flex-col items-center">
-        {/* Adicionado items-stretch para as colunas terem a mesma altura */}
         <div className="w-full max-w-5xl bg-white rounded-3xl shadow-2xl p-5 sm:p-7 flex flex-col md:flex-row gap-6 items-stretch">
           
-          {/* Esquerda - O container verde com p-3 cria uma moldura fina */}
+          {/* Esquerda */}
           <div className="hidden md:flex flex-1 bg-green-100 rounded-2xl p-3">
             <div
               className="w-full h-full rounded-xl bg-white shadow-inner overflow-hidden flex items-center justify-center min-h-[350px]"
@@ -241,7 +240,7 @@ export default function App() {
                     if (error) setError(null);
                   }}
                   className={
-                    `w-full mb-0 pl-4 pr-4 py-3 bg-gray-100 placeholder-gray-500 text-gray-700 rounded-xl focus:outline-none ` +
+                    `w-full mb-0 pl-4 pr-4 py-3 bg-gray-100 placeholder-gray-500 text-gray-700 rounded-xl focus:outline-none cursor-text ` +
                     `focus:ring-2 focus:ring-green-300 transition-all ` +
                     (usernameError
                       ? "ring-4 ring-red-500 border-red-500"
@@ -267,7 +266,7 @@ export default function App() {
                   }}
                   type={showPassword ? "text" : "password"}
                   className={
-                    `w-full mb-0 pl-4 pr-12 py-3 bg-gray-100 placeholder-gray-500 text-gray-700 rounded-xl focus:outline-none ` +
+                    `w-full mb-0 pl-4 pr-12 py-3 bg-gray-100 placeholder-gray-500 text-gray-700 rounded-xl focus:outline-none cursor-text ` +
                     `focus:ring-2 focus:ring-green-300 transition-all ` +
                     (passwordError
                       ? "ring-4 ring-red-500 border-red-500"
@@ -279,7 +278,7 @@ export default function App() {
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute inset-y-0 right-3 flex items-center text-gray-600"
+                  className="absolute inset-y-0 right-3 flex items-center text-gray-600 cursor-pointer"
                   aria-label="Toggle password visibility"
                 >
                   <img
@@ -298,7 +297,6 @@ export default function App() {
                  Esqueceu-se da palavra-passe?
               </div>
               
-              {/* Bloco de Mensagens dinâmico - agora afeta o layout da página */}
               <div className="flex flex-col gap-2 mb-3">
                 {error && (
                   <div className="text-sm text-red-600 font-medium transition-all">
@@ -306,7 +304,6 @@ export default function App() {
                   </div>
                 )}
 
-                {/* Mensagem biométrica */}
                 {bioStatus !== "idle" && (
                   <div
                     className={`text-xs p-2.5 rounded-xl transition-all ${
@@ -325,7 +322,7 @@ export default function App() {
                       bioStatus === "a_processar") && (
                       <button
                         onClick={bioCancelar}
-                        className="ml-2 text-xs font-semibold underline hover:no-underline"
+                        className="ml-2 text-xs font-semibold underline hover:no-underline cursor-pointer"
                       >
                         Cancelar
                       </button>
@@ -343,12 +340,11 @@ export default function App() {
                   bioStatus === "aguardar_dedo" ||
                   bioStatus === "a_processar"
                 }
-                className="cursor-pointer disabled:opacity-60 text-white font-semibold py-3.5 rounded-full text-base sm:text-lg shadow-md w-full bg-linear-to-r from-green-400 to-green-600 transition-all duration-200 ease-out hover:from-green-200 hover:to-green-500 hover:brightness-110 hover:shadow-lg hover:-translate-y-0.5"
+                className="cursor-pointer disabled:cursor-not-allowed disabled:opacity-60 text-white font-semibold py-3.5 rounded-full text-base sm:text-lg shadow-md w-full bg-linear-to-r from-green-400 to-green-600 transition-all duration-200 ease-out hover:from-green-200 hover:to-green-500 hover:brightness-110 hover:shadow-lg hover:-translate-y-0.5"
               >
                 {loading ? "A processar..." : "ENTRAR"}
               </button>
 
-              {/* Botão de Impressão Digital */}
               <button
                 onClick={bioLogin}
                 disabled={
@@ -356,7 +352,7 @@ export default function App() {
                   bioStatus === "aguardar_dedo" ||
                   bioStatus === "a_processar"
                 }
-                className="cursor-pointer disabled:opacity-60 text-white font-semibold py-3.5 rounded-full text-base sm:text-lg shadow-md w-full bg-linear-to-r from-emerald-500 to-teal-600 flex items-center justify-center gap-2 transition-all duration-200 ease-out hover:from-emerald-300 hover:to-teal-500 hover:brightness-110 hover:shadow-lg hover:-translate-y-0.5"
+                className="cursor-pointer disabled:cursor-not-allowed disabled:opacity-60 text-white font-semibold py-3.5 rounded-full text-base sm:text-lg shadow-md w-full bg-linear-to-r from-emerald-500 to-teal-600 flex items-center justify-center gap-2 transition-all duration-200 ease-out hover:from-emerald-300 hover:to-teal-500 hover:brightness-110 hover:shadow-lg hover:-translate-y-0.5"
               >
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
@@ -385,7 +381,7 @@ export default function App() {
                   bioStatus === "aguardar_dedo" ||
                   bioStatus === "a_processar"
                 }
-                className="cursor-pointer disabled:opacity-60 text-white font-semibold py-3.5 rounded-full text-base sm:text-lg shadow-md w-full bg-linear-to-r from-green-400 to-green-600 transition-all duration-200 ease-out hover:from-green-200 hover:to-green-500 hover:brightness-110 hover:shadow-lg hover:-translate-y-0.5"
+                className="cursor-pointer disabled:cursor-not-allowed disabled:opacity-60 text-white font-semibold py-3.5 rounded-full text-base sm:text-lg shadow-md w-full bg-linear-to-r from-green-400 to-green-600 transition-all duration-200 ease-out hover:from-green-200 hover:to-green-500 hover:brightness-110 hover:shadow-lg hover:-translate-y-0.5"
               >
                 Entrar (Teste)
               </button>

@@ -121,7 +121,7 @@ export default function FinalizarConsultaModal({
         <div className="flex gap-2 mb-4">
           <button
             onClick={() => setModo("procurar")}
-            className={`flex-1 py-2 rounded-full text-sm font-medium transition-colors ${
+            className={`flex-1 py-2 rounded-full text-sm font-medium transition-colors cursor-pointer ${
               modo === "procurar"
                 ? "bg-[#AAB99F] text-white"
                 : "bg-gray-100 text-gray-600"
@@ -131,7 +131,7 @@ export default function FinalizarConsultaModal({
           </button>
           <button
             onClick={() => setModo("novo")}
-            className={`flex-1 py-2 rounded-full text-sm font-medium transition-colors ${
+            className={`flex-1 py-2 rounded-full text-sm font-medium transition-colors cursor-pointer ${
               modo === "novo"
                 ? "bg-[#AAB99F] text-white"
                 : "bg-gray-100 text-gray-600"
@@ -151,7 +151,7 @@ export default function FinalizarConsultaModal({
                 setTermo(e.target.value);
                 setPacienteSelecionado(null);
               }}
-              className="border border-gray-300 rounded-xl px-3 py-2 text-sm"
+              className="border border-gray-300 rounded-xl px-3 py-2 text-sm cursor-text"
             />
 
             <div className="max-h-48 overflow-y-auto flex flex-col gap-1">
@@ -159,7 +159,7 @@ export default function FinalizarConsultaModal({
                 <button
                   key={p.idPessoa}
                   onClick={() => setPacienteSelecionado(p)}
-                  className={`text-left px-3 py-2 rounded-xl text-sm transition-colors ${
+                  className={`text-left px-3 py-2 rounded-xl text-sm transition-colors cursor-pointer ${
                     pacienteSelecionado?.idPessoa === p.idPessoa
                       ? "bg-[#AAB99F] text-white"
                       : "bg-gray-50 hover:bg-gray-100 text-gray-700"
@@ -183,14 +183,14 @@ export default function FinalizarConsultaModal({
               placeholder="Nome do paciente"
               value={novoNome}
               onChange={(e) => setNovoNome(e.target.value)}
-              className="border border-gray-300 rounded-xl px-3 py-2 text-sm"
+              className="border border-gray-300 rounded-xl px-3 py-2 text-sm cursor-text"
             />
             <input
               type="email"
               placeholder="Email"
               value={novoEmail}
               onChange={(e) => setNovoEmail(e.target.value)}
-              className="border border-gray-300 rounded-xl px-3 py-2 text-sm"
+              className="border border-gray-300 rounded-xl px-3 py-2 text-sm cursor-text"
             />
           </div>
         )}
@@ -199,7 +199,7 @@ export default function FinalizarConsultaModal({
           placeholder="Observações (opcional)"
           value={observacoes}
           onChange={(e) => setObservacoes(e.target.value)}
-          className="border border-gray-300 rounded-xl px-3 py-2 text-sm mt-3 w-full resize-none"
+          className="border border-gray-300 rounded-xl px-3 py-2 text-sm mt-3 w-full resize-none cursor-text"
           rows={3}
         />
 
@@ -208,7 +208,7 @@ export default function FinalizarConsultaModal({
         <button
           disabled={!podeConfirmar || aGuardar}
           onClick={confirmar}
-          className="w-full mt-4 py-2 bg-[#AAB99F] hover:bg-[#9CB39E] disabled:opacity-40 disabled:cursor-not-allowed rounded-full text-white font-medium transition-colors shadow-sm"
+          className="w-full mt-4 py-2 bg-[#AAB99F] hover:bg-[#9CB39E] disabled:opacity-40 cursor-pointer disabled:cursor-not-allowed rounded-full text-white font-medium transition-colors shadow-sm"
         >
           {aGuardar ? "A guardar..." : "Guardar Consulta"}
         </button>

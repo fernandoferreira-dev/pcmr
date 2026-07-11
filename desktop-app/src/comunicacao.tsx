@@ -146,7 +146,7 @@ export default function Comunicacao({ userId }: { userId: number }) {
           value={pesquisa}
           onChange={(e) => setPesquisa(e.target.value)}
           placeholder={vista === 'recebidas' ? 'Pesquisar por remetente...' : 'Pesquisar por destinatário...'}
-          className="w-full pl-11 pr-4 py-3 bg-white rounded-full border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-[#AAB99F]"
+          className="w-full pl-11 pr-4 py-3 bg-white rounded-full border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-[#AAB99F] cursor-text"
         />
       </div>
 

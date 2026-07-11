@@ -228,26 +228,26 @@ export default function DadosDiagnostico() {
                 </p>
               </div>
 
-              <label className="flex flex-col gap-1 text-sm font-medium text-[#4f4f4f]">
+              <label className="flex flex-col gap-1 text-sm font-medium text-[#4f4f4f] cursor-pointer">
                 <span className="ml-1 text-sm font-semibold">
                   Data de Início:
                 </span>
                 <span className="flex h-10 items-center gap-2 rounded-full border border-[#a5a5a5] bg-[#efefef] px-3 text-[#555] shadow-inner sm:h-11">
                   <CalendarDays size={15} />
                   <input
-                    className="w-full bg-transparent text-sm outline-none placeholder:text-[#8a8a8a]"
+                    className="w-full bg-transparent text-sm outline-none placeholder:text-[#8a8a8a] cursor-pointer"
                     type="date"
                     defaultValue="2026-10-01"
                   />
                 </span>
               </label>
 
-              <label className="flex flex-col gap-1 text-sm font-medium text-[#4f4f4f]">
+              <label className="flex flex-col gap-1 text-sm font-medium text-[#4f4f4f] cursor-pointer">
                 <span className="ml-1 text-sm font-semibold">Data de Fim:</span>
                 <span className="flex h-10 items-center gap-2 rounded-full border border-[#a5a5a5] bg-[#efefef] px-3 text-[#555] shadow-inner sm:h-11">
                   <CalendarDays size={15} />
                   <input
-                    className="w-full bg-transparent text-sm outline-none placeholder:text-[#8a8a8a]"
+                    className="w-full bg-transparent text-sm outline-none placeholder:text-[#8a8a8a] cursor-pointer"
                     type="date"
                     defaultValue="2026-10-15"
                   />
@@ -255,7 +255,7 @@ export default function DadosDiagnostico() {
               </label>
             </div>
 
-            <button className="inline-flex h-10 items-center justify-center gap-2 rounded-full border border-[#949494] bg-[#d8d8d8] px-4 text-sm font-semibold text-[#4d4d4d] shadow-[inset_0_1px_0_rgba(255,255,255,0.75)] transition hover:bg-[#d0d0d0] lg:mb-1">
+            <button className="inline-flex h-10 items-center justify-center gap-2 rounded-full border border-[#949494] bg-[#d8d8d8] px-4 text-sm font-semibold text-[#4d4d4d] shadow-[inset_0_1px_0_rgba(255,255,255,0.75)] transition hover:bg-[#d0d0d0] lg:mb-1 cursor-pointer">
               <BadgePlus size={15} />
               Aplicar Filtro
             </button>
@@ -298,7 +298,7 @@ export default function DadosDiagnostico() {
                         <button
                           onClick={() => iniciarExportacao(item)}
                           disabled={exportandoId !== null}
-                          className="inline-flex h-8 items-center rounded-full border border-[#a5a5a5] bg-[#e8e8e8] px-3 text-xs font-semibold text-[#4d4d4d] shadow-sm transition hover:bg-[#e1e1e1] disabled:opacity-50 disabled:cursor-not-allowed"
+                          className="inline-flex h-8 items-center rounded-full border border-[#a5a5a5] bg-[#e8e8e8] px-3 text-xs font-semibold text-[#4d4d4d] shadow-sm transition hover:bg-[#e1e1e1] cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                           {exportandoId === item.id ? "A exportar..." : "Exportar"}
                         </button>
@@ -320,9 +320,7 @@ export default function DadosDiagnostico() {
         </section>
       </div>
 
-      {/* Gráfico oculto, usado apenas como fonte de captura para o PDF.
-          Fica fora do ecrã em vez de display:none, porque html2canvas
-          não consegue capturar corretamente elementos com display:none. */}
+      {/* Gráfico oculto, usado apenas como fonte de captura para o PDF */}
       {dadosExport && (
         <div
           style={{ position: "fixed", top: "-9999px", left: "-9999px" }}
