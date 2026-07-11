@@ -1,0 +1,92 @@
+.main-page {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.main-page h1{
+    align-self: center;
+    display: block;
+    width: 50%;
+    color: #000000;
+    font-size: 2rem;
+    line-height: 1;
+    margin-top: 2rem;
+    
+}
+
+.mainbox {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-self: center;
+    justify-content: flex-start;
+    align-items: flex-start;
+    align-content: flex-start;
+    gap: 0.5rem;
+    border: 3px solid #B2C8B2;
+    border-radius: 1rem;
+    background-color: #E8E8E8;
+    height: 70vh;
+    width: 80%;
+    padding: 1.5rem;
+    box-sizing: border-box;
+    margin-top: 30px;
+    overflow: hidden;
+}
+
+.main-page-states {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 45px;
+  min-width: 0;
+  gap: 10px;
+}
+
+.main-page-states-box {
+    display: flex;
+    flex-direction: row;
+    align-self: last baseline;
+    width: 60%;
+    height: 10%;
+    color: #000000;
+    font-size: 1.25rem;
+    line-height: 1;
+    border: 3px solid #B2C8B2;
+    border-radius: 1rem;
+    background-color: #FFFFFF;
+    padding: 0.5rem 1rem;
+}
+
+.main-page-states-box h2 {
+    color: #000000;
+    align-self: center;
+}
+
+.OKstate {
+  display: block;
+  align-self: center;
+  border: 2px solid #a9c6a9;
+  border-radius: 3rem;
+  background-color: #a9c6a9;
+  width: 50px;
+  height: 30px;
+}
+
+.diagnosticbtn {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 0.5rem;
+    background-color: #FFFFFF;
+    color: #000000;
+    font-weight: bold;
+    font-size: 1rem;
+    padding: 2.5rem 3rem;
+    border: 3px solid #a9c6a9;
+    border-radius: 1rem;
+    width: 40%;
+    min-width: 0;
+    height: 10%;
+}
+

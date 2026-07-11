@@ -1,122 +1,102 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import heroImg from './assets/hero.png'
-import './App.css'
+import { useEffect, useRef, useState } from "react";
+import LoginPage from "./pages/login-page";
+import MainPage from "./pages/main-page";
+import { AuthProvider, useAuth } from "./context/auth-context";
 
-function App() {
-  const [count, setCount] = useState(0)
+type UserProfile = {
+  username: string;
+  phoneNumber: string;
+  email: string;
+  birthDate: string;
+  selectedOption: string;
+  userId?: number | null;
+};
+
+function AppContent() {
+  const { user, login, isAuthenticated } = useAuth();
+  const [profileLoaded, setProfileLoaded] = useState(false);
+  const profileLoadAttemptedRef = useRef(false);
+
+  useEffect(() => {
+    if (!isAuthenticated || !user?.userId || profileLoaded) {
+      return;
+    }
+    if (profileLoadAttemptedRef.current) {
+      return;
+    }
+    profileLoadAttemptedRef.current = true;
+
+    const userId = user.userId;
+    const cachedProfile = sessionStorage.getItem(`userProfile:${userId}`);
+    if (cachedProfile) {
+      try {
+        const parsedProfile = JSON.parse(cachedProfile) as UserProfile;
+        login(parsedProfile);
+        setProfileLoaded(true);
+        return;
+      } catch {
+        sessionStorage.removeItem(`userProfile:${userId}`);
+      }
+    }
+
+    fetch(`http://localhost:8080/api/users/${userId}`)
+      .then(async (response) => {
+        if (!response.ok) {
+          throw new Error("Unable to load user profile");
+        }
+        const data = (await response.json()) as UserProfile;
+        const nextProfile: UserProfile = {
+          username: data.username || user.username,
+          phoneNumber: data.phoneNumber || "",
+          email: data.email || user.email,
+          birthDate: data.birthDate || "",
+          selectedOption: data.selectedOption || "opcao-pt",
+          userId,
+        };
+        login(nextProfile);
+        sessionStorage.setItem(`userProfile:${userId}`, JSON.stringify(nextProfile));
+        setProfileLoaded(true);
+      })
+      .catch(() => {
+        setProfileLoaded(true);
+      });
+  }, [isAuthenticated, user, profileLoaded, login]);
+
+  useEffect(() => {
+    if (!isAuthenticated) {
+      profileLoadAttemptedRef.current = false;
+      setProfileLoaded(false);
+    }
+  }, [isAuthenticated]);
+
+  if (!isAuthenticated || !user) {
+    return (
+      <LoginPage
+        onLogin={(profile) => {
+          login(profile);
+        }}
+        onAccountCreated={(profile) => {
+          sessionStorage.setItem("pendingProfile", JSON.stringify(profile));
+        }}
+      />
+    );
+  }
 
   return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.tsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
-
-      <div className="ticks"></div>
-
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
-
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
-  )
+    <MainPage
+      username={user.username}
+      phonenumber={user.phoneNumber}
+      email={user.email}
+      birthDate={user.birthDate}
+      selectedOption={user.selectedOption}
+    />
+  );
 }
 
-export default App
+export default function App() {
+  return (
+    <AuthProvider>
+      <AppContent />
+    </AuthProvider>
+  );
+}
