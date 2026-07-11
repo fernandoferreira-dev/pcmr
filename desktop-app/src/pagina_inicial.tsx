@@ -214,7 +214,7 @@ const OverviewDashboard = ({ onAbrirConsulta }: OverviewDashboardProps) => {
             </div>
             <button
               onClick={onAbrirConsulta}
-              className="w-full py-2 bg-white/40 rounded-full text-white font-medium hover:bg-white/50 transition-colors shadow-sm cursor-pointer"
+              className="w-full py-2 bg-white/40 rounded-full text-white font-medium hover:bg-white/50 transition-colors shadow-sm cursor-pointer disabled:cursor-not-allowed"
             >
               Iniciar Consulta
             </button>
@@ -282,7 +282,7 @@ export default function App({ userName, userId, onLogout }: PaginaInicialProps) 
                 <button
                   onClick={() => iniciarRegisto(userId)}
                   disabled={false}
-                  className="flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-xl hover:bg-emerald-700 transition-colors shadow-sm disabled:opacity-60 cursor-pointer"
+                  className="flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-xl hover:bg-emerald-700 transition-colors shadow-sm disabled:opacity-60 cursor-pointer disabled:cursor-not-allowed"
                   title="Associar impressão digital a esta conta"
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -309,14 +309,14 @@ export default function App({ userName, userId, onLogout }: PaginaInicialProps) 
                 }`}>
                   <span>{bioMensagem}</span>
                   {(bioStatus === 'aguardar_dedo' || bioStatus === 'a_processar') && (
-                    <button onClick={bioCancelar} className="ml-2 underline cursor-pointer">Cancelar</button>
+                    <button onClick={bioCancelar} className="ml-2 underline cursor-pointer disabled:cursor-not-allowed">Cancelar</button>
                   )}
                 </div>
               )}
 
               <button
                 onClick={onLogout}
-                className="flex items-center gap-3 hover:opacity-80 transition-opacity cursor-pointer"
+                className="flex items-center gap-3 hover:opacity-80 transition-opacity cursor-pointer disabled:cursor-not-allowed"
                 title="Clique para fazer Logout"
               >
                 <span className="text-xl text-gray-800 font-medium">

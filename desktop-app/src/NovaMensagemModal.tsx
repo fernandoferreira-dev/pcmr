@@ -101,7 +101,7 @@ export default function NovaMensagemModal({
               placeholder="Procurar destinatário por nome..."
               value={termo}
               onChange={(e) => setTermo(e.target.value)}
-              className="border border-gray-300 rounded-xl px-3 py-2 text-sm"
+              className="border border-gray-300 rounded-xl px-3 py-2 text-sm cursor-text"
             />
 
             <div className="max-h-48 overflow-y-auto flex flex-col gap-1">
@@ -109,7 +109,7 @@ export default function NovaMensagemModal({
                 <button
                   key={u.idUtilizador}
                   onClick={() => setDestinatario(u)}
-                  className="text-left px-3 py-2 rounded-xl text-sm bg-gray-50 hover:bg-gray-100 text-gray-700 transition-colors"
+                  className="text-left px-3 py-2 rounded-xl text-sm bg-gray-50 hover:bg-gray-100 text-gray-700 transition-colors cursor-pointer"
                 >
                   <div className="font-medium">{u.nome} <span className="text-xs text-gray-400">({u.tipoUtilizador})</span></div>
                   <div className="text-xs opacity-80">{u.email}</div>
@@ -140,7 +140,7 @@ export default function NovaMensagemModal({
               placeholder="Assunto"
               value={assunto}
               onChange={(e) => setAssunto(e.target.value)}
-              className="border border-gray-300 rounded-xl px-3 py-2 text-sm"
+              className="border border-gray-300 rounded-xl px-3 py-2 text-sm cursor-text"
             />
 
             <textarea
@@ -148,7 +148,7 @@ export default function NovaMensagemModal({
               value={corpo}
               onChange={(e) => setCorpo(e.target.value)}
               rows={5}
-              className="border border-gray-300 rounded-xl px-3 py-2 text-sm resize-none"
+              className="border border-gray-300 rounded-xl px-3 py-2 text-sm resize-none cursor-text"
             />
           </div>
         )}
@@ -158,7 +158,7 @@ export default function NovaMensagemModal({
         <button
           disabled={!podeEnviar || aEnviar}
           onClick={enviar}
-          className="w-full mt-4 py-2 bg-[#AAB99F] hover:bg-[#9CB39E] disabled:opacity-40 disabled:cursor-not-allowed rounded-full text-white font-medium transition-colors shadow-sm"
+          className="w-full mt-4 py-2 bg-[#AAB99F] hover:bg-[#9CB39E] disabled:opacity-40 cursor-pointer disabled:cursor-not-allowed rounded-full text-white font-medium transition-colors shadow-sm"
         >
           {aEnviar ? 'A enviar...' : 'Enviar'}
         </button>

@@ -275,7 +275,7 @@ export default function DiagnosticoLiveView({
         <button
           disabled={!leitura}
           onClick={() => setMostrarFinalizar(true)}
-          className="px-6 py-2 bg-[#AAB99F] hover:bg-[#9CB39E] disabled:opacity-40 disabled:cursor-not-allowed rounded-full text-white font-medium transition-colors shadow-sm"
+          className="px-6 py-2 bg-[#AAB99F] hover:bg-[#9CB39E] disabled:opacity-40 cursor-pointer disabled:cursor-not-allowed rounded-full text-white font-medium transition-colors shadow-sm"
         >
           Terminar Consulta
         </button>

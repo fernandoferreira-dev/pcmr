@@ -67,14 +67,14 @@ export default function DiagnosticoRapidoModal({
           <div className="flex gap-3">
             <button
               onClick={onClose}
-              className="flex-1 py-2 bg-gray-100 hover:bg-gray-200 rounded-full text-gray-700 font-medium transition-colors"
+              className="flex-1 py-2 bg-gray-100 hover:bg-gray-200 rounded-full text-gray-700 font-medium transition-colors cursor-pointer"
             >
               Não
             </button>
             <button
               onClick={() => setPasso('ao_vivo')}
               disabled={presente !== true}
-              className="flex-1 py-2 bg-[#AAB99F] hover:bg-[#9CB39E] disabled:opacity-40 disabled:cursor-not-allowed rounded-full text-white font-medium transition-colors shadow-sm"
+              className="flex-1 py-2 bg-[#AAB99F] hover:bg-[#9CB39E] disabled:opacity-40 cursor-pointer disabled:cursor-not-allowed rounded-full text-white font-medium transition-colors shadow-sm"
             >
               Sim
             </button>
