@@ -30,6 +30,9 @@ export default function FinalizarConsultaModal({
   const [observacoes, setObservacoes] = useState("");
   const [aGuardar, setAGuardar] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
+  
+  const [tokenGerado, setTokenGerado] = useState<string | null>(null);
+  
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const procurarPacientes = useCallback(async (nome: string) => {
@@ -92,7 +95,13 @@ export default function FinalizarConsultaModal({
       const data = await res.json();
 
       if (res.ok && data.sucesso) {
-        onFinalizado();
+        if (data.tokenAcesso) {
+          // Se recebemos um token de acesso, mostramos o ecrã de sucesso
+          setTokenGerado(data.tokenAcesso);
+        } else {
+          // Se for paciente existente (sem token devolvido), fecha direto
+          onFinalizado();
+        }
       } else {
         setErro(data.erro || "Erro ao finalizar a consulta.");
       }
@@ -103,6 +112,42 @@ export default function FinalizarConsultaModal({
     }
   };
 
+  // Ecrã de Sucesso que aparece caso o token seja gerado
+  if (tokenGerado) {
+    return (
+      <div className="fixed inset-0 z-[60] bg-black/40 flex items-center justify-center p-6">
+        <div className="bg-white rounded-3xl shadow-xl w-full max-w-sm p-8 relative text-center">
+          <h2 className="text-2xl font-bold text-gray-800 mb-2">
+            Consulta Finalizada!
+          </h2>
+          <p className="text-gray-600 mb-6 text-sm">
+            O novo paciente foi registado com sucesso.
+          </p>
+
+          <div className="bg-gray-50 border border-gray-200 rounded-2xl p-6 mb-6">
+            <p className="text-xs text-gray-500 uppercase tracking-wider font-semibold mb-2">
+              Código de Acesso
+            </p>
+            <p className="text-4xl font-mono font-bold text-[#AAB99F] tracking-widest">
+              {tokenGerado}
+            </p>
+            <p className="text-xs text-gray-400 mt-3 px-2">
+              Forneça este código ao paciente para que este consiga aceder à aplicação móvel.
+            </p>
+          </div>
+
+          <button
+            onClick={onFinalizado}
+            className="w-full py-3 bg-[#AAB99F] hover:bg-[#9CB39E] cursor-pointer rounded-full text-white font-medium transition-colors shadow-sm"
+          >
+            Concluir
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // Ecrã normal de associação
   return (
     <div className="fixed inset-0 z-[60] bg-black/40 flex items-center justify-center p-6">
       <div className="bg-white rounded-3xl shadow-xl w-full max-w-lg p-6 relative">
@@ -151,7 +196,7 @@ export default function FinalizarConsultaModal({
                 setTermo(e.target.value);
                 setPacienteSelecionado(null);
               }}
-              className="border border-gray-300 rounded-xl px-3 py-2 text-sm cursor-text"
+              className="border border-gray-300 rounded-xl px-3 py-2 text-sm cursor-text focus:outline-none focus:border-[#AAB99F]"
             />
 
             <div className="max-h-48 overflow-y-auto flex flex-col gap-1">
@@ -183,14 +228,14 @@ export default function FinalizarConsultaModal({
               placeholder="Nome do paciente"
               value={novoNome}
               onChange={(e) => setNovoNome(e.target.value)}
-              className="border border-gray-300 rounded-xl px-3 py-2 text-sm cursor-text"
+              className="border border-gray-300 rounded-xl px-3 py-2 text-sm cursor-text focus:outline-none focus:border-[#AAB99F]"
             />
             <input
               type="email"
               placeholder="Email"
               value={novoEmail}
               onChange={(e) => setNovoEmail(e.target.value)}
-              className="border border-gray-300 rounded-xl px-3 py-2 text-sm cursor-text"
+              className="border border-gray-300 rounded-xl px-3 py-2 text-sm cursor-text focus:outline-none focus:border-[#AAB99F]"
             />
           </div>
         )}
@@ -199,7 +244,7 @@ export default function FinalizarConsultaModal({
           placeholder="Observações (opcional)"
           value={observacoes}
           onChange={(e) => setObservacoes(e.target.value)}
-          className="border border-gray-300 rounded-xl px-3 py-2 text-sm mt-3 w-full resize-none cursor-text"
+          className="border border-gray-300 rounded-xl px-3 py-2 text-sm mt-3 w-full resize-none cursor-text focus:outline-none focus:border-[#AAB99F]"
           rows={3}
         />
 

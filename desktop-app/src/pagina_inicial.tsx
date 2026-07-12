@@ -65,12 +65,14 @@ const viewTitles: Record<View, string> = {
 type PaginaInicialProps = {
   userName: string
   userId: number
-  tipo: string 
+  tipo: string
   onLogout: () => void
 }
 
 type OverviewDashboardProps = {
+  userId: number
   onAbrirConsulta: () => void
+  onAbrirComunicacao: (idMensagem?: number) => void
 }
 
 interface DiagnosticosPorMes {
@@ -84,6 +86,14 @@ interface EstatisticasOverview {
   diagnosticosPorMes: DiagnosticosPorMes[]
 }
 
+interface NotificacaoResumo {
+  idMensagem: number
+  nomeRemetente: string
+  assunto: string
+  dataEnvio: string
+  lida: boolean
+}
+
 function formatarMesLabel(mesISO: string): string {
   const [ano, mes] = mesISO.split('-')
   const nomesMeses = [
@@ -94,9 +104,22 @@ function formatarMesLabel(mesISO: string): string {
   return `${nomesMeses[indice] ?? mes}/${ano.slice(2)}`
 }
 
-const OverviewDashboard = ({ onAbrirConsulta }: OverviewDashboardProps) => {
+function formatarDataHoraCurta(iso: string): string {
+  const data = new Date(iso)
+  return data.toLocaleString('pt-PT', {
+    day: '2-digit',
+    month: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+  })
+}
+
+const OverviewDashboard = ({ userId, onAbrirConsulta, onAbrirComunicacao }: OverviewDashboardProps) => {
   const [stats, setStats] = useState<EstatisticasOverview | null>(null)
   const [erroStats, setErroStats] = useState<string | null>(null)
+
+  const [notificacoes, setNotificacoes] = useState<NotificacaoResumo[]>([])
+  const [erroNotificacoes, setErroNotificacoes] = useState<string | null>(null)
 
   useEffect(() => {
     const carregarEstatisticas = async () => {
@@ -116,6 +139,25 @@ const OverviewDashboard = ({ onAbrirConsulta }: OverviewDashboardProps) => {
 
     carregarEstatisticas()
   }, [])
+
+  useEffect(() => {
+    const carregarNotificacoes = async () => {
+      try {
+        const res = await fetch(`/api/mensagens/recebidas?userId=${userId}`)
+        if (!res.ok) {
+          setErroNotificacoes('Não foi possível carregar as notificações.')
+          return
+        }
+        const data: NotificacaoResumo[] = await res.json()
+        setNotificacoes(data.slice(0, 2))
+        setErroNotificacoes(null)
+      } catch {
+        setErroNotificacoes('Erro de comunicação com o servidor.')
+      }
+    }
+
+    carregarNotificacoes()
+  }, [userId])
 
   const dadosGrafico =
     stats?.diagnosticosPorMes.map((p) => ({
@@ -187,10 +229,44 @@ const OverviewDashboard = ({ onAbrirConsulta }: OverviewDashboardProps) => {
       </div>
 
       <div className="flex flex-col sm:flex-row gap-4 shrink-0 h-auto sm:h-48">
-        <div className="flex-1 bg-white rounded-xl border border-gray-300 p-4 shadow-sm">
+        <div className="flex-1 bg-white rounded-xl border border-gray-300 p-4 shadow-sm flex flex-col">
           <div className="text-sm font-bold text-gray-600 mb-2">Notificações</div>
-          <div className="text-xs text-gray-500 uppercase">???</div>
-          <div className="text-xs text-gray-500 uppercase mt-1">???</div>
+
+          {erroNotificacoes && (
+            <div className="flex-1 flex items-center justify-center text-xs text-red-500">
+              {erroNotificacoes}
+            </div>
+          )}
+
+          {!erroNotificacoes && notificacoes.length === 0 && (
+            <div className="flex-1 flex items-center justify-center text-xs text-gray-400">
+              Sem notificações recentes.
+            </div>
+          )}
+
+          {!erroNotificacoes && notificacoes.length > 0 && (
+            <div className="flex-1 flex flex-col gap-2 overflow-y-auto">
+              {notificacoes.map((n) => (
+                <button
+                  key={n.idMensagem}
+                  onClick={() => onAbrirComunicacao(n.idMensagem)}
+                  className="text-left px-3 py-2 rounded-xl bg-gray-50 hover:bg-gray-100 transition-colors cursor-pointer"
+                >
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-xs font-semibold text-gray-800 truncate">
+                      {n.nomeRemetente}
+                    </span>
+                    <span
+                      className={`w-2 h-2 rounded-full shrink-0 ${n.lida ? 'bg-green-500' : 'bg-red-500'}`}
+                      title={n.lida ? 'Lida' : 'Não lida'}
+                    />
+                  </div>
+                  <div className="text-xs text-gray-500 truncate">{n.assunto}</div>
+                  <div className="text-[0.65rem] text-gray-400">{formatarDataHoraCurta(n.dataEnvio)}</div>
+                </button>
+              ))}
+            </div>
+          )}
         </div>
 
         <div className="flex-1 bg-white rounded-xl border border-gray-300 p-4 shadow-sm flex flex-col">
@@ -216,6 +292,7 @@ export default function App({ userName, userId, tipo, onLogout }: PaginaInicialP
   const [view, setView] = useState<View>('home')
   const [modalAberto, setModalAberto] = useState(false)
   const [statsRefreshKey, setStatsRefreshKey] = useState(0)
+  const [mensagemParaAbrir, setMensagemParaAbrir] = useState<number | null>(null)
 
   const tipoNormalizado = (tipo || '')
     .normalize("NFD")
@@ -225,7 +302,6 @@ export default function App({ userName, userId, tipo, onLogout }: PaginaInicialP
 
   const esMedico = tipoNormalizado === 'medico';
 
-  // BARREIRA 1: Bloqueio ativo no estado (Redirecionamento)
   useEffect(() => {
     if (esMedico && view === 'dados_equipamentos') {
       setView('home')
@@ -239,15 +315,29 @@ export default function App({ userName, userId, tipo, onLogout }: PaginaInicialP
     cancelar: bioCancelar,
   } = useBiometriaRegisto()
 
+  const irParaView = (id: View) => {
+    setMensagemParaAbrir(null)
+    setView(id)
+  }
+
+  const abrirComunicacaoComMensagem = (idMensagem?: number) => {
+    setMensagemParaAbrir(idMensagem ?? null)
+    setView('comunicacao')
+  }
+
   let content: ReactNode
   if (view === 'dados_diagnostico') content = <DadosDiagnostico />
-  else if (view === 'comunicacao') content = <Comunicacao userId={userId}/>
+  else if (view === 'comunicacao') content = (
+    <Comunicacao userId={userId} idMensagemInicial={mensagemParaAbrir} />
+  )
   else if (view === 'dados_equipamentos' && !esMedico) content = <DadosEquipamentos userId={userId} />
   else if (view === 'dados_pessoais') content = <DadosPessoais userId={userId} />
   else content = (
     <OverviewDashboard
       key={statsRefreshKey}
+      userId={userId}
       onAbrirConsulta={() => setModalAberto(true)}
+      onAbrirComunicacao={abrirComunicacaoComMensagem}
     />
   )
 
@@ -263,15 +353,15 @@ export default function App({ userName, userId, tipo, onLogout }: PaginaInicialP
           </div>
 
           <nav className="flex flex-col gap-2 overflow-y-auto">
-            <NavButton id="home" label="Overview" icon={OverviewIcon} isActive={view === 'home'} onClick={setView} />
-            <NavButton id="dados_diagnostico" label="Dados Diagnósticos" icon={DadosDiag} isActive={view === 'dados_diagnostico'} onClick={setView} />
-            <NavButton id="comunicacao" label="Comunicação" icon={comunicaicon} isActive={view === 'comunicacao'} onClick={setView} />
-            
+            <NavButton id="home" label="Overview" icon={OverviewIcon} isActive={view === 'home'} onClick={irParaView} />
+            <NavButton id="dados_diagnostico" label="Dados Diagnósticos" icon={DadosDiag} isActive={view === 'dados_diagnostico'} onClick={irParaView} />
+            <NavButton id="comunicacao" label="Comunicação" icon={comunicaicon} isActive={view === 'comunicacao'} onClick={irParaView} />
+
             {!esMedico && (
-              <NavButton id="dados_equipamentos" label="Dados Equipamentos" icon={dadosequi} isActive={view === 'dados_equipamentos'} onClick={setView} />
+              <NavButton id="dados_equipamentos" label="Dados Equipamentos" icon={dadosequi} isActive={view === 'dados_equipamentos'} onClick={irParaView} />
             )}
-            
-            <NavButton id="dados_pessoais" label="Dados Pessoais" icon={datapessoal} isActive={view === 'dados_pessoais'} onClick={setView} />
+
+            <NavButton id="dados_pessoais" label="Dados Pessoais" icon={datapessoal} isActive={view === 'dados_pessoais'} onClick={irParaView} />
           </nav>
         </aside>
 

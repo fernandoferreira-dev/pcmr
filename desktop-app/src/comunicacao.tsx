@@ -30,7 +30,13 @@ function formatarDataHora(iso: string): string {
   })
 }
 
-export default function Comunicacao({ userId }: { userId: number }) {
+export default function Comunicacao({
+  userId,
+  idMensagemInicial = null,
+}: {
+  userId: number
+  idMensagemInicial?: number | null
+}) {
   const [vista, setVista] = useState<Vista>('recebidas')
   const [mensagens, setMensagens] = useState<Mensagem[]>([])
   const [pesquisa, setPesquisa] = useState('')
@@ -38,6 +44,10 @@ export default function Comunicacao({ userId }: { userId: number }) {
   const [mostrarNovaMensagem, setMostrarNovaMensagem] = useState(false)
   const [mensagemExpandida, setMensagemExpandida] = useState<number | null>(null)
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  // Evita reabrir/re-marcar a mesma mensagem várias vezes se a lista
+  // recarregar por outro motivo (ex.: pesquisa) depois da abertura inicial.
+  const idJaAbertoRef = useRef<number | null>(null)
 
   const carregarMensagens = useCallback(async (termo: string, vistaAtual: Vista) => {
     try {
@@ -59,8 +69,6 @@ export default function Comunicacao({ userId }: { userId: number }) {
   useEffect(() => {
     setMensagemExpandida(null)
     carregarMensagens(pesquisa, vista)
-    // Muda de vista deve recarregar imediatamente, sem esperar pelo debounce da pesquisa
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [vista])
 
   useEffect(() => {
@@ -73,11 +81,9 @@ export default function Comunicacao({ userId }: { userId: number }) {
     }
   }, [pesquisa, vista, carregarMensagens])
 
-  const abrirMensagem = async (mensagem: Mensagem) => {
-    setMensagemExpandida(mensagemExpandida === mensagem.idMensagem ? null : mensagem.idMensagem)
+  const abrirMensagem = useCallback(async (mensagem: Mensagem) => {
+    setMensagemExpandida((atual) => (atual === mensagem.idMensagem ? null : mensagem.idMensagem))
 
-    // Só faz sentido marcar como lida do lado de quem recebeu — o backend
-    // rejeita (403) se o remetente tentar marcar uma mensagem enviada.
     if (vista === 'recebidas' && !mensagem.lida) {
       try {
         await fetch(`/api/mensagens/${mensagem.idMensagem}/lida?userId=${userId}`, {
@@ -90,7 +96,19 @@ export default function Comunicacao({ userId }: { userId: number }) {
         // falha silenciosa; o estado local não muda, o utilizador pode tentar reabrir
       }
     }
-  }
+  }, [vista, userId])
+
+  useEffect(() => {
+    if (idMensagemInicial == null) return
+    if (idJaAbertoRef.current === idMensagemInicial) return
+    if (vista !== 'recebidas') return
+
+    const alvo = mensagens.find((m) => m.idMensagem === idMensagemInicial)
+    if (!alvo) return
+
+    idJaAbertoRef.current = idMensagemInicial
+    abrirMensagem(alvo)
+  }, [idMensagemInicial, mensagens, vista, abrirMensagem])
 
   const apagarMensagem = async (idMensagem: number, e: React.MouseEvent) => {
     e.stopPropagation()
@@ -245,7 +263,6 @@ export default function Comunicacao({ userId }: { userId: number }) {
           onClose={() => setMostrarNovaMensagem(false)}
           onEnviada={() => {
             setMostrarNovaMensagem(false)
-            // Se estiver na vista "enviadas", mostra a mensagem que acabou de mandar
             setVista('enviadas')
             carregarMensagens(pesquisa, 'enviadas')
           }}

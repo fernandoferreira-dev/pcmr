@@ -4,7 +4,11 @@ import com.pcmr.api.dto.FinalizarConsultaRequestDTO;
 import com.pcmr.api.model.*;
 import com.pcmr.api.repository.*;
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Random;
+import java.util.UUID;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
@@ -13,26 +17,29 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 public class ConsultaService {
 
-    @Autowired
-    private PessoaRepository pessoaRepository;
+    @Autowired private PessoaRepository pessoaRepository;
+    @Autowired private ConsultaRepository consultaRepository;
+    @Autowired private DiagnosticoRepository diagnosticoRepository;
+    @Autowired private SensorRepository sensorRepository;
+    @Autowired private LeituraSensorService leituraSensorService;
+    @Autowired private JdbcTemplate jdbcTemplate;
+    
+    // Repositórios injetados com os nomes corretos
+    @Autowired private UserRepository userRepository;
+    @Autowired private UtilizadorPacienteAcessoRepository acessoRepository;
 
-    @Autowired
-    private ConsultaRepository consultaRepository;
+    public static class ResultadoFinalizacao {
+        public Diagnostico diagnostico;
+        public String tokenAcesso;
 
-    @Autowired
-    private DiagnosticoRepository diagnosticoRepository;
-
-    @Autowired
-    private SensorRepository sensorRepository;
-
-    @Autowired
-    private LeituraSensorService leituraSensorService;
-
-    @Autowired
-    private JdbcTemplate jdbcTemplate;
+        public ResultadoFinalizacao(Diagnostico diagnostico, String tokenAcesso) {
+            this.diagnostico = diagnostico;
+            this.tokenAcesso = tokenAcesso;
+        }
+    }
 
     @Transactional
-    public Diagnostico finalizarConsulta(FinalizarConsultaRequestDTO req) {
+    public ResultadoFinalizacao finalizarConsulta(FinalizarConsultaRequestDTO req) {
         if (req.getIdMedico() == null) {
             throw new IllegalArgumentException("idMedico é obrigatório");
         }
@@ -41,7 +48,9 @@ public class ConsultaService {
             .findById(req.getIdMedico())
             .orElseThrow(() -> new IllegalArgumentException("Médico não encontrado"));
 
-        Pessoa paciente = resolverPaciente(req);
+        PacienteResolvido pacResolvido = resolverPaciente(req);
+        Pessoa paciente = pacResolvido.pessoa;
+        String tokenGerado = pacResolvido.tokenAcesso;
 
         Consulta consulta = new Consulta();
         consulta.setMedico(medico);
@@ -85,7 +94,8 @@ public class ConsultaService {
         }
 
         leituraSensorService.limparAcumulador(req.getDeviceId());
-        return guardado;
+        
+        return new ResultadoFinalizacao(guardado, tokenGerado);
     }
 
     private void inserirHistoricoEmLote(Long idDiagnostico, List<LeituraSensorService.PontoHistoricoMemory> leituras) {
@@ -103,11 +113,18 @@ public class ConsultaService {
         });
     }
 
-    private Pessoa resolverPaciente(FinalizarConsultaRequestDTO req) {
+    private static class PacienteResolvido {
+        Pessoa pessoa;
+        String tokenAcesso;
+        PacienteResolvido(Pessoa p, String t) { this.pessoa = p; this.tokenAcesso = t; }
+    }
+
+    private PacienteResolvido resolverPaciente(FinalizarConsultaRequestDTO req) {
         if (req.getIdPacienteExistente() != null) {
-            return pessoaRepository
+            Pessoa p = pessoaRepository
                 .findById(req.getIdPacienteExistente())
                 .orElseThrow(() -> new IllegalArgumentException("Paciente não encontrado"));
+            return new PacienteResolvido(p, null);
         }
 
         if (req.getNovoPaciente() != null) {
@@ -122,7 +139,26 @@ public class ConsultaService {
             Pessoa novaPessoa = new Pessoa();
             novaPessoa.setNome(dto.getNome());
             novaPessoa.setEmail(dto.getEmail());
-            return pessoaRepository.save(novaPessoa);
+            novaPessoa = pessoaRepository.save(novaPessoa);
+
+            Utilizador u = new Utilizador();
+            u.setPessoa(novaPessoa);
+            u.setUsername(dto.getEmail());
+            u.setPassword(UUID.randomUUID().toString()); 
+            
+            u = userRepository.save(u);
+
+            String token = String.format("%06d", new Random().nextInt(999999));
+            
+            UtilizadorPacienteAcesso acesso = new UtilizadorPacienteAcesso();
+            acesso.setUtilizador(u);
+            acesso.setTokenAcesso(token);
+            acesso.setDataInicio(LocalDateTime.now());
+            acesso.setDataFim(LocalDateTime.now().plusMonths(1));
+            
+            acessoRepository.save(acesso);
+
+            return new PacienteResolvido(novaPessoa, token);
         }
 
         throw new IllegalArgumentException("É necessário indicar um paciente existente ou os dados de um novo paciente");
