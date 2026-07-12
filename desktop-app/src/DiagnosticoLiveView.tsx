@@ -26,6 +26,12 @@ interface PontoGrafico {
   magnitudeG: number;
 }
 
+interface AlertaSessao {
+  tipoAlerta: string;
+  mensagem: string;
+  dataHora: string; 
+}
+
 type MetricaKey = "temperatura" | "bpm" | "magnitudeG";
 
 const POLL_INTERVAL_MS = 2000;
@@ -33,7 +39,6 @@ const DEVICE_ID = "wearable01";
 const MAX_PONTOS_GRAFICO = 60; // últimos 2 minutos de histórico (60 * 2s)
 const DURACAO_PULSO_MS = 700;
 
-// Definição dos limiares para os alertas
 const LIMITES_ALERTA = {
   tempMaxima: 38.0,
   bpmMinimo: 50,
@@ -43,7 +48,7 @@ const FALL_STATE_LABELS: Record<number, string> = {
   0: "Repouso",
   1: "Queda livre detetada",
   2: "Impacto detetado",
-  3: "A confirming queda...",
+  3: "A confirmar queda...",
 };
 
 const METRICAS: {
@@ -75,14 +80,16 @@ export default function DiagnosticoLiveView({
   const [mostrarFinalizar, setMostrarFinalizar] = useState(false);
   const [metricaAtiva, setMetricaAtiva] = useState<MetricaKey>("temperatura");
   const [pulsando, setPulsando] = useState(false);
+  const [alertas, setAlertas] = useState<AlertaSessao[]>([]);
   
   const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const pulsoTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const ultimaHoraRef = useRef<string | null>(null);
-
   const alertaTempRegistadoRef = useRef(false);
   const alertaBpmRegistadoRef = useRef(false);
+  const inicioSessaoRef = useRef(new Date().toISOString());
 
+  // FUNÇÕES DE REGISTO
   const registarAlertaBD = async (tipo: string, valor: number, mensagem: string) => {
     try {
       await fetch('/api/alertas', {
@@ -101,6 +108,7 @@ export default function DiagnosticoLiveView({
     }
   };
 
+
   useEffect(() => {
     const buscarLeitura = async () => {
       try {
@@ -113,6 +121,7 @@ export default function DiagnosticoLiveView({
         setLeitura(data);
         setErro(null);
 
+        // Verificação de alertas
         if (data.temperatura > LIMITES_ALERTA.tempMaxima) {
           if (!alertaTempRegistadoRef.current) {
             registarAlertaBD(
@@ -123,7 +132,7 @@ export default function DiagnosticoLiveView({
             alertaTempRegistadoRef.current = true;
           }
         } else {
-          alertaTempRegistadoRef.current = false; // Permite um novo registo caso volte a subir após normalizar
+          alertaTempRegistadoRef.current = false;
         }
 
         if (data.bpm > 0 && data.bpm < LIMITES_ALERTA.bpmMinimo) {
@@ -136,9 +145,10 @@ export default function DiagnosticoLiveView({
             alertaBpmRegistadoRef.current = true;
           }
         } else {
-          alertaBpmRegistadoRef.current = false; // Reseta o estado quando o batimento normaliza
+          alertaBpmRegistadoRef.current = false;
         }
 
+        // Atualização do gráfico
         if (data.atualizadoEm !== ultimaHoraRef.current) {
           ultimaHoraRef.current = data.atualizadoEm;
 
@@ -178,7 +188,29 @@ export default function DiagnosticoLiveView({
     };
   }, [idMedico]);
 
-  // Estados locais para renderização dos alertas no JSX
+  useEffect(() => {
+    const buscarAlertas = async () => {
+      try {
+        const res = await fetch(`/api/alertas?deviceId=${DEVICE_ID}&desde=${inicioSessaoRef.current}`);
+        if (!res.ok) return;
+        const data = await res.json();
+        
+        // Garante que os dados recebidos são uma estrutura de array antes de aplicar no estado
+        if (Array.isArray(data)) {
+          setAlertas(data);
+        }
+      } catch {
+        // falha silenciosa
+      }
+    };
+
+    buscarAlertas();
+    const interval = setInterval(buscarAlertas, 4000);
+    return () => clearInterval(interval);
+  }, []);
+
+
+  // --- ESTADOS DERIVADOS PARA JSX ---
   const emQueda = leitura?.alertaQuedaAtivo ?? false;
   const alertaTemperatura = leitura && leitura.temperatura > LIMITES_ALERTA.tempMaxima;
   const alertaBpm = leitura && leitura.bpm > 0 && leitura.bpm < LIMITES_ALERTA.bpmMinimo;
@@ -232,6 +264,28 @@ export default function DiagnosticoLiveView({
           {alertaBpm && (
             <div className="bg-rose-50 border border-rose-300 text-rose-700 rounded-2xl px-4 py-3 font-bold flex items-center gap-2 shadow-sm">
                ALERTA: Bradicardia grave detetada ({leitura?.bpm} bpm). Valor abaixo de 50 bpm.
+            </div>
+          )}
+
+          {/* Banner de alertas originados na BD */}
+          {alertas.length > 0 && (
+            <div className="flex flex-col gap-2">
+              {alertas.map((a, idx) => (
+                <div
+                  key={idx}
+                  className="bg-red-50 border border-red-300 text-red-700 rounded-2xl px-4 py-3 text-sm shadow-sm animate-fadeIn"
+                >
+                  <span className="font-semibold">
+                    {a.tipoAlerta ? a.tipoAlerta.replace(/_/g, " ") : "ALERTA"}:
+                  </span>{" "}
+                  {a.mensagem}
+                  {a.dataHora && (
+                    <span className="text-xs text-red-400 ml-2">
+                      ({new Date(a.dataHora).toLocaleTimeString('pt-PT')})
+                    </span>
+                  )}
+                </div>
+              ))}
             </div>
           )}
         </div>

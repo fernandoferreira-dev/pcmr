@@ -242,7 +242,7 @@ export default function App({ userName, userId, tipo, onLogout }: PaginaInicialP
   let content: ReactNode
   if (view === 'dados_diagnostico') content = <DadosDiagnostico />
   else if (view === 'comunicacao') content = <Comunicacao userId={userId}/>
-  else if (view === 'dados_equipamentos' && !esMedico) content = <DadosEquipamentos />
+  else if (view === 'dados_equipamentos' && !esMedico) content = <DadosEquipamentos userId={userId} />
   else if (view === 'dados_pessoais') content = <DadosPessoais userId={userId} />
   else content = (
     <OverviewDashboard

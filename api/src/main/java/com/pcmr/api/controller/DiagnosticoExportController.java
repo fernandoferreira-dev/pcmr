@@ -2,8 +2,10 @@ package com.pcmr.api.controller;
 
 import com.lowagie.text.*;
 import com.lowagie.text.pdf.PdfWriter;
+import com.pcmr.api.model.AlertaClinico;
 import com.pcmr.api.model.Diagnostico;
 import com.pcmr.api.model.HistoricoSensor;
+import com.pcmr.api.repository.AlertaClinicoRepository;
 import com.pcmr.api.repository.DiagnosticoRepository;
 import com.pcmr.api.repository.HistoricoSensorRepository;
 import jakarta.servlet.http.HttpServletResponse;
@@ -14,6 +16,7 @@ import org.jfree.data.category.DefaultCategoryDataset;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
+import java.awt.Color;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
 import java.time.format.DateTimeFormatter;
@@ -29,6 +32,9 @@ public class DiagnosticoExportController {
 
     @Autowired
     private HistoricoSensorRepository historicoSensorRepository;
+
+    @Autowired
+    private AlertaClinicoRepository alertaClinicoRepository;
 
     @GetMapping("/{id}/exportar")
     public void exportarPdf(@PathVariable Long id, HttpServletResponse response) {
@@ -49,6 +55,7 @@ public class DiagnosticoExportController {
             Font tituloFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 18);
             Font subFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 12);
             Font normalFont = FontFactory.getFont(FontFactory.HELVETICA, 10);
+            Font alertaFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 10, Color.RED);
 
             document.add(new Paragraph("RELATÓRIO DE DIAGNÓSTICO MÉDICO", tituloFont));
             document.add(new Paragraph("Data da Consulta: " + diag.getGdhDiagnostico().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")), normalFont));
@@ -69,11 +76,37 @@ public class DiagnosticoExportController {
                 document.add(new Paragraph("• Eventos Notificados: " + diag.getRelacaoCausaEfeito(), normalFont));
             }
             document.add(new Paragraph("\n"));
+            
+            if (!historico.isEmpty()) {
+                var inicio = historico.get(0).getGdhLeitura().toLocalDateTime();
+                var fim = historico.get(historico.size() - 1).getGdhLeitura().toLocalDateTime();
+
+                List<AlertaClinico> alertas = alertaClinicoRepository
+                        .findBySensor_IdSensorAndDataHoraBetweenOrderByDataHoraAsc(
+                                diag.getSensor().getIdSensor(), inicio, fim
+                        );
+
+                if (!alertas.isEmpty()) {
+                    document.add(new Paragraph("⚠ Alertas Registados Durante a Consulta:", subFont));
+                    DateTimeFormatter horaFormatter = DateTimeFormatter.ofPattern("HH:mm:ss");
+
+                    for (AlertaClinico a : alertas) {
+                        String linha = String.format(
+                                "[%s] %s — %s",
+                                a.getDataHora().format(horaFormatter),
+                                a.getTipoAlerta(),
+                                a.getMensagem()
+                        );
+                        document.add(new Paragraph(linha, alertaFont));
+                    }
+                    document.add(new Paragraph("\n"));
+                }
+            }
 
             if (!historico.isEmpty()) {
                 document.add(new Paragraph("Evolução Cinética dos Sensores (Gráfico):", subFont));
                 document.add(new Paragraph("\n"));
-                
+
                 DefaultCategoryDataset dataset = new DefaultCategoryDataset();
                 DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("HH:mm:ss");
 
@@ -93,10 +126,10 @@ public class DiagnosticoExportController {
                 ByteArrayOutputStream baos = new ByteArrayOutputStream();
                 javax.imageio.ImageIO.write(bufferedImage, "png", baos);
                 Image chartImage = Image.getInstance(baos.toByteArray());
-                
+
                 document.add(chartImage);
             } else {
-                document.add(new Paragraph("Não foram localizados pontos para construir o gráfico]", normalFont));
+                document.add(new Paragraph("Não foram localizados pontos para construir o gráfico", normalFont));
             }
 
             document.close();
