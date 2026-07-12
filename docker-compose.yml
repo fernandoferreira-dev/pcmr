@@ -1,5 +1,4 @@
 services:
-  # Spring Boot API Backend
   spring-app:
     build:
       context: ./api
@@ -25,7 +24,6 @@ services:
       - pcmr-network
     restart: unless-stopped
 
-  # Desktop Web Application
   desktop-app:
     build:
       context: ./desktop-app
@@ -42,12 +40,13 @@ services:
       - pcmr-network
     restart: unless-stopped
 
-  # Mobile Web Application
   mobile-app:
     build:
       context: ./mobile-app
       dockerfile: Dockerfile
     container_name: mobile_app_container
+    ports:
+      - "3001:80"
     expose:
       - "80"
     depends_on:
@@ -57,7 +56,22 @@ services:
       - pcmr-network
     restart: unless-stopped
 
-  # MQTT5 Broker
+  paciente-app:
+    build:
+      context: ./paciente-app
+      dockerfile: Dockerfile
+    container_name: paciente-app-container
+    ports:
+      - "3002:80"
+    expose:
+      - "80"
+    depends_on:
+      - spring-app
+      - mqtt5
+    networks:
+      - pcmr-network
+    restart: unless-stopped
+
   mqtt5:
     image: eclipse-mosquitto:2
     container_name: mosquitto
@@ -72,14 +86,12 @@ services:
       - pcmr-network
     restart: unless-stopped
 
-  # HTTPS Reverse Proxy
-  # HTTPS Reverse Proxy
   caddy:
     image: caddy:latest
     container_name: caddy
     restart: unless-stopped
     ports:
-      - "80:80"   # <--- Add this line
+      - "80:80"
       - "443:443"
     volumes:
       - ./configuration/caddy/Caddyfile:/etc/caddy/Caddyfile:ro
