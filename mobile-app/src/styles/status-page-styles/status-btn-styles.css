@@ -10,10 +10,11 @@
     border-radius: 1rem;
     background-color: #E8E8E8;
     height: auto;
-    width: 80%;
+    width: 90%;
+    max-width: 500px;
     padding: 1.5rem;
     box-sizing: border-box;
-    margin-top: 30px;
+    margin: 30px auto 0;
     overflow: hidden;
 }
 
@@ -30,21 +31,20 @@
     border: 3px solid #6C757D;
     border-radius: 1rem;
     padding: 0.5rem 1rem;
-    
     align-self: center;
     background-color: #A8B8A0;
     width: 150px;
     height: 140px;
     color: #ffffff;
     gap: 10px;
-
+    box-sizing: border-box;
 }
 
 .status-btn-box button {
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 0.5rem 1rem;
+    padding: 0.9rem 1rem;
     box-sizing: border-box;
     align-self: center;
     background-color: #C1D2C3;

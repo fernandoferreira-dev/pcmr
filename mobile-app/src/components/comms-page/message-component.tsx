@@ -3,10 +3,11 @@ import { FaRegTrashAlt } from "react-icons/fa";
 import "../../styles/messages-page-styles/message-box-styles.css";
 import "../../styles/diagnostic-data-styles/data-containers-styles.css";
 import { useState, useEffect, useCallback } from "react";
+import { useAuth } from "../../context/auth-context";
 
 const API_URL = "http://localhost:8080";
 
-type FiltroOpcao = "env" | "rec" | "all"; // pt = Enviadas, ing = Recebidas, esp = Todas
+type FiltroOpcao = "env" | "rec" | "all";
 
 interface MensagemDTO {
     idMensagem: number;
@@ -23,22 +24,23 @@ interface MensagemDTO {
 }
 
 export default function MessageComponent() {
+    const { user } = useAuth();
+    const userId = user?.userId ?? null;
+
     const [selectedOption, setSelectedOption] = useState<FiltroOpcao>("env");
     const [pesquisa, setPesquisa] = useState<string>("");
     const [mensagens, setMensagens] = useState<MensagemDTO[]>([]);
     const [loading, setLoading] = useState<boolean>(false);
     const [erro, setErro] = useState<string | null>(null);
 
-    const userId = localStorage.getItem("userId"); // TODO: replace with real auth source
-
     const fetchMensagens = useCallback(async () => {
         if (!userId) return;
         setLoading(true);
         setErro(null);
         try {
-            const params = new URLSearchParams({ userId });
+            const params = new URLSearchParams({ userId: String(userId) });
             if (pesquisa) params.append("pesquisa", pesquisa);
-            
+
             //filtra mensagens enviadas
             if (selectedOption === "env") {
                 const res = await fetch(`${API_URL}/api/mensagens/enviadas?${params}`);
@@ -46,16 +48,16 @@ export default function MessageComponent() {
                     throw new Error("Erro ao carregar mensagens enviadas");
                 }
                 setMensagens(await res.json() as MensagemDTO[]);
-            
-            //filtra mensagens recebidas
+
+                //filtra mensagens recebidas
             } else if (selectedOption === "rec") {
                 const res = await fetch(`${API_URL}/api/mensagens/recebidas?${params}`);
                 if (!res.ok) {
                     throw new Error("Erro ao carregar mensagens recebidas");
                 }
                 setMensagens(await res.json() as MensagemDTO[]);
-            
-            //filtra todas de uma maneira muito porca lol
+
+                //filtra todas de uma maneira muito porca lol
             } else {
                 const [resEnv, resRec] = await Promise.all([
                     fetch(`${API_URL}/api/mensagens/enviadas?${params}`),
@@ -134,48 +136,54 @@ export default function MessageComponent() {
                 </label>
             </div>
 
-            {loading && <p>A carregar mensagens...</p>}
-            {erro && <p className="erro-mensagem">{erro}</p>}
+            <div className="messages-scroll-container">
+                {mensagens.map((msg) => {
+                    const isRecebida =
+                        selectedOption === "all"
+                            ? msg.idDestinatario === userId
+                            : selectedOption === "rec";
+                    const nome = isRecebida ? msg.nomeRemetente : msg.nomeDestinatario;
 
-            {mensagens.map((msg) => {
-                const isRecebida =
-                    selectedOption === "all"
-                        ? msg.idDestinatario === Number(userId)
-                        : selectedOption === "rec";
-                const nome = isRecebida ? msg.nomeRemetente : msg.nomeDestinatario;
-
-                return (
-                    <div className="notification-wrapper" key={msg.idMensagem}>
-                        <div className="message-header">
-                            <div className="sender-info">
-                                <img src={UserImg} alt="Sender" className="message-icon" />
-                                <span className="sender-name">{nome}</span>
+                    return (
+                        <>
+                            <div className="notification-wrapper" key={msg.idMensagem}>
+                                <div className="message-header">
+                                    <div className="sender-info">
+                                        <img src={UserImg} alt="Sender" className="message-icon" />
+                                        <span className="sender-name">{nome}</span>
+                                    </div>
+                                    <span className="message-date">{msg.dataEnvio}</span>
+                                </div>
+                                <div
+                                    className="message-body"
+                                    onClick={() => isRecebida && !msg.lida && marcarComoLida(msg.idMensagem)}
+                                >
+                                    <div className="message-top-row">
+                                        <span className="message-subject">
+                                            <strong>Assunto:</strong> {msg.assunto}
+                                        </span>
+                                        <div className="message-actions">
+                                            <FaRegTrashAlt
+                                                className="trash-icon"
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    apagarMensagem(msg.idMensagem);
+                                                }}
+                                            />
+                                            {isRecebida && !msg.lida && <div className="unread-dot"></div>}
+                                        </div>
+                                    </div>
+                                    <div className="message-corpo">
+                                        <strong>Corpo:</strong> {msg.corpo}
+                                    </div>
+                                </div>
                             </div>
-                            <span className="message-date">{msg.dataEnvio}</span>
-                        </div>
-                        <div
-                            className="message-body"
-                            onClick={() => isRecebida && !msg.lida && marcarComoLida(msg.idMensagem)}
-                        >
-                            <span className="message-subject">
-                                <strong>Assunto:</strong> {msg.assunto}
-                            </span>
-                            <div className="message-actions">
-                                <FaRegTrashAlt
-                                    className="trash-icon"
-                                    onClick={(e) => {
-                                        e.stopPropagation();
-                                        apagarMensagem(msg.idMensagem);
-                                    }}
-                                />
-                                {isRecebida && !msg.lida && <div className="unread-dot"></div>}
-                            </div>
-                        </div>
-                    </div>
-                );
-            })}
+                        </>
+                    );
+                })}
 
-            {!loading && mensagens.length === 0 && <p>Sem mensagens.</p>}
+                {!loading && mensagens.length === 0 && <p>Sem mensagens.</p>}
+            </div>
         </>
     );
 }

@@ -1,21 +1,25 @@
 .status-search-bar {
     align-self: center;
     display: block;
-    width: 150px;
+    width: 100%;
+    max-width: 150px;
     padding: 0.6rem 0.8rem;
     color: #000000;
     border: 1px solid #6C757D;
     background-color: #CFCDCD;
     border-radius: 1rem;
+    box-sizing: border-box;
 }
 
 .message-search-bar {
     display: flex;
     align-self: center;
-    width: 40vh;
+    width: 100%;
+    max-width: 320px;
     padding: 0.6rem 0.8rem;
     color: #000000;
     border: 1px solid #6C757D;
     background-color: #CFCDCD;
     border-radius: 1rem;
+    box-sizing: border-box;
 }

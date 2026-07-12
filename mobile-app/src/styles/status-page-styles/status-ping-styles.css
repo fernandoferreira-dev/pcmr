@@ -5,16 +5,22 @@
     border-radius: 1rem;
     background-color: #ffffff;
     padding: 0.5rem 1rem;
-    align-items: first baseline;
+    align-items: flex-start;
+    width: 100%;
+    box-sizing: border-box;
 }
 
 .status-ping-messsage-box {
     display: flex;
     flex-direction: row;
+    flex-wrap: wrap;
+    width: 100%;
+    gap: 0.5rem;
 }
 
 .status-ping-messsage-box img {
     width: 40px;
+    flex-shrink: 0;
 }
 
 .status-ping-box h1 {
@@ -22,17 +28,22 @@
     border: 3px solid #b3b9b3;
     border-radius: 1rem;
     padding: 0.5rem;
-    align-self: first baseline;
-    width: 30vh;
+    align-self: flex-start;
+    width: 100%;
+    max-width: 260px;
+    box-sizing: border-box;
     text-align: left;
 }
 
 .status-ping-box h2 {
     color: #000000;
+    font-size: 15px;
 }
 
 .status-ping-box p {
     color: #000000;
     padding: 0.5rem;
     text-align: left;
+    word-break: break-word;
+    font-size: 13px;
 }

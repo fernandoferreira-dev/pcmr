@@ -73,6 +73,7 @@ function AppContent() {
     return (
       <LoginPage
         onLogin={(profile) => {
+          console.log("Saved userId:", profile.userId);
           login(profile);
         }}
         onAccountCreated={(profile) => {
