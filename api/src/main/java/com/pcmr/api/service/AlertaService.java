@@ -1,14 +1,19 @@
 package com.pcmr.api.service;
 
 import com.pcmr.api.dto.AlertaRequestDTO;
+import com.pcmr.api.dto.AlertaResponseDTO;
 import com.pcmr.api.model.AlertaClinico;
 import com.pcmr.api.model.Sensor;
 import com.pcmr.api.model.Utilizador;
 import com.pcmr.api.repository.AlertaClinicoRepository;
 import com.pcmr.api.repository.SensorRepository;
-import com.pcmr.api.repository.UserRepository; 
+import com.pcmr.api.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class AlertaService {
@@ -26,7 +31,7 @@ public class AlertaService {
         AlertaClinico alerta = new AlertaClinico();
 
         if (dto.getIdMedico() != null) {
-            Utilizador medico = userRepository.findById(dto.getIdMedico())
+            Utilizador medico = userRepository.findById(Long.valueOf(dto.getIdMedico()))
                     .orElseThrow(() -> new RuntimeException("Médico não encontrado. ID: " + dto.getIdMedico()));
             alerta.setMedico(medico);
         }
@@ -40,5 +45,18 @@ public class AlertaService {
         alerta.setMensagem(dto.getMensagem());
 
         alertaRepository.save(alerta);
+    }
+
+    public List<AlertaResponseDTO> listarPorDispositivo(String deviceId, LocalDateTime desde) {
+        List<AlertaClinico> alertas = alertaRepository
+                .findBySensor_NomeAndDataHoraAfterOrderByDataHoraDesc(deviceId, desde);
+
+        return alertas.stream().map(a -> new AlertaResponseDTO(
+                a.getIdAlerta(),
+                a.getTipoAlerta(),
+                a.getValorRegistado(),
+                a.getMensagem(),
+                a.getDataHora().toString()
+        )).collect(Collectors.toList());
     }
 }
