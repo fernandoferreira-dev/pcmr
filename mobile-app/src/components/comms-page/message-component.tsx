@@ -103,15 +103,7 @@ export default function MessageComponent() {
     };
 
     const apagarMensagem = async (id: number) => {
-        try {
-            const res = await fetch(`${API_URL}/api/mensagens/${id}?userId=${userId}`, {
-                method: "DELETE",
-            });
-            if (!res.ok) throw new Error("Erro ao apagar mensagem");
-            setMensagens((prev) => prev.filter((m) => m.idMensagem !== id));
-        } catch (e) {
-            setErro(e instanceof Error ? e.message : "Erro desconhecido");
-        }
+        setMensagens((prev) => prev.filter((m) => m.idMensagem !== id));
     };
 
     return (
