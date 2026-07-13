@@ -7,11 +7,14 @@ import InfoPage from "./info-page";
 import ClientInfoPage from "./client-info-page";
 import SettingsButtonComponent from "../components/misc/settings-button-component";
 import SendEmailButtonComponent from "../components/misc/send-email-btn";
+import { useAuth } from "../context/auth-context";
 import "../styles/misc/header-styles.css";
 
 type Props = { username: string; phonenumber: string; email: string; birthDate: string; selectedOption: string };
 
 export default function MainPage({ username, phonenumber, email, birthDate, selectedOption }: Props) {
+  const { user } = useAuth();
+  const userId = user?.userId ?? null;
   const [view, setView] = useState<
     "home" | "comms" | "status" | "doctor" | "records"
   >("home");
@@ -44,17 +47,17 @@ export default function MainPage({ username, phonenumber, email, birthDate, sele
         return <ClientInfoPage />;
       default:
         return <AdminDashboardComponent username={username} />;
-      }
-    };
-    
-    return (
-      <>
+    }
+  };
+
+  return (
+    <>
       <div className="header-container">
         <div className="header-row">
           <h1 className="header-page-title">{pageTitles[view]}</h1>
           <div className="buttons-row">
             <SettingsButtonComponent />
-            <SendEmailButtonComponent />
+            {userId !== null && <SendEmailButtonComponent idRemetente={userId} />}
           </div>
         </div>
       </div>

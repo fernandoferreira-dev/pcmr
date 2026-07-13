@@ -6,9 +6,6 @@ type Diagnostic = {
     patient: string;
     date: string;
     status: string;
-    temperature: number;
-    bpm: number;
-    magnitude: number;
     cause: string;
 }
 
@@ -17,9 +14,6 @@ type DiagnosticoResponseDTO = {
     patient: string;
     date: string;
     status: string;
-    temperatura: number;
-    bpm: number;
-    magnitudeG: number;
     relacaoCausaEfeito: string;
 }
 
@@ -44,9 +38,6 @@ export default function DiagnosticsTableComponent() {
                     patient: item.patient || "",
                     date: item.date || "",
                     status: item.status || "",
-                    temperature: item.temperatura ?? 0,
-                    bpm: item.bpm ?? 0,
-                    magnitude: item.magnitudeG ?? 0,
                     cause: item.relacaoCausaEfeito || "",
                 }));
                 applyPatients(nextPatients);
@@ -75,9 +66,6 @@ export default function DiagnosticsTableComponent() {
             diagnostic.patient.toLowerCase().includes(query) ||
             formatDate(diagnostic.date).toLowerCase().includes(query) ||
             diagnostic.status.toLowerCase().includes(query) ||
-            diagnostic.temperature.toString().includes(query) ||
-            diagnostic.bpm.toString().includes(query) ||
-            diagnostic.magnitude.toString().includes(query) ||
             diagnostic.cause.toLowerCase().includes(query)
         );
     });
@@ -100,10 +88,7 @@ export default function DiagnosticsTableComponent() {
                         <tr>
                             <th>Pacientes</th>
                             <th>Horário</th>
-                            <th>Status</th>
-                            <th>Temperatura</th>
-                            <th>Batimentos cardíacos</th>
-                            <th>Magnitude</th>
+                            <th>Observações</th>
                             <th>Causa-efeito</th>
                         </tr>
                     </thead>
@@ -113,9 +98,6 @@ export default function DiagnosticsTableComponent() {
                                 <td>{diagnostic.patient}</td>
                                 <td>{formatDate(diagnostic.date)}</td>
                                 <td>{diagnostic.status}</td>
-                                <td>{diagnostic.temperature}</td>
-                                <td>{diagnostic.bpm}</td>
-                                <td>{diagnostic.magnitude}</td>
                                 <td>{diagnostic.cause}</td>
                             </tr>
                         ))}

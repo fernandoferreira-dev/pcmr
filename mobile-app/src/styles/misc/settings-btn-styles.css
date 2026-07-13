@@ -32,6 +32,19 @@
     border: 1px solid #6C757D;
     background-color: #CFCDCD;
     border-radius: 1rem;
+    resize: none;
+    font-family: inherit;
+}
+
+.message-receiver {
+    align-self: center;
+    display: block;
+    width: 50%;
+    padding: 0.6rem 0.8rem;
+    color: #000000;
+    border: 1px solid #6C757D;
+    background-color: #CFCDCD;
+    border-radius: 1rem;
 }
 
 .log-out-btn {
