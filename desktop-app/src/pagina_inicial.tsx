@@ -22,6 +22,7 @@ const dadosequi = new URL("./assets/imagens/server.png", import.meta.url).href
 const cruzverde = new URL("./assets/imagens/Untitled design (1).png", import.meta.url).href
 const datapessoal = new URL("./assets/imagens/personal-information.png", import.meta.url).href
 const sair = new URL ("./assets/imagens/exit.png", import.meta.url).href
+const logo = new URL ("./assets/imagens/logosemback.png", import.meta.url).href
 
 type View = 'home' | 'dados_diagnostico' | 'comunicacao' | 'dados_equipamentos' | 'dados_pessoais'
 
@@ -348,9 +349,17 @@ export default function App({ userName, userId, tipo, onLogout }: PaginaInicialP
 
         {/* Barra Lateral */}
         <aside className="w-72 h-full bg-[#AAB99F] rounded-4xl p-6 shadow-md flex flex-col">
-          <div className="flex items-center gap-3 mb-10 mt-2">
-            <div className="h-10 w-10 bg-red-600 rounded-sm shadow-sm" />
-            <div className="text-2xl font-semibold text-gray-800 tracking-wide">MedyCist</div>
+          
+          {/*LOGO*/}
+          <div className="flex flex-col items-center justify-center gap-3 mb-8 mt-4">
+            <img 
+              src={logo} 
+              alt="Logo MedyCist" 
+              className="h-20 w-auto object-contain drop-shadow-md" 
+            />
+            <div className="text-2xl font-bold text-gray-800 tracking-wide">
+              MedyCist
+            </div>
           </div>
 
           <nav className="flex flex-col gap-2 overflow-y-auto">
