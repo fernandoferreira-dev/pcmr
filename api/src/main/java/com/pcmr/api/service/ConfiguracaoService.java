@@ -2,12 +2,16 @@ package com.pcmr.api.service;
 
 import com.pcmr.api.dto.ConfiguracaoSistemaDTO;
 import com.pcmr.api.model.ConfiguracaoSistema;
+import com.pcmr.api.model.Sensor;
 import com.pcmr.api.repository.ConfiguracaoSistemaRepository;
+import com.pcmr.api.repository.SensorRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 @Service
 public class ConfiguracaoService {
@@ -15,19 +19,35 @@ public class ConfiguracaoService {
     @Autowired
     private ConfiguracaoSistemaRepository repository;
 
-    private volatile ConfiguracaoSistemaDTO cache;
+    @Autowired
+    private SensorRepository sensorRepository;
 
-    public synchronized ConfiguracaoSistemaDTO obterAtual() {
+    private final Map<Long, ConfiguracaoSistemaDTO> cachePorSensor = new ConcurrentHashMap<>();
+
+    public ConfiguracaoSistemaDTO obterAtual(Long idSensor) {
+        ConfiguracaoSistemaDTO cache = cachePorSensor.get(idSensor);
         if (cache != null) return cache;
 
-        ConfiguracaoSistema atual = repository.findTopByOrderByAtualizadoEmDesc()
-                .orElseGet(this::criarPadrao);
+        ConfiguracaoSistema atual = repository.findTopBySensor_IdSensorOrderByAtualizadoEmDesc(idSensor)
+                .orElseGet(() -> criarPadrao(idSensor));
 
-        cache = paraDTO(atual);
-        return cache;
+        ConfiguracaoSistemaDTO dto = paraDTO(atual);
+        cachePorSensor.put(idSensor, dto);
+        return dto;
     }
 
-    public synchronized ConfiguracaoSistemaDTO atualizar(ConfiguracaoSistemaDTO dto) {
+    // Usado pelo AlertaMonitorService, que só tem o nome (deviceId) do sensor.
+    // Devolve null se não houver sensor com esse nome
+    public ConfiguracaoSistemaDTO obterAtualPorNome(String nomeSensor) {
+        return sensorRepository.findByNome(nomeSensor)
+                .map(s -> obterAtual(s.getIdSensor()))
+                .orElse(null);
+    }
+
+    public ConfiguracaoSistemaDTO atualizar(ConfiguracaoSistemaDTO dto) {
+        if (dto.getIdSensor() == null) {
+            throw new IllegalArgumentException("idSensor é obrigatório");
+        }
         if (dto.getTemperaturaMinAlerta() >= dto.getTemperaturaMaxAlerta()) {
             throw new IllegalArgumentException("A temperatura mínima deve ser inferior à máxima");
         }
@@ -35,7 +55,11 @@ public class ConfiguracaoService {
             throw new IllegalArgumentException("O BPM mínimo deve ser inferior ao máximo");
         }
 
+        Sensor sensor = sensorRepository.findById(dto.getIdSensor())
+                .orElseThrow(() -> new IllegalArgumentException("Sensor não encontrado"));
+
         ConfiguracaoSistema nova = new ConfiguracaoSistema();
+        nova.setSensor(sensor);
         nova.setTemperaturaMaxAlerta(BigDecimal.valueOf(dto.getTemperaturaMaxAlerta()));
         nova.setTemperaturaMinAlerta(BigDecimal.valueOf(dto.getTemperaturaMinAlerta()));
         nova.setBpmMaxAlerta(dto.getBpmMaxAlerta());
@@ -44,12 +68,17 @@ public class ConfiguracaoService {
         nova.setIdUtilizadorAtualizou(dto.getIdUtilizadorAtualizou());
 
         ConfiguracaoSistema guardada = repository.save(nova);
-        cache = paraDTO(guardada);
-        return cache;
+        ConfiguracaoSistemaDTO resultado = paraDTO(guardada);
+        cachePorSensor.put(dto.getIdSensor(), resultado);
+        return resultado;
     }
 
-    private ConfiguracaoSistema criarPadrao() {
+    private ConfiguracaoSistema criarPadrao(Long idSensor) {
+        Sensor sensor = sensorRepository.findById(idSensor)
+                .orElseThrow(() -> new IllegalArgumentException("Sensor não encontrado"));
+
         ConfiguracaoSistema c = new ConfiguracaoSistema();
+        c.setSensor(sensor);
         c.setTemperaturaMaxAlerta(BigDecimal.valueOf(37.8));
         c.setTemperaturaMinAlerta(BigDecimal.valueOf(35.0));
         c.setBpmMaxAlerta(110);
@@ -60,6 +89,7 @@ public class ConfiguracaoService {
 
     private ConfiguracaoSistemaDTO paraDTO(ConfiguracaoSistema c) {
         ConfiguracaoSistemaDTO dto = new ConfiguracaoSistemaDTO();
+        dto.setIdSensor(c.getSensor().getIdSensor());
         dto.setTemperaturaMaxAlerta(c.getTemperaturaMaxAlerta().doubleValue());
         dto.setTemperaturaMinAlerta(c.getTemperaturaMinAlerta().doubleValue());
         dto.setBpmMaxAlerta(c.getBpmMaxAlerta());

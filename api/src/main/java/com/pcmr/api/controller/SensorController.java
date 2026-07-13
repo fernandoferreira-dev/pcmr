@@ -16,6 +16,7 @@ import java.time.Duration;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @RestController
@@ -32,11 +33,12 @@ public class SensorController {
     private SensorRepository sensorRepository;
 
     private static final long LIMITE_ONLINE_SEGUNDOS = 10;
+    private static final Set<String> TIPOS_VALIDOS = Set.of("WEARABLE", "PRESENCA", "BIOMETRICO", "GENERICO");
 
     @GetMapping
     public ResponseEntity<List<SensorDTO>> listar() {
         List<SensorDTO> dtos = sensorRepository.findAll().stream()
-                .map(s -> new SensorDTO(s.getIdSensor(), s.getNome(), s.getLocalizacao(), s.getEstado()))
+                .map(s -> new SensorDTO(s.getIdSensor(), s.getNome(), s.getLocalizacao(), s.getEstado(), s.getTipoMetrica()))
                 .collect(Collectors.toList());
         return ResponseEntity.ok(dtos);
     }
@@ -53,14 +55,25 @@ public class SensorController {
             ));
         }
 
+        String tipo = req.getTipoMetrica();
+        if (tipo == null || tipo.isBlank()) {
+            tipo = "GENERICO";
+        } else if (!TIPOS_VALIDOS.contains(tipo)) {
+            return ResponseEntity.badRequest().body(Map.of(
+                    "erro", "tipoMetrica inválido. Valores aceites: " + TIPOS_VALIDOS
+            ));
+        }
+
         Sensor novo = new Sensor();
         novo.setNome(req.getNome());
         novo.setLocalizacao(req.getLocalizacao());
         novo.setEstado("ATIVO");
+        novo.setTipoMetrica(tipo);
 
         Sensor guardado = sensorRepository.save(novo);
         return ResponseEntity.ok(new SensorDTO(
-                guardado.getIdSensor(), guardado.getNome(), guardado.getLocalizacao(), guardado.getEstado()
+                guardado.getIdSensor(), guardado.getNome(), guardado.getLocalizacao(),
+                guardado.getEstado(), guardado.getTipoMetrica()
         ));
     }
 
@@ -79,8 +92,6 @@ public class SensorController {
 
     @GetMapping("/{deviceId}/ping")
     public ResponseEntity<EstadoSensorDTO> ping(@PathVariable String deviceId) {
-        // Tenta primeiro via leituras estruturadas (caso do wearable),
-        // e cai para o registo genérico de atividade nos restantes nós.
         LeituraSensorService.LeituraAtual leitura = leituraSensorService.getUltimaLeitura(deviceId);
         OffsetDateTime ultimaOcorrencia = (leitura != null)
                 ? leitura.getAtualizadoEm()

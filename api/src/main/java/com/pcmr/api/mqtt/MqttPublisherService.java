@@ -55,4 +55,20 @@ public class MqttPublisherService {
             }
         } catch (Exception ignored) {}
     }
+
+    public void publishRetido(String topic, String payload) {
+    if (client == null || !client.isConnected()) {
+        System.err.println("MqttPublisherService não está ligado ao broker");
+        return;
+    }
+    try {
+        MqttMessage message = new MqttMessage(payload.getBytes());
+        message.setQos(1);
+        message.setRetained(true); // o Nó 1 recebe isto imediatamente ao (re)ligar-se e subscrever
+        client.publish(topic, message);
+        System.out.println("✓ Publicado MQTT (retido) [" + topic + "]: " + payload);
+    } catch (Exception e) {
+        System.err.println("✗ Erro ao publicar MQTT (retido): " + e.getMessage());
+    }
+}
 }
