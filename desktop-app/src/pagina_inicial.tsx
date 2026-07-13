@@ -21,6 +21,7 @@ const comunicaicon = new URL("./assets/imagens/phone.png", import.meta.url).href
 const dadosequi = new URL("./assets/imagens/server.png", import.meta.url).href
 const cruzverde = new URL("./assets/imagens/Untitled design (1).png", import.meta.url).href
 const datapessoal = new URL("./assets/imagens/personal-information.png", import.meta.url).href
+const sair = new URL ("./assets/imagens/exit.png", import.meta.url).href
 
 type View = 'home' | 'dados_diagnostico' | 'comunicacao' | 'dados_equipamentos' | 'dados_pessoais'
 
@@ -400,7 +401,11 @@ export default function App({ userName, userId, tipo, onLogout }: PaginaInicialP
               <button onClick={onLogout} className="flex items-center gap-3 hover:opacity-80 transition-opacity cursor-pointer" title="Clique para fazer Logout">
                 <span className="text-xl text-gray-800 font-medium">Bem-vindo, {userName}! ({tipo})</span>
                 <div className="w-10 h-10 bg-gray-500 rounded-full flex items-center justify-center text-white shadow-sm">
-                  <div className="w-5 h-5 bg-white rounded-sm" />
+                  <img 
+                    src={sair} 
+                    alt="Ícone de Sair" 
+                    className="w-5 h-5 object-contain inverted-color-if-needed" 
+                  />
                 </div>
               </button>
             </div>

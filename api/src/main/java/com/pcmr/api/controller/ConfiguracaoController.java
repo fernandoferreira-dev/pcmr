@@ -6,6 +6,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Map;
+
 @RestController
 @RequestMapping("/api/configuracoes")
 public class ConfiguracaoController {
@@ -19,7 +21,11 @@ public class ConfiguracaoController {
     }
 
     @PutMapping
-    public ResponseEntity<ConfiguracaoSistemaDTO> atualizar(@RequestBody ConfiguracaoSistemaDTO dto) {
-        return ResponseEntity.ok(configuracaoService.atualizar(dto));
+    public ResponseEntity<?> atualizar(@RequestBody ConfiguracaoSistemaDTO dto) {
+        try {
+            return ResponseEntity.ok(configuracaoService.atualizar(dto));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(Map.of("erro", e.getMessage()));
+        }
     }
 }

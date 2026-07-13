@@ -28,9 +28,18 @@ public class ConfiguracaoService {
     }
 
     public synchronized ConfiguracaoSistemaDTO atualizar(ConfiguracaoSistemaDTO dto) {
+        if (dto.getTemperaturaMinAlerta() >= dto.getTemperaturaMaxAlerta()) {
+            throw new IllegalArgumentException("A temperatura mínima deve ser inferior à máxima");
+        }
+        if (dto.getBpmMinAlerta() >= dto.getBpmMaxAlerta()) {
+            throw new IllegalArgumentException("O BPM mínimo deve ser inferior ao máximo");
+        }
+
         ConfiguracaoSistema nova = new ConfiguracaoSistema();
         nova.setTemperaturaMaxAlerta(BigDecimal.valueOf(dto.getTemperaturaMaxAlerta()));
+        nova.setTemperaturaMinAlerta(BigDecimal.valueOf(dto.getTemperaturaMinAlerta()));
         nova.setBpmMaxAlerta(dto.getBpmMaxAlerta());
+        nova.setBpmMinAlerta(dto.getBpmMinAlerta());
         nova.setAtualizadoEm(OffsetDateTime.now());
         nova.setIdUtilizadorAtualizou(dto.getIdUtilizadorAtualizou());
 
@@ -42,7 +51,9 @@ public class ConfiguracaoService {
     private ConfiguracaoSistema criarPadrao() {
         ConfiguracaoSistema c = new ConfiguracaoSistema();
         c.setTemperaturaMaxAlerta(BigDecimal.valueOf(37.8));
+        c.setTemperaturaMinAlerta(BigDecimal.valueOf(35.0));
         c.setBpmMaxAlerta(110);
+        c.setBpmMinAlerta(50);
         c.setAtualizadoEm(OffsetDateTime.now());
         return repository.save(c);
     }
@@ -50,7 +61,9 @@ public class ConfiguracaoService {
     private ConfiguracaoSistemaDTO paraDTO(ConfiguracaoSistema c) {
         ConfiguracaoSistemaDTO dto = new ConfiguracaoSistemaDTO();
         dto.setTemperaturaMaxAlerta(c.getTemperaturaMaxAlerta().doubleValue());
+        dto.setTemperaturaMinAlerta(c.getTemperaturaMinAlerta().doubleValue());
         dto.setBpmMaxAlerta(c.getBpmMaxAlerta());
+        dto.setBpmMinAlerta(c.getBpmMinAlerta());
         dto.setAtualizadoEm(c.getAtualizadoEm().toString());
         dto.setIdUtilizadorAtualizou(c.getIdUtilizadorAtualizou());
         return dto;
