@@ -3,6 +3,7 @@ import {
   ClipboardList,
   CalendarDays,
   Stethoscope,
+  Search,
 } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import {
@@ -52,6 +53,10 @@ export default function DadosDiagnostico() {
   });
   const [loading, setLoading] = useState(true);
   const [erro, setErro] = useState<string | null>(null);
+
+  const [filtroNome, setFiltroNome] = useState("");
+  const [dataInicio, setDataInicio] = useState("");
+  const [dataFim, setDataFim] = useState("");
 
   const [exportandoId, setExportandoId] = useState<number | null>(null);
   const [dadosExport, setDadosExport] = useState<PontoGraficoExport[] | null>(null);
@@ -172,6 +177,16 @@ export default function DadosDiagnostico() {
     gerarPdf();
   }, [dadosExport, diagnosticoExport]);
 
+  const diagnosticosFiltrados = data.diagnosticos.filter((item) => {
+    const bateNome = item.patient.toLowerCase().includes(filtroNome.toLowerCase());
+
+    const dataItemFormatada = item.date.split("T")[0];
+    const bateInicio = dataInicio ? dataItemFormatada >= dataInicio : true;
+    const bateFim = dataFim ? dataItemFormatada <= dataFim : true;
+
+    return bateNome && bateInicio && bateFim;
+  });
+
   return (
     <div className="relative flex flex-col w-full h-full p-6 bg-[#EBEBEB] rounded-4xl shadow-inner overflow-hidden">
       
@@ -213,35 +228,55 @@ export default function DadosDiagnostico() {
       {/* Barra de Filtros */}
       <section className="bg-white rounded-3xl border border-gray-300 p-4 mb-4 shrink-0">
         <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
-          <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 flex-1">
+            
+            {/* Campo de Busca por Nome */}
+            <div className="flex flex-col gap-1">
+              <span className="ml-2 text-xs font-semibold text-gray-600">Buscar Paciente:</span>
+              <span className="relative flex h-11 items-center gap-2 rounded-full border border-gray-300 bg-white px-4 text-gray-700 focus-within:ring-2 focus-within:ring-[#AAB99F]">
+                <Search size={16} className="text-gray-400 shrink-0" />
+                <input
+                  className="bg-transparent text-sm outline-none w-full text-gray-700"
+                  type="text"
+                  placeholder="Nome do paciente..."
+                  value={filtroNome}
+                  onChange={(e) => setFiltroNome(e.target.value)}
+                />
+              </span>
+            </div>
+
+            {/* Data de Início */}
             <div className="flex flex-col gap-1">
               <span className="ml-2 text-xs font-semibold text-gray-600">Data de Início:</span>
               <span className="relative flex h-11 items-center gap-2 rounded-full border border-gray-300 bg-white px-4 text-gray-700 focus-within:ring-2 focus-within:ring-[#AAB99F]">
                 <CalendarDays size={16} className="text-gray-400" />
                 <input
-                  className="bg-transparent text-sm outline-none cursor-pointer text-gray-700"
+                  className="bg-transparent text-sm outline-none cursor-pointer text-gray-700 w-full"
                   type="date"
-                  defaultValue="2026-10-01"
+                  value={dataInicio}
+                  onChange={(e) => setDataInicio(e.target.value)}
                 />
               </span>
             </div>
 
+            {/* Data de Fim */}
             <div className="flex flex-col gap-1">
               <span className="ml-2 text-xs font-semibold text-gray-600">Data de Fim:</span>
               <span className="relative flex h-11 items-center gap-2 rounded-full border border-gray-300 bg-white px-4 text-gray-700 focus-within:ring-2 focus-within:ring-[#AAB99F]">
                 <CalendarDays size={16} className="text-gray-400" />
                 <input
-                  className="bg-transparent text-sm outline-none cursor-pointer text-gray-700"
+                  className="bg-transparent text-sm outline-none cursor-pointer text-gray-700 w-full"
                   type="date"
-                  defaultValue="2026-10-15"
+                  value={dataFim}
+                  onChange={(e) => setDataFim(e.target.value)}
                 />
               </span>
             </div>
           </div>
 
-          <button className="inline-flex h-11 items-center justify-center gap-2 rounded-full bg-[#AAB99F] px-5 text-sm font-medium text-white shadow-sm transition hover:bg-[#97a68d] cursor-pointer">
+          <button className="inline-flex h-11 items-center justify-center gap-2 rounded-full bg-[#AAB99F] px-5 text-sm font-medium text-white shadow-sm transition hover:bg-[#97a68d] cursor-pointer whitespace-nowrap">
             <BadgePlus size={16} />
-            Aplicar Filtro
+            Filtros Ativos
           </button>
         </div>
       </section>
@@ -267,12 +302,12 @@ export default function DadosDiagnostico() {
               <p className="p-5 text-center text-sm text-gray-400">
                 A carregar dados...
               </p>
-            ) : data.diagnosticos.length === 0 ? (
+            ) : diagnosticosFiltrados.length === 0 ? (
               <p className="p-5 text-center text-sm text-gray-400">
-                Nenhum diagnóstico encontrado.
+                Nenhum diagnóstico encontrado para os filtros selecionados.
               </p>
             ) : (
-              data.diagnosticos.map((item) => (
+              diagnosticosFiltrados.map((item) => (
                 <div
                   key={item.id}
                   className="grid grid-cols-[1.2fr_1.5fr_1.2fr_1fr] items-center gap-4 px-5 py-3 text-sm text-gray-600 hover:bg-gray-50 transition-colors"

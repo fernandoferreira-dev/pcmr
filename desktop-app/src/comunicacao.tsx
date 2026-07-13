@@ -18,6 +18,7 @@ interface Mensagem {
 }
 
 type Vista = 'recebidas' | 'enviadas'
+type FiltroEstado = 'todas' | 'lidas' | 'nao_lidas'
 
 function formatarDataHora(iso: string): string {
   const data = new Date(iso)
@@ -40,13 +41,12 @@ export default function Comunicacao({
   const [vista, setVista] = useState<Vista>('recebidas')
   const [mensagens, setMensagens] = useState<Mensagem[]>([])
   const [pesquisa, setPesquisa] = useState('')
+  const [filtroEstado, setFiltroEstado] = useState<FiltroEstado>('todas')
   const [erro, setErro] = useState<string | null>(null)
   const [mostrarNovaMensagem, setMostrarNovaMensagem] = useState(false)
   const [mensagemExpandida, setMensagemExpandida] = useState<number | null>(null)
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
-  // Evita reabrir/re-marcar a mesma mensagem várias vezes se a lista
-  // recarregar por outro motivo (ex.: pesquisa) depois da abertura inicial.
   const idJaAbertoRef = useRef<number | null>(null)
 
   const carregarMensagens = useCallback(async (termo: string, vistaAtual: Vista) => {
@@ -124,6 +124,12 @@ export default function Comunicacao({
     }
   }
 
+  const mensagensFiltradas = mensagens.filter((m) => {
+    if (filtroEstado === 'lidas') return m.lida
+    if (filtroEstado === 'nao_lidas') return !m.lida
+    return true
+  })
+
   return (
     <div className="relative flex flex-col w-full h-full p-6 bg-[#EBEBEB] rounded-4xl shadow-inner">
       {/* Alternador Recebidas / Enviadas */}
@@ -150,22 +156,34 @@ export default function Comunicacao({
         </button>
       </div>
 
-      {/* Pesquisa */}
-      <div className="relative mb-4 shrink-0">
-        <svg
-          xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"
-          fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
-          className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"
+      {/* Pesquisa e Filtro de Estado */}
+      <div className="flex flex-col sm:flex-row gap-4 mb-4 shrink-0">
+        <div className="relative flex-1">
+          <svg
+            xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"
+            fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+            className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"
+          >
+            <circle cx="11" cy="11" r="8" />
+            <path d="m21 21-4.3-4.3" />
+          </svg>
+          <input
+            value={pesquisa}
+            onChange={(e) => setPesquisa(e.target.value)}
+            placeholder={vista === 'recebidas' ? 'Pesquisar por remetente...' : 'Pesquisar por destinatário...'}
+            className="w-full pl-11 pr-4 py-3 bg-white rounded-full border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-[#AAB99F] cursor-text"
+          />
+        </div>
+
+        <select
+          value={filtroEstado}
+          onChange={(e) => setFiltroEstado(e.target.value as FiltroEstado)}
+          className="px-4 py-3 bg-white rounded-full border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-[#AAB99F] cursor-pointer text-gray-600 w-full sm:w-auto"
         >
-          <circle cx="11" cy="11" r="8" />
-          <path d="m21 21-4.3-4.3" />
-        </svg>
-        <input
-          value={pesquisa}
-          onChange={(e) => setPesquisa(e.target.value)}
-          placeholder={vista === 'recebidas' ? 'Pesquisar por remetente...' : 'Pesquisar por destinatário...'}
-          className="w-full pl-11 pr-4 py-3 bg-white rounded-full border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-[#AAB99F] cursor-text"
-        />
+          <option value="todas">Todas as Mensagens</option>
+          <option value="lidas">Apenas Lidas</option>
+          <option value="nao_lidas">Apenas Não Lidas</option>
+        </select>
       </div>
 
       {erro && (
@@ -176,13 +194,15 @@ export default function Comunicacao({
 
       {/* Lista de mensagens */}
       <div className="flex-1 overflow-y-auto flex flex-col gap-4 pr-2">
-        {mensagens.length === 0 && !erro && (
+        {mensagensFiltradas.length === 0 && !erro && (
           <div className="flex-1 flex items-center justify-center text-sm text-gray-400">
-            {vista === 'recebidas' ? 'Sem mensagens recebidas.' : 'Sem mensagens enviadas.'}
+            {mensagens.length === 0 
+              ? (vista === 'recebidas' ? 'Sem mensagens recebidas.' : 'Sem mensagens enviadas.')
+              : 'Nenhuma mensagem corresponde aos filtros selecionados.'}
           </div>
         )}
 
-        {mensagens.map((m) => {
+        {mensagensFiltradas.map((m) => {
           const nomeContacto = vista === 'recebidas' ? m.nomeRemetente : m.nomeDestinatario
           const rotuloContacto = vista === 'recebidas' ? 'De' : 'Para'
 
