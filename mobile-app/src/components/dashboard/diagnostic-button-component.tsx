@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import DiagnosticoLiveView from './DiagnosticoLiveView'
+import '../../styles/dashboard-styles/quick-diagnostic-styles.css'
 
 type Passo = 'confirmar' | 'ao_vivo'
 
@@ -35,46 +36,46 @@ export default function DiagnosticButtonComponent({
   }
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-6">
-      <div className="bg-white rounded-3xl shadow-xl w-full max-w-md p-6 relative">
+    <div className="overlay">
+      <div className="modal">
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 text-gray-400 hover:text-gray-700 text-xl cursor-pointer"
+          className="closeButton"
           title="Fechar"
         >
           ✕
         </button>
 
-        <h2 className="text-xl font-bold text-gray-800 mb-4">Consulta Rápida</h2>
+        <h2 className="title">Consulta Rápida</h2>
 
-        <div className="flex flex-col gap-6">
+        <div className="content">
           {presente === null && (
-            <p className="text-sm text-gray-400">A verificar presença do paciente...</p>
+            <p className="checkingText">A verificar presença do paciente...</p>
           )}
 
-          {presente === false && (
-            <div className="bg-yellow-50 border border-yellow-300 text-yellow-700 rounded-2xl px-4 py-3 text-sm">
+          {presente === true && (
+            <div className="warningBox">
               Não foi detetada a presença de nenhum paciente. Aproxima-te do sensor e aguarda alguns segundos.
             </div>
           )}
 
-          {presente === true && (
-            <p className="text-sm text-gray-600">
+          {presente === false && (
+            <p className="confirmText">
               Tem a certeza que pretende iniciar uma consulta rápida?
             </p>
           )}
 
-          <div className="flex gap-3">
+          <div className="buttonRow">
             <button
               onClick={onClose}
-              className="flex-1 py-2 bg-gray-100 hover:bg-gray-200 rounded-full text-gray-700 font-medium transition-colors cursor-pointer"
+              className="noButton"
             >
               Não
             </button>
             <button
               onClick={() => setPasso('ao_vivo')}
               disabled={presente !== true}
-              className="flex-1 py-2 bg-[#AAB99F] hover:bg-[#9CB39E] disabled:opacity-40 cursor-pointer disabled:cursor-not-allowed rounded-full text-white font-medium transition-colors shadow-sm"
+              className="yesButton"
             >
               Sim
             </button>
