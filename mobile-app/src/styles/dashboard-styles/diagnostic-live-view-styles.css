@@ -1,0 +1,381 @@
+@keyframes pulsoVerde {
+  0% {
+    box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.6);
+    border-color: rgba(34, 197, 94, 0.9);
+  }
+  70% {
+    box-shadow: 0 0 0 10px rgba(34, 197, 94, 0);
+    border-color: rgba(34, 197, 94, 0.4);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(34, 197, 94, 0);
+    border-color: transparent;
+  }
+}
+
+@keyframes pulsoVermelho {
+  0% {
+    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.6);
+    border-color: rgba(239, 68, 68, 0.9);
+  }
+  70% {
+    box-shadow: 0 0 0 10px rgba(239, 68, 68, 0);
+    border-color: rgba(239, 68, 68, 0.4);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0);
+    border-color: transparent;
+  }
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.pulsoVerdeAtivo {
+  animation: pulsoVerde 700ms ease-out;
+  border: 2px solid transparent;
+}
+
+.pulsoVermelhoAtivo {
+  animation: pulsoVermelho 1500ms infinite ease-out;
+  border: 2px solid #ef4444;
+  background-color: #fef2f2;
+}
+
+.animatePulse {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+.animateFadeIn {
+  animation: fadeIn 0.3s ease-out;
+}
+
+/* layout das coisas */
+
+.container {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  background-color: #ffffff;
+  display: flex;
+  flex-direction: column;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.title {
+  font-size: 1.25rem;
+  line-height: 1.75rem;
+  font-weight: 700;
+  color: #1f2937;
+}
+
+.closeButton {
+  color: #9ca3af;
+  font-size: 1.25rem;
+  line-height: 1.75rem;
+  cursor: pointer;
+  background: none;
+  border: none;
+  transition: color 0.15s ease-in-out;
+}
+
+.closeButton:hover {
+  color: #374151;
+}
+
+.main {
+  flex: 1 1 0%;
+  overflow-y: auto;
+  padding: 1.5rem;
+}
+
+/* alertas*/
+
+.alertsContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.alertaQueda {
+  background-color: #fef2f2;
+  border: 1px solid #fca5a5;
+  color: #b91c1c;
+  border-radius: 1rem;
+  padding: 0.75rem 1rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+}
+
+.alertaTemperatura {
+  background-color: #fff7ed;
+  border: 1px solid #fdba74;
+  color: #c2410c;
+  border-radius: 1rem;
+  padding: 0.75rem 1rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+}
+
+.alertaBpm {
+  background-color: #fff1f2;
+  border: 1px solid #fda4af;
+  color: #be123c;
+  border-radius: 1rem;
+  padding: 0.75rem 1rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+}
+
+.alertasBdWrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.alertaBdItem {
+  background-color: #fef2f2;
+  border: 1px solid #fca5a5;
+  color: #b91c1c;
+  border-radius: 1rem;
+  padding: 0.75rem 1rem;
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+}
+
+.alertaBdTipo {
+  font-weight: 600;
+}
+
+.alertaBdHora {
+  font-size: 0.75rem;
+  line-height: 1rem;
+  color: #fca5a5;
+  margin-left: 0.5rem;
+}
+
+.erroBox {
+  margin-bottom: 1.5rem;
+  background-color: #fefce8;
+  border: 1px solid #fde047;
+  color: #a16207;
+  border-radius: 1rem;
+  padding: 0.75rem 1rem;
+}
+
+/* sensores */
+
+.cardsGrid {
+  display: grid;
+  grid-template-columns: repeat(1, minmax(0, 1fr));
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+@media (min-width: 640px) {
+  .cardsGrid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+.card {
+  border-radius: 1rem;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  transition: all 0.3s ease;
+}
+
+.cardBgGray {
+  background-color: #f9fafb;
+}
+
+.cardBorderTransparent {
+  border: 2px solid transparent;
+}
+
+.cardLabel {
+  font-size: 0.75rem;
+  line-height: 1rem;
+  text-transform: uppercase;
+  letter-spacing: 0.025em;
+  transition: color 0.15s ease-in-out;
+}
+
+.cardLabelAlert {
+  color: #b91c1c;
+  font-weight: 700;
+}
+
+.cardLabelNormal {
+  color: #6b7280;
+}
+
+.cardValue {
+  font-size: 1.5rem;
+  line-height: 2rem;
+  font-weight: 700;
+  transition: color 0.15s ease-in-out;
+}
+
+.cardValueAlert {
+  color: #b91c1c;
+}
+
+.cardValueNormal {
+  color: #1f2937;
+}
+
+/* chart*/
+
+.chartSection {
+  background-color: #f9fafb;
+  border-radius: 1rem;
+  padding: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.chartHeaderRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.75rem;
+}
+
+.chartTitle {
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  font-weight: 600;
+  color: #4b5563;
+}
+
+.metricToggleGroup {
+  display: flex;
+  gap: 0.25rem;
+  background-color: #ffffff;
+  border-radius: 9999px;
+  padding: 0.25rem;
+  border: 1px solid #e5e7eb;
+}
+
+.metricButton {
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  line-height: 1rem;
+  font-weight: 500;
+  transition: background-color 0.15s ease-in-out, color 0.15s ease-in-out;
+  cursor: pointer;
+  border: none;
+  background: none;
+}
+
+.metricButtonActive {
+  background-color: #AAB99F;
+  color: #ffffff;
+}
+
+.metricButtonInactive {
+  color: #6b7280;
+}
+
+.metricButtonInactive:hover {
+  background-color: #f3f4f6;
+}
+
+.chartPlaceholder {
+  height: 280px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  color: #9ca3af;
+}
+
+/* footer e merdas assim*/
+
+.fallStateBox {
+  background-color: #f9fafb;
+  border-radius: 1rem;
+  padding: 0.75rem 1rem;
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  color: #4b5563;
+}
+
+.fallStateValue {
+  font-weight: 500;
+  color: #1f2937;
+}
+
+.lastUpdateText {
+  margin-top: 1rem;
+  font-size: 0.75rem;
+  line-height: 1rem;
+  color: #9ca3af;
+}
+
+.footer {
+  padding: 1rem 1.5rem;
+  border-top: 1px solid #e5e7eb;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.finishButton {
+  padding: 0.5rem 1.5rem;
+  background-color: #AAB99F;
+  border-radius: 9999px;
+  color: #ffffff;
+  font-weight: 500;
+  cursor: pointer;
+  border: none;
+  transition: background-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+}
+
+.finishButton:hover {
+  background-color: #9CB39E;
+}
+
+.finishButton:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}

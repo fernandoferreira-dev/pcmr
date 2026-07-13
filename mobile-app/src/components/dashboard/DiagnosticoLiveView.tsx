@@ -9,6 +9,7 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import FinalizarConsultaModal from "./FinalizarConsultaModal";
+import "../../styles/dashboard-styles/diagnostic-live-view-styles.css";
 
 interface LeituraSensor {
   temperatura: number;
@@ -218,69 +219,54 @@ export default function DiagnosticoLiveView({
   const metrica = METRICAS.find((m) => m.key === metricaAtiva)!;
 
   return (
-    <div className="fixed inset-0 z-50 bg-white flex flex-col">
-      <style>{`
-        @keyframes pulso-verde {
-          0% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.6); border-color: rgba(34, 197, 94, 0.9); }
-          70% { box-shadow: 0 0 0 10px rgba(34, 197, 94, 0); border-color: rgba(34, 197, 94, 0.4); }
-          100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); border-color: transparent; }
-        }
-        @keyframes pulso-vermelho {
-          0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.6); border-color: rgba(239, 68, 68, 0.9); }
-          70% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); border-color: rgba(239, 68, 68, 0.4); }
-          100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); border-color: transparent; }
-        }
-        .pulso-verde-ativo { animation: pulso-verde ${DURACAO_PULSO_MS}ms ease-out; border: 2px solid transparent; }
-        .pulso-vermelho-ativo { animation: pulso-vermelho 1500ms infinite ease-out; border: 2px solid #ef4444; background-color: #fef2f2; }
-      `}</style>
-
-      <header className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
-        <h1 className="text-xl font-bold text-gray-800">
-          Consulta Rápida — Dados em Tempo Real
+    <div className="container">
+      <header className="header">
+        <h1 className="title">
+          Consulta Rápida
         </h1>
         <button
           onClick={onClose}
-          className="text-gray-400 hover:text-gray-700 text-xl cursor-pointer"
+          className="closeButton"
           title="Fechar"
         >
           ✕
         </button>
       </header>
 
-      <main className="flex-1 overflow-y-auto p-6">
+      <main className="main">
 
         {/* Painel Superior de Alertas Ativos */}
-        <div className="flex flex-col gap-2 mb-6">
+        <div className="alertsContainer">
           {emQueda && (
-            <div className="bg-red-50 border border-red-300 text-red-700 rounded-2xl px-4 py-3 font-bold flex items-center gap-2 shadow-sm animate-pulse">
+            <div className={`${"alertaQueda"} ${"animatePulse"}`}>
               ALERTA: Movimento de queda severa detetado no paciente!
             </div>
           )}
           {alertaTemperatura && (
-            <div className="bg-orange-50 border border-orange-300 text-orange-700 rounded-2xl px-4 py-3 font-bold flex items-center gap-2 shadow-sm">
+            <div className="alertaTemperatura">
               ALERTA: Hipertermia detetada ({leitura?.temperatura.toFixed(1)} °C). Limite de 38.0°C ultrapassado.
             </div>
           )}
           {alertaBpm && (
-            <div className="bg-rose-50 border border-rose-300 text-rose-700 rounded-2xl px-4 py-3 font-bold flex items-center gap-2 shadow-sm">
+            <div className="alertaBpm">
               ALERTA: Bradicardia grave detetada ({leitura?.bpm} bpm). Valor abaixo de 50 bpm.
             </div>
           )}
 
           {/* Banner de alertas originados na BD */}
           {alertas.length > 0 && (
-            <div className="flex flex-col gap-2">
+            <div className="alertasBdWrapper">
               {alertas.map((a, idx) => (
                 <div
                   key={idx}
-                  className="bg-red-50 border border-red-300 text-red-700 rounded-2xl px-4 py-3 text-sm shadow-sm animate-fadeIn"
+                  className={`${"alertaBdItem"} ${"animateFadeIn"}`}
                 >
-                  <span className="font-semibold">
+                  <span className="alertaBdTipo">
                     {a.tipoAlerta ? a.tipoAlerta.replace(/_/g, " ") : "ALERTA"}:
                   </span>{" "}
                   {a.mensagem}
                   {a.dataHora && (
-                    <span className="text-xs text-red-400 ml-2">
+                    <span className="alertaBdHora">
                       ({new Date(a.dataHora).toLocaleTimeString('pt-PT')})
                     </span>
                   )}
@@ -291,13 +277,13 @@ export default function DiagnosticoLiveView({
         </div>
 
         {erro && (
-          <div className="mb-6 bg-yellow-50 border border-yellow-300 text-yellow-700 rounded-2xl px-4 py-3">
+          <div className="erroBox">
             {erro}
           </div>
         )}
 
         {/* Cartões dos Sensores Biométricos */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+        <div className="cardsGrid">
           <CartaoSensor
             titulo="Temperatura"
             valor={leitura ? `${leitura.temperatura.toFixed(1)} °C` : "—"}
@@ -319,20 +305,16 @@ export default function DiagnosticoLiveView({
         </div>
 
         {/* Gráfico de Evolução Temporal */}
-        <div className="bg-gray-50 rounded-2xl p-4 mb-6">
-          <div className="flex items-center justify-between mb-3">
-            <div className="text-sm font-semibold text-gray-600">
-              Evolução — {metrica.label}
-            </div>
-
-            <div className="flex gap-1 bg-white rounded-full p-1 border border-gray-200">
+        <div className="chartSection">
+          <div className="chartHeaderRow">
+            <div className="metricToggleGroup">
               {METRICAS.map((m) => (
                 <button
                   key={m.key}
                   onClick={() => setMetricaAtiva(m.key)}
-                  className={`px-3 py-1 rounded-full text-xs font-medium transition-colors cursor-pointer ${metricaAtiva === m.key
-                      ? "bg-[#AAB99F] text-white"
-                      : "text-gray-500 hover:bg-gray-100"
+                  className={`${"metricButton"} ${metricaAtiva === m.key
+                      ? "metricButtonActive"
+                      : "metricButtonInactive"
                     }`}
                 >
                   {m.label}
@@ -372,15 +354,15 @@ export default function DiagnosticoLiveView({
               </LineChart>
             </ResponsiveContainer>
           ) : (
-            <div className="h-[280px] flex items-center justify-center text-sm text-gray-400">
+            <div className="chartPlaceholder">
               A recolher dados suficientes para o gráfico...
             </div>
           )}
         </div>
 
-        <div className="bg-gray-50 rounded-2xl px-4 py-3 text-sm text-gray-600">
+        <div className="fallStateBox">
           Estado do sensor de queda:{" "}
-          <span className="font-medium text-gray-800">
+          <span className="fallStateValue">
             {leitura
               ? (FALL_STATE_LABELS[leitura.fallState] ?? "Desconhecido")
               : "—"}
@@ -388,18 +370,18 @@ export default function DiagnosticoLiveView({
         </div>
 
         {leitura && (
-          <p className="mt-4 text-xs text-gray-400">
+          <p className="lastUpdateText">
             Última atualização:{" "}
             {new Date(leitura.atualizadoEm).toLocaleTimeString()}
           </p>
         )}
       </main>
 
-      <footer className="px-6 py-4 border-t border-gray-200 flex justify-end">
+      <footer className="footer">
         <button
           disabled={!leitura}
           onClick={() => setMostrarFinalizar(true)}
-          className="px-6 py-2 bg-[#AAB99F] hover:bg-[#9CB39E] disabled:opacity-40 cursor-pointer disabled:cursor-not-allowed rounded-full text-white font-medium transition-colors shadow-sm"
+          className="finishButton"
         >
           Terminar Consulta
         </button>
@@ -428,19 +410,24 @@ function CartaoSensor({
   pulsando: boolean;
   emAlerta: boolean;
 }) {
+  const estadoClass = emAlerta
+    ? "pulsoVermelhoAtivo"
+    : pulsando
+      ? `${"cardBgGray"} ${"pulsoVerdeAtivo"}`
+      : `${"cardBgGray"} ${"cardBorderTransparent"}`;
+
   return (
-    <div
-      className={`rounded-2xl p-4 flex flex-col gap-1 transition-all duration-300 ${emAlerta
-          ? "pulso-vermelho-ativo"
-          : pulsando
-            ? "bg-gray-50 pulso-verde-ativo"
-            : "bg-gray-50 border-2 border-transparent"
-        }`}
-    >
-      <span className={`text-xs uppercase tracking-wide transition-colors ${emAlerta ? "text-red-700 font-bold" : "text-gray-500"}`}>
+    <div className={`${"card"} ${estadoClass}`}>
+      <span
+        className={`${"cardLabel"} ${emAlerta ? "cardLabelAlert" : "cardLabelNormal"
+          }`}
+      >
         {titulo}
       </span>
-      <span className={`text-2xl font-bold transition-colors ${emAlerta ? "text-red-700" : "text-gray-800"}`}>
+      <span
+        className={`${"cardValue"} ${emAlerta ? "cardValueAlert" : "cardValueNormal"
+          }`}
+      >
         {valor}
       </span>
     </div>

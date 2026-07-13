@@ -74,7 +74,6 @@ export default function DiagnosticButtonComponent({
             </button>
             <button
               onClick={() => setPasso('ao_vivo')}
-              disabled={presente !== true}
               className="yesButton"
             >
               Sim
