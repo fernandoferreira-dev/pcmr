@@ -25,12 +25,12 @@ public class Utilizador {
     private OffsetDateTime dataUltimaAtualizacao = OffsetDateTime.now();
 
     // Ligação com a tabela tipo_utilizador
-    @ManyToOne
+    @ManyToOne(cascade = CascadeType.PERSIST)
     @JoinColumn(name = "id_tipo_utilizador", nullable = false)
     private TipoUtilizador tipoUtilizador;
 
     // Ligação com a tabela pessoa
-    @ManyToOne
+    @ManyToOne(cascade = CascadeType.PERSIST)
     @JoinColumn(name = "id_pessoa", nullable = false)
     private Pessoa pessoa;
 

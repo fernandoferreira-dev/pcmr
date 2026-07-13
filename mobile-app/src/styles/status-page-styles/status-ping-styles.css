@@ -1,0 +1,38 @@
+.status-ping-box {
+    display: flex; 
+    flex-direction: column;
+    border: 3px solid #b3b9b3;
+    border-radius: 1rem;
+    background-color: #ffffff;
+    padding: 0.5rem 1rem;
+    align-items: first baseline;
+}
+
+.status-ping-messsage-box {
+    display: flex;
+    flex-direction: row;
+}
+
+.status-ping-messsage-box img {
+    width: 40px;
+}
+
+.status-ping-box h1 {
+    color: #000000;
+    border: 3px solid #b3b9b3;
+    border-radius: 1rem;
+    padding: 0.5rem;
+    align-self: first baseline;
+    width: 30vh;
+    text-align: left;
+}
+
+.status-ping-box h2 {
+    color: #000000;
+}
+
+.status-ping-box p {
+    color: #000000;
+    padding: 0.5rem;
+    text-align: left;
+}

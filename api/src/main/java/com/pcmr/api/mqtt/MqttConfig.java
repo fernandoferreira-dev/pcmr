@@ -52,7 +52,8 @@ public class MqttConfig {
                         topicSensors,
                         topicBiometria,
                         "sensor/login",   
-                        "sensor/enroll"   
+                        "sensor/enroll",
+                        "sensors/node1/presenca" // Novo tópico adicionado aqui
                 );
         adapter.setCompletionTimeout(5000);
         adapter.setConverter(new DefaultPahoMessageConverter());

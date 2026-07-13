@@ -1,5 +1,21 @@
-import { BadgePlus, ClipboardList, CalendarDays, Stethoscope } from 'lucide-react';
-import { useState, useEffect } from 'react';
+import {
+  BadgePlus,
+  ClipboardList,
+  CalendarDays,
+  Stethoscope,
+} from "lucide-react";
+import { useState, useEffect, useRef } from "react";
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+} from "recharts";
+import jsPDF from "jspdf";
+import html2canvas from "html2canvas";
 
 interface Diagnostico {
   id: number;
@@ -14,43 +30,170 @@ interface DashboardData {
   diagnosticos: Diagnostico[];
 }
 
+interface PontoHistorico {
+  gdhLeitura: string;
+  temperatura: number;
+  bpm: number;
+  magnitudeG: number;
+}
+
+interface PontoGraficoExport {
+  hora: string;
+  temperatura: number;
+  bpm: number;
+  magnitudeG: number;
+}
+
 export default function DadosDiagnostico() {
   const [data, setData] = useState<DashboardData>({
     totalPacientes: 0,
     totalDiagnosticos: 0,
-    diagnosticos: []
+    diagnosticos: [],
   });
   const [loading, setLoading] = useState(true);
+  const [erro, setErro] = useState<string | null>(null);
+
+  const [exportandoId, setExportandoId] = useState<number | null>(null);
+  const [dadosExport, setDadosExport] = useState<PontoGraficoExport[] | null>(null);
+  const [diagnosticoExport, setDiagnosticoExport] = useState<Diagnostico | null>(null);
+  const chartRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    fetch('http://localhost:8080/api/diagnosticos/dashboard') 
-      .then(response => response.json())
+    fetch("/api/diagnosticos/dashboard")
+      .then((response) => {
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        return response.json();
+      })
       .then((result: DashboardData) => {
         setData(result);
+        setErro(null);
         setLoading(false);
       })
-      .catch(error => {
-        console.error('Erro ao buscar dados do dashboard:', error);
+      .catch((error) => {
+        console.error("Erro ao buscar dados do dashboard:", error);
+        setErro("Não foi possível carregar os dados de diagnóstico.");
         setLoading(false);
       });
   }, []);
 
   const formatarData = (dataIso: string) => {
     const dataObj = new Date(dataIso);
-    return dataObj.toLocaleDateString('pt-PT') + ' ' + dataObj.toLocaleTimeString('pt-PT', { hour: '2-digit', minute:'2-digit' });
+    return (
+      dataObj.toLocaleDateString("pt-PT") +
+      " " +
+      dataObj.toLocaleTimeString("pt-PT", {
+        hour: "2-digit",
+        minute: "2-digit",
+      })
+    );
   };
+
+  const iniciarExportacao = async (item: Diagnostico) => {
+    setExportandoId(item.id);
+    setDiagnosticoExport(item);
+    setDadosExport(null);
+
+    try {
+      const res = await fetch(`/api/diagnosticos/${item.id}/historico`);
+      if (!res.ok) {
+        alert("Não foi possível obter o histórico deste diagnóstico.");
+        setExportandoId(null);
+        return;
+      }
+
+      const pontos: PontoHistorico[] = await res.json();
+
+      const dadosFormatados: PontoGraficoExport[] = pontos.map((p) => ({
+        hora: new Date(p.gdhLeitura).toLocaleTimeString("pt-PT"),
+        temperatura: p.temperatura,
+        bpm: p.bpm,
+        magnitudeG: p.magnitudeG,
+      }));
+
+      setDadosExport(dadosFormatados);
+    } catch (error) {
+      console.error("Erro ao carregar histórico:", error);
+      alert("Erro de comunicação ao carregar o histórico.");
+      setExportandoId(null);
+    }
+  };
+
+  // Assim que o gráfico oculto tiver dados e estiver montado no DOM,
+  // captura-o como imagem e gera o PDF.
+  useEffect(() => {
+    if (!dadosExport || !diagnosticoExport || !chartRef.current) return;
+
+    const gerarPdf = async () => {
+      // pequena espera para garantir que o recharts terminou de desenhar
+      await new Promise((resolve) => setTimeout(resolve, 300));
+
+      try {
+        const canvas = await html2canvas(chartRef.current!, {
+          backgroundColor: "#ffffff",
+          scale: 2,
+        });
+        const imagemGrafico = canvas.toDataURL("image/png");
+
+        const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
+
+        doc.setFontSize(18);
+        doc.text("Relatório de Diagnóstico", 15, 20);
+
+        doc.setFontSize(11);
+        doc.text(`Diagnóstico #${diagnosticoExport.id}`, 15, 30);
+        doc.text(`Paciente: ${diagnosticoExport.patient}`, 15, 37);
+        doc.text(`Data: ${formatarData(diagnosticoExport.date)}`, 15, 44);
+
+        doc.setFontSize(12);
+        doc.text("Observações:", 15, 55);
+        doc.setFontSize(10);
+        const observacoesTexto = diagnosticoExport.status || "Sem observações";
+        const linhasObservacoes = doc.splitTextToSize(observacoesTexto, 180);
+        doc.text(linhasObservacoes, 15, 62);
+
+        const alturaObservacoes = linhasObservacoes.length * 5;
+        const yGrafico = 62 + alturaObservacoes + 10;
+
+        doc.setFontSize(12);
+        doc.text("Evolução dos Sensores durante a Consulta:", 15, yGrafico);
+
+        const larguraImagem = 180;
+        const alturaImagem = (canvas.height / canvas.width) * larguraImagem;
+        doc.addImage(imagemGrafico, "PNG", 15, yGrafico + 5, larguraImagem, alturaImagem);
+
+        doc.save(`diagnostico_${diagnosticoExport.id}.pdf`);
+      } catch (error) {
+        console.error("Erro ao gerar PDF:", error);
+        alert("Erro ao gerar o PDF.");
+      } finally {
+        setExportandoId(null);
+        setDadosExport(null);
+        setDiagnosticoExport(null);
+      }
+    };
+
+    gerarPdf();
+  }, [dadosExport, diagnosticoExport]);
 
   return (
     <div className="flex h-full w-full flex-col overflow-hidden rounded-4xl bg-(--background) p-3 shadow-inner sm:p-4">
       <div className="flex h-full min-h-0 w-full flex-col gap-3 overflow-hidden">
+
+        {erro && (
+          <div className="bg-yellow-50 border border-yellow-300 text-yellow-700 rounded-2xl px-4 py-3 text-sm">
+            {erro}
+          </div>
+        )}
+
         <section className="grid gap-3 md:grid-cols-2">
-          
           {/* Card: Pacientes */}
           <article className="flex items-center justify-between rounded-3xl border border-[#a9a9a9] bg-[#ececec] px-4 py-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.65)] sm:px-5 sm:py-4">
             <div>
-              <p className="text-base font-semibold text-[#565656] sm:text-lg">Pacientes</p>
+              <p className="text-base font-semibold text-[#565656] sm:text-lg">
+                Pacientes
+              </p>
               <p className="mt-1 text-2xl font-black text-[#111111] sm:text-[2rem]">
-                {loading ? '...' : data.totalPacientes}
+                {loading ? "..." : data.totalPacientes}
               </p>
               <p className="text-sm text-[#5e5e5e]">Total na Base de Dados</p>
             </div>
@@ -62,9 +205,11 @@ export default function DadosDiagnostico() {
           {/* Card: Diagnósticos */}
           <article className="flex items-center justify-between rounded-3xl border border-[#a9a9a9] bg-[#ececec] px-4 py-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.65)] sm:px-5 sm:py-4">
             <div>
-              <p className="text-base font-semibold text-[#565656] sm:text-lg">Diagnósticos</p>
+              <p className="text-base font-semibold text-[#565656] sm:text-lg">
+                Diagnósticos
+              </p>
               <p className="mt-1 text-2xl font-black text-[#111111] sm:text-[2rem]">
-                {loading ? '...' : data.totalDiagnosticos}
+                {loading ? "..." : data.totalDiagnosticos}
               </p>
               <p className="text-sm text-[#5e5e5e]">Total Registado</p>
             </div>
@@ -74,32 +219,35 @@ export default function DadosDiagnostico() {
           </article>
         </section>
 
-        {/* ... Secção de Filtros mantém-se inalterada ... */}
         <section className="rounded-[1.6rem] border border-[#a9a9a9] bg-[#dedede] px-4 py-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.7)] sm:px-5 sm:py-4">
           <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
             <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:gap-3">
               <div>
-                <p className="text-sm font-semibold text-[#565656]">Filtrar por data:</p>
+                <p className="text-sm font-semibold text-[#565656]">
+                  Filtrar por data:
+                </p>
               </div>
 
-              <label className="flex flex-col gap-1 text-sm font-medium text-[#4f4f4f]">
-                <span className="ml-1 text-sm font-semibold">Data de Início:</span>
+              <label className="flex flex-col gap-1 text-sm font-medium text-[#4f4f4f] cursor-pointer">
+                <span className="ml-1 text-sm font-semibold">
+                  Data de Início:
+                </span>
                 <span className="flex h-10 items-center gap-2 rounded-full border border-[#a5a5a5] bg-[#efefef] px-3 text-[#555] shadow-inner sm:h-11">
                   <CalendarDays size={15} />
                   <input
-                    className="w-full bg-transparent text-sm outline-none placeholder:text-[#8a8a8a]"
+                    className="w-full bg-transparent text-sm outline-none placeholder:text-[#8a8a8a] cursor-pointer"
                     type="date"
                     defaultValue="2026-10-01"
                   />
                 </span>
               </label>
 
-              <label className="flex flex-col gap-1 text-sm font-medium text-[#4f4f4f]">
+              <label className="flex flex-col gap-1 text-sm font-medium text-[#4f4f4f] cursor-pointer">
                 <span className="ml-1 text-sm font-semibold">Data de Fim:</span>
                 <span className="flex h-10 items-center gap-2 rounded-full border border-[#a5a5a5] bg-[#efefef] px-3 text-[#555] shadow-inner sm:h-11">
                   <CalendarDays size={15} />
                   <input
-                    className="w-full bg-transparent text-sm outline-none placeholder:text-[#8a8a8a]"
+                    className="w-full bg-transparent text-sm outline-none placeholder:text-[#8a8a8a] cursor-pointer"
                     type="date"
                     defaultValue="2026-10-15"
                   />
@@ -107,7 +255,7 @@ export default function DadosDiagnostico() {
               </label>
             </div>
 
-            <button className="inline-flex h-10 items-center justify-center gap-2 rounded-full border border-[#949494] bg-[#d8d8d8] px-4 text-sm font-semibold text-[#4d4d4d] shadow-[inset_0_1px_0_rgba(255,255,255,0.75)] transition hover:bg-[#d0d0d0] lg:mb-1">
+            <button className="inline-flex h-10 items-center justify-center gap-2 rounded-full border border-[#949494] bg-[#d8d8d8] px-4 text-sm font-semibold text-[#4d4d4d] shadow-[inset_0_1px_0_rgba(255,255,255,0.75)] transition hover:bg-[#d0d0d0] lg:mb-1 cursor-pointer">
               <BadgePlus size={15} />
               Aplicar Filtro
             </button>
@@ -133,21 +281,36 @@ export default function DadosDiagnostico() {
               {/* Corpo da Tabela */}
               <div className="flex-1 overflow-y-auto divide-y divide-[#dddddd]">
                 {loading ? (
-                  <p className="p-4 text-center text-[#555]">A carregar dados...</p>
+                  <p className="p-4 text-center text-[#555]">
+                    A carregar dados...
+                  </p>
                 ) : data.diagnosticos.length === 0 ? (
-                  <p className="p-4 text-center text-[#555]">Nenhum diagnóstico encontrado.</p>
+                  <p className="p-4 text-center text-[#555]">
+                    Nenhum diagnóstico encontrado.
+                  </p>
                 ) : (
                   data.diagnosticos.map((item) => (
-                    <div key={item.id} className="grid grid-cols-[0.9fr_1.2fr_1fr_0.8fr] items-center gap-3 px-4 py-3 text-sm text-[#505050]">
+                    <div
+                      key={item.id}
+                      className="grid grid-cols-[0.9fr_1.2fr_1fr_0.8fr] items-center gap-3 px-4 py-3 text-sm text-[#505050]"
+                    >
                       <div className="flex items-center gap-2">
-                        <button className="inline-flex h-8 items-center rounded-full border border-[#a5a5a5] bg-[#e8e8e8] px-3 text-xs font-semibold text-[#4d4d4d] shadow-sm transition hover:bg-[#e1e1e1]">
-                          Exportar
+                        <button
+                          onClick={() => iniciarExportacao(item)}
+                          disabled={exportandoId !== null}
+                          className="inline-flex h-8 items-center rounded-full border border-[#a5a5a5] bg-[#e8e8e8] px-3 text-xs font-semibold text-[#4d4d4d] shadow-sm transition hover:bg-[#e1e1e1] cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          {exportandoId === item.id ? "A exportar..." : "Exportar"}
                         </button>
-                        <span className="font-semibold text-[#404040]">#{item.id}</span>
+                        <span className="font-semibold text-[#404040]">
+                          #{item.id}
+                        </span>
                       </div>
                       <span>{item.patient}</span>
                       <span>{formatarData(item.date)}</span>
-                      <span className="truncate" title={item.status}>{item.status}</span>
+                      <span className="truncate" title={item.status}>
+                        {item.status}
+                      </span>
                     </div>
                   ))
                 )}
@@ -156,6 +319,54 @@ export default function DadosDiagnostico() {
           </div>
         </section>
       </div>
+
+      {/* Gráfico oculto, usado apenas como fonte de captura para o PDF */}
+      {dadosExport && (
+        <div
+          style={{ position: "fixed", top: "-9999px", left: "-9999px" }}
+        >
+          <div ref={chartRef} style={{ width: 700, height: 350, backgroundColor: "#ffffff", padding: 16 }}>
+            <LineChart width={668} height={318} data={dadosExport}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+              <XAxis dataKey="hora" tick={{ fontSize: 11 }} />
+              <YAxis yAxisId="temp" tick={{ fontSize: 11 }} width={40} />
+              <YAxis yAxisId="bpm" orientation="right" tick={{ fontSize: 11 }} width={40} />
+              <Tooltip />
+              <Legend wrapperStyle={{ fontSize: 12 }} />
+              <Line
+                yAxisId="temp"
+                type="monotone"
+                dataKey="temperatura"
+                name="Temperatura (°C)"
+                stroke="#f97316"
+                strokeWidth={2}
+                dot={false}
+                isAnimationActive={false}
+              />
+              <Line
+                yAxisId="bpm"
+                type="monotone"
+                dataKey="bpm"
+                name="BPM"
+                stroke="#dc2626"
+                strokeWidth={2}
+                dot={false}
+                isAnimationActive={false}
+              />
+              <Line
+                yAxisId="temp"
+                type="monotone"
+                dataKey="magnitudeG"
+                name="Magnitude (G)"
+                stroke="#2563eb"
+                strokeWidth={2}
+                dot={false}
+                isAnimationActive={false}
+              />
+            </LineChart>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

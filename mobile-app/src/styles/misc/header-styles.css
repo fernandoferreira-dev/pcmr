@@ -1,0 +1,25 @@
+.header-container {
+  padding: 0.3rem;
+  background-color: #ffffff;
+}
+
+.header-row {
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+.buttons-row {
+  display: flex;
+  flex-direction: row;
+  margin-left: auto;
+  gap: 20px;
+}
+
+.header-page-title {
+  margin: 0;
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: #2e8b57;
+}
+

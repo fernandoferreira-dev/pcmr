@@ -1,21 +1,20 @@
 services:
-  # Spring Boot API Backend
   spring-app:
     build:
       context: ./api
       dockerfile: Dockerfile
     container_name: spring_app_container
-    ports:
-      - "8080:8080"
+    expose:
+      - "8080"
     volumes:
-      - ./api/src:/app/src 
+      - ./api/src:/app/src
     environment:
       SPRING_APPLICATION_NAME: api
       SERVER_PORT: 8080
       SPRING_DATASOURCE_URL: "jdbc:postgresql://85.247.43.227:5432/pcmr"
       SPRING_DATASOURCE_USERNAME: diogo
       SPRING_DATASOURCE_PASSWORD: "1234"
-      SPRING_JPA_HIBERNATE_DDL_AUTO: validate
+      SPRING_JPA_HIBERNATE_DDL_AUTO: none
       SPRING_JPA_SHOW_SQL: "true"
       MQTT_BROKER_URL: tcp://mosquitto:1883
       MQTT_TOPIC: sensors/#
@@ -25,7 +24,6 @@ services:
       - pcmr-network
     restart: unless-stopped
 
-  # Desktop Web Application
   desktop-app:
     build:
       context: ./desktop-app
@@ -33,9 +31,8 @@ services:
     container_name: desktop_app_container
     ports:
       - "3000:80"
-    volumes:
-      - ./desktop-app/src:/app/src  # 🔥 Adicione isto
-      - ./desktop-app/index.html:/app/index.html  # Se precisar
+    expose:
+      - "80"
     depends_on:
       - spring-app
       - mqtt5
@@ -43,7 +40,6 @@ services:
       - pcmr-network
     restart: unless-stopped
 
-  # Mobile Web Application
   mobile-app:
     build:
       context: ./mobile-app
@@ -51,9 +47,8 @@ services:
     container_name: mobile_app_container
     ports:
       - "3001:80"
-    volumes:
-      - ./mobile-app/src:/app/src  # 🔥 Adicione isto
-      - ./mobile-app/index.html:/app/index.html  # Se precisar
+    expose:
+      - "80"
     depends_on:
       - spring-app
       - mqtt5
@@ -61,7 +56,22 @@ services:
       - pcmr-network
     restart: unless-stopped
 
-  # MQTT5 Broker
+  paciente-app:
+    build:
+      context: ./paciente-app
+      dockerfile: Dockerfile
+    container_name: paciente-app-container
+    ports:
+      - "3002:80"
+    expose:
+      - "80"
+    depends_on:
+      - spring-app
+      - mqtt5
+    networks:
+      - pcmr-network
+    restart: unless-stopped
+
   mqtt5:
     image: eclipse-mosquitto:2
     container_name: mosquitto
@@ -69,16 +79,34 @@ services:
       - "1883:1883"
       - "9001:9001"
     volumes:
-      - ./configuration/mqtt5/config:/mosquitto/config
+      - ./configuration/mqtt5:/mosquitto/config
       - mqtt-data:/mosquitto/data
       - mqtt-log:/mosquitto/log
     networks:
       - pcmr-network
     restart: unless-stopped
 
+  caddy:
+    image: caddy:latest
+    container_name: caddy
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./configuration/caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - desktop-app
+    networks:
+      - pcmr-network
+
 volumes:
   mqtt-data:
   mqtt-log:
+  caddy_data:
+  caddy_config:
 
 networks:
   pcmr-network:

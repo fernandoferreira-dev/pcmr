@@ -1,0 +1,12 @@
+:root {
+    --font-sans: "Poppins", system-ui, sans-serif;
+
+    --color-primary: #A8B8A0;
+    --color-primary-outline: #B2C8B2;
+
+    --color-text: #4E5452;
+    --color-muted: #6C757D;
+
+    --color-background: #E8E8E8;
+    --color-surface-footer: #535353;
+}

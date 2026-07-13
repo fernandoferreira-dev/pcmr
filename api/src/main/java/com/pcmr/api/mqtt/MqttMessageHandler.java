@@ -3,8 +3,11 @@ package com.pcmr.api.mqtt;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.pcmr.api.dto.SensorReadingDTO;
+import com.pcmr.api.service.AlertaMonitorService;
+import com.pcmr.api.service.AtividadeSensorService;
 import com.pcmr.api.service.BiometriaService;
 import com.pcmr.api.service.LeituraSensorService;
+import com.pcmr.api.service.PresencaService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.integration.annotation.ServiceActivator;
 import org.springframework.messaging.Message;
@@ -19,6 +22,18 @@ public class MqttMessageHandler {
     @Autowired
     private BiometriaService biometriaService;
 
+    @Autowired
+    private PresencaService presencaService;
+
+    @Autowired
+    private AtividadeSensorService atividadeSensorService;
+
+    @Autowired
+    private AlertaMonitorService alertaMonitorService;
+
+    private static final String DEVICE_ID_NODE1 = "node1-presenca";
+    private static final String DEVICE_ID_NODE3 = "esp32-pico-fingerprint";
+
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     @ServiceActivator(inputChannel = "mqttInputChannel")
@@ -29,7 +44,19 @@ public class MqttMessageHandler {
         if (topic == null) return;
 
         try {
+            if (topic.equals("sensors/node1/presenca")) {
+                atividadeSensorService.registarAtividade(DEVICE_ID_NODE1);
+
+                JsonNode json = objectMapper.readTree(payload);
+                boolean presente = json.get("presente").asBoolean();
+                presencaService.atualizarPresenca(presente);
+                System.out.println((presente ? "✓ Paciente presente" : "✗ Paciente ausente") + " (Nó 1)");
+                return;
+            }
+
             if (topic.equals("sensor/login")) {
+                atividadeSensorService.registarAtividade(DEVICE_ID_NODE3);
+
                 JsonNode json = objectMapper.readTree(payload);
                 int idSensor = json.get("id_sensor").asInt();
                 String status = json.get("status").asText();
@@ -41,6 +68,8 @@ public class MqttMessageHandler {
             }
 
             if (topic.equals("sensor/enroll")) {
+                atividadeSensorService.registarAtividade(DEVICE_ID_NODE3);
+
                 JsonNode json = objectMapper.readTree(payload);
 
                 if (json.has("erro") && json.get("erro").asBoolean()) {
@@ -67,6 +96,10 @@ public class MqttMessageHandler {
                 wrapper.alertaQuedaAtivo = leitura.isAlertaQuedaAtivo();
 
                 leituraSensorService.registarLeitura(deviceId, wrapper);
+
+                atividadeSensorService.registarAtividade(DEVICE_ID_NODE1);
+
+                alertaMonitorService.avaliarLimites(deviceId, wrapper.temperatura, wrapper.bpm);
             }
 
         } catch (Exception e) {
