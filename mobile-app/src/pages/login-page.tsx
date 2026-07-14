@@ -2,7 +2,7 @@ import { useState } from "react";
 import "../styles/login-page/login-page-styles.css";
 import LoginButtonComponent from "../components/login-page/login-button-component";
 import FooterComponent from "../components/misc/footer-component";
-import appImage from "../assets/medycist_logo.png";
+import appImage from "../assets/logo.png";
 import RegisterButtonComponent from "../components/login-page/register-button-component";
 import CreateAccountComponent from "../components/login-page/create-account-btn-component";
 
@@ -130,7 +130,6 @@ export default function LoginPage({ onLogin, onAccountCreated }: Props) {
           )}
         </div>
       </div>
-      <FooterComponent />
     </>
   );
 }

@@ -9,6 +9,7 @@ import SettingsButtonComponent from "../components/misc/settings-button-componen
 import SendEmailButtonComponent from "../components/misc/send-email-btn";
 import { useAuth } from "../context/auth-context";
 import "../styles/misc/header-styles.css";
+import appImage from "../assets/logosemback.png"
 
 type Props = { username: string; phonenumber: string; email: string; birthDate: string; selectedOption: string };
 
@@ -20,11 +21,11 @@ export default function MainPage({ username, phonenumber, email, birthDate, sele
   >("home");
 
   const pageTitles = {
-    home: "Medycist - Dashboard",
-    comms: "Medycist - Comunicação",
-    status: "Medycist - Dados de Equipamentos",
-    doctor: "Medycist - Dados Pessoais",
-    records: "Medycist - Dados Diagnósticos",
+    home: "Dashboard",
+    comms: "Comunicação",
+    status: "Dados de Equipamentos",
+    doctor: "Dados Pessoais",
+    records: "Dados Diagnósticos",
   } as const;
 
   const renderView = () => {
@@ -54,7 +55,10 @@ export default function MainPage({ username, phonenumber, email, birthDate, sele
     <>
       <div className="header-container">
         <div className="header-row">
-          <h1 className="header-page-title">{pageTitles[view]}</h1>
+          <h1 className="header-page-title">
+            <img src={appImage} alt="Logo App"></img>
+            {pageTitles[view]}
+          </h1>
           <div className="buttons-row">
             <SettingsButtonComponent />
             {userId !== null && <SendEmailButtonComponent idRemetente={userId} />}
