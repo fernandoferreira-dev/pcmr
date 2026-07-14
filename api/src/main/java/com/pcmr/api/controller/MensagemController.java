@@ -63,6 +63,18 @@ public class MensagemController {
         }
     }
 
+    @PatchMapping("/{id}/guardar")
+    public ResponseEntity<?> alternarGuardada(@PathVariable Long id, @RequestParam Long userId) {
+        try {
+            MensagemDTO dto = mensagemService.alternarGuardada(id, userId);
+            return ResponseEntity.ok(dto);
+        } catch (IllegalStateException e) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("erro", e.getMessage()));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(Map.of("erro", e.getMessage()));
+        }
+    }
+
     @DeleteMapping("/{id}")
     public ResponseEntity<?> apagar(@PathVariable Long id, @RequestParam Long userId) {
         try {

@@ -44,6 +44,18 @@ public class MqttMessageHandler {
         if (topic == null) return;
 
         try {
+            if (topic.endsWith("/status")) {
+                String deviceId = extrairDeviceId(topic);
+                if (deviceId != null) {
+                    System.out.println("⚠️ [MQTT STATUS] O dispositivo '" + deviceId + "' reportou estado: " + payload);
+                    
+                    if ("OFFLINE".equalsIgnoreCase(payload)) {
+                        leituraSensorService.pararDiagnostico(deviceId);
+                    }
+                }
+                return;
+            }
+
             if (topic.equals("sensors/node1/presenca")) {
                 atividadeSensorService.registarAtividade(DEVICE_ID_NODE1);
 
@@ -86,6 +98,11 @@ public class MqttMessageHandler {
 
             String deviceId = extrairDeviceId(topic);
             if (deviceId != null) {
+                
+                if (!leituraSensorService.isDiagnosticoAtivo(deviceId)) {
+                    return; 
+                }
+
                 SensorReadingDTO leitura = objectMapper.readValue(payload, SensorReadingDTO.class);
 
                 LeituraSensorService.SensorReadingDTOWrapper wrapper = new LeituraSensorService.SensorReadingDTOWrapper();

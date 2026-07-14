@@ -12,6 +12,7 @@ public class MensagemDTO {
     private String corpo;
     private String dataEnvio;
     private boolean lida;
+    private boolean guardada;
 
     public Long getIdMensagem() { return idMensagem; }
     public void setIdMensagem(Long idMensagem) { this.idMensagem = idMensagem; }
@@ -45,4 +46,7 @@ public class MensagemDTO {
 
     public boolean isLida() { return lida; }
     public void setLida(boolean lida) { this.lida = lida; }
+
+    public boolean isGuardada() { return guardada; }
+    public void setGuardada(boolean guardada) { this.guardada = guardada; }
 }

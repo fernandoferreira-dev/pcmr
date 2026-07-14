@@ -91,6 +91,23 @@ public class LeituraSensorService {
 
     private final Map<String, LeituraAtual> leiturasPorDispositivo = new ConcurrentHashMap<>();
     private final Map<String, Acumulador> acumuladoresPorDispositivo = new ConcurrentHashMap<>();
+    
+    private final Map<String, Boolean> diagnosticosAtivos = new ConcurrentHashMap<>();
+
+    public void iniciarDiagnostico(String deviceId) {
+        diagnosticosAtivos.put(deviceId, true);
+        limparAcumulador(deviceId);
+        System.out.println("Diagnóstico INICIADO e acumulador limpo para o dispositivo: " + deviceId);
+    }
+
+    public void pararDiagnostico(String deviceId) {
+        diagnosticosAtivos.put(deviceId, false);
+        System.out.println("Diagnóstico PARADO para o dispositivo: " + deviceId);
+    }
+
+    public boolean isDiagnosticoAtivo(String deviceId) {
+        return diagnosticosAtivos.getOrDefault(deviceId, false);
+    }
 
     public void registarLeitura(String deviceId, SensorReadingDTOWrapper leitura) {
         LeituraAtual atual = new LeituraAtual();
