@@ -32,7 +32,7 @@ export default function AdminDashboardComponent({ username }: Props) {
       <div className="main-page">
         <h1>Bem vindo, {username || "Admin"}</h1>
         <div className="mainbox">
-          <button onClick={() => setIsDiagnosticOpen(true)}>
+          <button onClick={() => setIsDiagnosticOpen(true)} className="diagnosticbtn">
             Consulta Rápida
           </button>
 
