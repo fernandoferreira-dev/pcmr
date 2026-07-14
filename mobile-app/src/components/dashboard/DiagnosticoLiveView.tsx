@@ -39,10 +39,14 @@ const POLL_INTERVAL_MS = 2000;
 const DEVICE_ID = "wearable01";
 const MAX_PONTOS_GRAFICO = 60; // últimos 2 minutos de histórico (60 * 2s)
 const DURACAO_PULSO_MS = 700;
+const TEMPO_CALIBRACAO_MS = 10000; // 10 segundos para calibração inicial
 
+// LIMITES ALINHADOS COM O SEU BACKEND
 const LIMITES_ALERTA = {
+  tempMinima: 35.0,
   tempMaxima: 38.0,
-  bpmMinimo: 50,
+  bpmMinimo: 60,
+  bpmMaximo: 100,
 };
 
 const FALL_STATE_LABELS: Record<number, string> = {
@@ -83,12 +87,32 @@ export default function DiagnosticoLiveView({
   const [pulsando, setPulsando] = useState(false);
   const [alertas, setAlertas] = useState<AlertaSessao[]>([]);
 
+  // Estado para controlar se o período de calibração terminou
+  const [calibrado, setCalibrado] = useState(false);
+
+  // Estados dos alertas ativos em tempo real (mensagens ativas por sensor)
+  const [mensagemAlertaTemp, setMensagemAlertaTemp] = useState<string | null>(null);
+  const [mensagemAlertaBpm, setMensagemAlertaBpm] = useState<string | null>(null);
+
   const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const pulsoTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const ultimaHoraRef = useRef<string | null>(null);
-  const alertaTempRegistadoRef = useRef(false);
-  const alertaBpmRegistadoRef = useRef(false);
   const inicioSessaoRef = useRef(new Date().toISOString());
+
+  // Refs para monitorizar se o alerta já foi enviado uma vez para a base de dados (evita SPAM)
+  const alertaTempAltaEnviado = useRef(false);
+  const alertaTempBaixaEnviado = useRef(false);
+  const alertaBpmAltoEnviado = useRef(false);
+  const alertaBpmBaixoEnviado = useRef(false);
+
+  // Temporizador para calibração inicial de 10 segundos
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setCalibrado(true);
+    }, TEMPO_CALIBRACAO_MS);
+
+    return () => clearTimeout(timer);
+  }, []);
 
   // FUNÇÕES DE REGISTO
   const registarAlertaBD = async (tipo: string, valor: number, mensagem: string) => {
@@ -109,7 +133,6 @@ export default function DiagnosticoLiveView({
     }
   };
 
-
   useEffect(() => {
     const buscarLeitura = async () => {
       try {
@@ -122,31 +145,64 @@ export default function DiagnosticoLiveView({
         setLeitura(data);
         setErro(null);
 
-        // Verificação de alertas
-        if (data.temperatura > LIMITES_ALERTA.tempMaxima) {
-          if (!alertaTempRegistadoRef.current) {
-            registarAlertaBD(
-              'TEMPERATURA_ALTA',
-              data.temperatura,
-              `Temperatura crítica atingida durante monitorização: ${data.temperatura.toFixed(1)}°C`
-            );
-            alertaTempRegistadoRef.current = true;
-          }
-        } else {
-          alertaTempRegistadoRef.current = false;
-        }
+        // Apenas processa os alertas lógicos após os 10s de calibração inicial
+        if (calibrado) {
 
-        if (data.bpm > 0 && data.bpm < LIMITES_ALERTA.bpmMinimo) {
-          if (!alertaBpmRegistadoRef.current) {
-            registarAlertaBD(
-              'BPM_BAIXO',
-              data.bpm,
-              `Frequência cardíaca abaixo do limiar seguro: ${data.bpm} bpm`
-            );
-            alertaBpmRegistadoRef.current = true;
+          // --- PROCESSAMENTO DA TEMPERATURA ---
+          if (data.temperatura > LIMITES_ALERTA.tempMaxima) {
+            const msg = `Temperatura de ${data.temperatura.toFixed(1)}°C excede o limite de ${LIMITES_ALERTA.tempMaxima.toFixed(1)}°C`;
+            setMensagemAlertaTemp(msg);
+
+            if (!alertaTempAltaEnviado.current) {
+              registarAlertaBD('TEMPERATURA_ALTA', data.temperatura, msg);
+              alertaTempAltaEnviado.current = true;
+            }
+            alertaTempBaixaEnviado.current = false; // Reset o limite oposto
+
+          } else if (data.temperatura < LIMITES_ALERTA.tempMinima) {
+            const msg = `Temperatura de ${data.temperatura.toFixed(1)}°C está abaixo do mínimo de ${LIMITES_ALERTA.tempMinima.toFixed(1)}°C`;
+            setMensagemAlertaTemp(msg);
+
+            if (!alertaTempBaixaEnviado.current) {
+              registarAlertaBD('TEMPERATURA_BAIXA', data.temperatura, msg);
+              alertaTempBaixaEnviado.current = true;
+            }
+            alertaTempAltaEnviado.current = false; // Reset o limite oposto
+
+          } else {
+            // Se estiver nos valores corretos, o alerta desaparece sozinho automaticamente!
+            setMensagemAlertaTemp(null);
+            alertaTempAltaEnviado.current = false;
+            alertaTempBaixaEnviado.current = false;
           }
-        } else {
-          alertaBpmRegistadoRef.current = false;
+
+          // --- PROCESSAMENTO DOS BATIMENTOS CARDÍACOS (BPM) ---
+          if (data.bpm > LIMITES_ALERTA.bpmMaximo) {
+            const msg = `Frequência de ${data.bpm} bpm excede o limite máximo de ${LIMITES_ALERTA.bpmMaximo} bpm`;
+            setMensagemAlertaBpm(msg);
+
+            if (!alertaBpmAltoEnviado.current) {
+              registarAlertaBD('BPM_ALTO', data.bpm, msg);
+              alertaBpmAltoEnviado.current = true;
+            }
+            alertaBpmBaixoEnviado.current = false;
+
+          } else if (data.bpm > 0 && data.bpm < LIMITES_ALERTA.bpmMinimo) {
+            const msg = `Frequência de ${data.bpm} bpm está abaixo do mínimo de ${LIMITES_ALERTA.bpmMinimo} bpm`;
+            setMensagemAlertaBpm(msg);
+
+            if (!alertaBpmBaixoEnviado.current) {
+              registarAlertaBD('BPM_BAIXO', data.bpm, msg);
+              alertaBpmBaixoEnviado.current = true;
+            }
+            alertaBpmAltoEnviado.current = false;
+
+          } else {
+            // Se estiver nos valores corretos, o alerta desaparece sozinho automaticamente!
+            setMensagemAlertaBpm(null);
+            alertaBpmAltoEnviado.current = false;
+            alertaBpmBaixoEnviado.current = false;
+          }
         }
 
         // Atualização do gráfico
@@ -187,7 +243,7 @@ export default function DiagnosticoLiveView({
       if (pollingRef.current) clearInterval(pollingRef.current);
       if (pulsoTimeoutRef.current) clearTimeout(pulsoTimeoutRef.current);
     };
-  }, [idMedico]);
+  }, [idMedico, calibrado]);
 
   useEffect(() => {
     const buscarAlertas = async () => {
@@ -213,8 +269,6 @@ export default function DiagnosticoLiveView({
 
   // --- ESTADOS DERIVADOS PARA JSX ---
   const emQueda = leitura?.alertaQuedaAtivo ?? false;
-  const alertaTemperatura = leitura && leitura.temperatura > LIMITES_ALERTA.tempMaxima;
-  const alertaBpm = leitura && leitura.bpm > 0 && leitura.bpm < LIMITES_ALERTA.bpmMinimo;
 
   const metrica = METRICAS.find((m) => m.key === metricaAtiva)!;
 
@@ -242,14 +296,14 @@ export default function DiagnosticoLiveView({
               ALERTA: Movimento de queda severa detetado no paciente!
             </div>
           )}
-          {alertaTemperatura && (
+          {mensagemAlertaTemp && (
             <div className="alertaTemperatura">
-              ALERTA: Hipertermia detetada ({leitura?.temperatura.toFixed(1)} °C). Limite de 38.0°C ultrapassado.
+              ALERTA: {mensagemAlertaTemp}
             </div>
           )}
-          {alertaBpm && (
+          {mensagemAlertaBpm && (
             <div className="alertaBpm">
-              ALERTA: Bradicardia grave detetada ({leitura?.bpm} bpm). Valor abaixo de 50 bpm.
+              ALERTA: {mensagemAlertaBpm}
             </div>
           )}
 
@@ -287,20 +341,23 @@ export default function DiagnosticoLiveView({
           <CartaoSensor
             titulo="Temperatura"
             valor={leitura ? `${leitura.temperatura.toFixed(1)} °C` : "—"}
-            pulsando={pulsando && !alertaTemperatura}
-            emAlerta={alertaTemperatura ?? false}
+            pulsando={pulsando && !mensagemAlertaTemp}
+            mensagemAlerta={mensagemAlertaTemp}
+            estaCalibrando={!calibrado}
           />
           <CartaoSensor
             titulo="Frequência Cardíaca"
             valor={leitura ? `${leitura.bpm} bpm` : "—"}
-            pulsando={pulsando && !alertaBpm}
-            emAlerta={alertaBpm ?? false}
+            pulsando={pulsando && !mensagemAlertaBpm}
+            mensagemAlerta={mensagemAlertaBpm}
+            estaCalibrando={!calibrado}
           />
           <CartaoSensor
             titulo="Magnitude (aceleração)"
             valor={leitura ? `${leitura.magnitudeG.toFixed(2)} G` : "—"}
             pulsando={pulsando}
-            emAlerta={false}
+            mensagemAlerta={null}
+            estaCalibrando={!calibrado}
           />
         </div>
 
@@ -313,8 +370,8 @@ export default function DiagnosticoLiveView({
                   key={m.key}
                   onClick={() => setMetricaAtiva(m.key)}
                   className={`${"metricButton"} ${metricaAtiva === m.key
-                      ? "metricButtonActive"
-                      : "metricButtonInactive"
+                    ? "metricButtonActive"
+                    : "metricButtonInactive"
                     }`}
                 >
                   {m.label}
@@ -399,37 +456,57 @@ export default function DiagnosticoLiveView({
   );
 }
 
+interface CartaoProps {
+  titulo: string;
+  valor: string;
+  pulsando: boolean;
+  mensagemAlerta: string | null;
+  estaCalibrando: boolean;
+}
+
 function CartaoSensor({
   titulo,
   valor,
   pulsando,
-  emAlerta,
-}: {
-  titulo: string;
-  valor: string;
-  pulsando: boolean;
-  emAlerta: boolean;
-}) {
-  const estadoClass = emAlerta
-    ? "pulsoVermelhoAtivo"
-    : pulsando
-      ? `${"cardBgGray"} ${"pulsoVerdeAtivo"}`
-      : `${"cardBgGray"} ${"cardBorderTransparent"}`;
+  mensagemAlerta,
+  estaCalibrando,
+}: CartaoProps) {
+  const emAlerta = !!mensagemAlerta;
+
+  const estadoClass = estaCalibrando
+    ? "cardCalibrando"
+    : emAlerta
+      ? "pulsoVermelhoAtivo"
+      : pulsando
+        ? `${"cardBgGray"} ${"pulsoVerdeAtivo"}`
+        : `${"cardBgGray"} ${"cardBorderTransparent"}`;
 
   return (
     <div className={`${"card"} ${estadoClass}`}>
-      <span
-        className={`${"cardLabel"} ${emAlerta ? "cardLabelAlert" : "cardLabelNormal"
-          }`}
-      >
-        {titulo}
-      </span>
+      <div className="cardHeaderRow">
+        <span
+          className={`${"cardLabel"} ${emAlerta ? "cardLabelAlert" : "cardLabelNormal"
+            }`}
+        >
+          {titulo}
+        </span>
+        {estaCalibrando && (
+          <span className="calibrandoBadge">A calibrar...</span>
+        )}
+      </div>
       <span
         className={`${"cardValue"} ${emAlerta ? "cardValueAlert" : "cardValueNormal"
           }`}
       >
-        {valor}
+        {estaCalibrando ? "—" : valor}
       </span>
+
+      {/* Mensagem de alerta específica do sensor */}
+      {emAlerta && !estaCalibrando && (
+        <div className="alertaMensagemBox">
+          <span className="alertaMensagemIcone">⚠️ Alerta:</span> {mensagemAlerta}
+        </div>
+      )}
     </div>
   );
 }
