@@ -5,13 +5,14 @@
 #include <mbedtls/base64.h>
 #include <ArduinoJson.h>
 
-const char* SSID = "???";
-const char* PASSWORD = "???";
-const char* MQTT_BROKER = "???";
+// CONFIGURAÇÕES
+const char* SSID = "Vodafone-07FD83";
+const char* PASSWORD = "AZEITAO2026";
+const char* MQTT_BROKER = "192.168.1.72";
 const int MQTT_PORT = 1883;
 
 // Tópicos MQTT
-const char* TOPIC_SUBSCRIBE_MODE = "casa/biometria/comando";  
+const char* TOPIC_SUBSCRIBE_MODE = "casa/biometria/comando";
 const char* TOPIC_PUBLISH_ENROLL = "sensor/enroll";            
 const char* TOPIC_PUBLISH_LOGIN  = "sensor/login";             
 
@@ -37,8 +38,11 @@ enum FingerprintMode {
   MODE_ENROLL  
 };
 
+// Variável global para controlar o estado do sensor
 volatile FingerprintMode currentMode = MODE_IDLE;
 
+// CALLBACK MQTT
+// Chamada automaticamente quando o Spring Boot envia um comando
 void mqttCallback(char* topic, byte* payload, unsigned int length) {
   String message;
   for (unsigned int i = 0; i < length; i++) {
@@ -56,20 +60,18 @@ void mqttCallback(char* topic, byte* payload, unsigned int length) {
       const char* modoCmd = doc["modo"];
       if (modoCmd && String(modoCmd) == "enroll") {
         currentMode = MODE_ENROLL;
-        Serial.println("➜ Comando recebido: MUDAR PARA MODO ENROLL");
+        Serial.println("Comando recebido: MUDAR PARA MODO ENROLL");
       } else {
-        // "login" ou "idle" tratados da mesma forma: sair do modo enroll.
-        // Se estivermos a meio de um enroll, isto vai ser detetado
-        // dentro de collectEnrollmentSamples() e aborta o processo.
         currentMode = MODE_IDLE;
-        Serial.println("➜ Comando recebido: MUDAR PARA MODO IDLE");
+        Serial.println("Comando recebido: MUDAR PARA MODO IDLE");
       }
     } else {
-      Serial.println("✗ Erro ao interpretar JSON do comando MQTT.");
+      Serial.println("Erro ao interpretar JSON do comando MQTT.");
     }
   }
 }
 
+// FUNÇÕES DE APOIO MQTT
 
 void publicarErroEnroll(const char* motivo) {
   StaticJsonDocument<128> doc;
@@ -87,7 +89,7 @@ void publicarErroEnroll(const char* motivo) {
   }
 }
 
-
+// FUNÇÕES DO SENSOR
 bool collectEnrollmentSamples(uint8_t samplesNeeded) {
   uint8_t captured = 0;
   unsigned long inicio = millis();
@@ -191,14 +193,14 @@ void processLoginFingerprint() {
   int id = fingerprint.search();
 
   if (id == 0) {
-    Serial.println("✗ Impressão não reconhecida!");
+    Serial.println("Impressão não reconhecida!");
     fingerprint.ctrlLED(fingerprint.eKeepsOn, fingerprint.eLEDRed, 0);
     delay(1000);
     fingerprint.ctrlLED(fingerprint.eNormalClose, fingerprint.eLEDBlue, 0);
     return;
   }
 
-  Serial.print("✓ Acesso Reconhecido (Localmente)! ID: ");
+  Serial.print("Acesso Reconhecido (Localmente)! ID: ");
   Serial.println(id);
   fingerprint.ctrlLED(fingerprint.eKeepsOn, fingerprint.eLEDGreen, 0);
 
@@ -211,15 +213,16 @@ void processLoginFingerprint() {
   serializeJson(mqttDoc, loginJson, sizeof(loginJson));
 
   if (client.publish(TOPIC_PUBLISH_LOGIN, loginJson)) {
-    Serial.println("✓ Evento de Login enviado via MQTT");
+    Serial.println("Evento de Login enviado via MQTT");
   } else {
-    Serial.println("✗ Erro ao enviar evento de login");
+    Serial.println("Erro ao enviar evento de login");
   }
 
   delay(2000);
   fingerprint.ctrlLED(fingerprint.eNormalClose, fingerprint.eLEDBlue, 0);
 }
 
+// ================= FUNÇÕES DE REDE =================
 void setupWiFi() {
   Serial.println("\nA conectar ao WiFi...");
   WiFi.begin(SSID, PASSWORD);
@@ -235,6 +238,7 @@ void reconnectMQTT() {
     Serial.println("A conectar ao broker MQTT...");
     if (client.connect("esp32-pico-fingerprint")) {
       Serial.println("MQTT conectado!");
+      // Subscreve ao tópico de comandos assim que se liga!
       client.subscribe(TOPIC_SUBSCRIBE_MODE);
     } else {
       Serial.print("Falhou, erro rc=");
@@ -245,6 +249,7 @@ void reconnectMQTT() {
   }
 }
 
+// SETUP
 void setup() {
   Serial.begin(115200);
   delay(2000);
@@ -254,6 +259,7 @@ void setup() {
   client.setCallback(mqttCallback);
   client.setBufferSize(2048);
 
+  Serial.println("\n=== SENSOR DFRobot ID809 ===");
   mySerial.begin(115200, SERIAL_8N1, RX_PIN, TX_PIN);
   fingerprint.begin(mySerial);
 
@@ -261,9 +267,10 @@ void setup() {
     Serial.println("Erro: Sensor não encontrado.");
     delay(2000);
   }
-  Serial.println("Sensor ligado e pronto!");
+  Serial.println("✓ Sensor ligado e pronto!");
 }
 
+// LOOP
 void loop() {
   if (!client.connected()) {
     reconnectMQTT();
@@ -275,11 +282,11 @@ void loop() {
     processEnrollmentFingerprint();
 
     currentMode = MODE_IDLE;
-    Serial.println("A voltar ao Modo de Autenticação (IDLE)");
+    Serial.println("➜ A voltar ao Modo de Autenticação (IDLE)");
     return;
   }
 
-  // Modo IDLE
+  // Modo IDLE (Autenticação normal)
   if (fingerprint.collectionFingerprint(/*timeout=*/5) != ERR_ID809) {
     processLoginFingerprint();
 

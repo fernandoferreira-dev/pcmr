@@ -6,10 +6,11 @@
 #include <DallasTemperature.h>
 #include <WiFi.h>
 #include <esp_now.h>
+#include <esp_wifi.h> 
 #include <esp_sleep.h>
 #include <esp_task_wdt.h>
 
-uint8_t MAC_NODE1[] = {0xXX, 0xXX, 0xXX, 0xXX, 0xXX, 0xXX};
+uint8_t MAC_NODE1[] = {0x24, 0x0a, 0xc4, 0x09, 0x61, 0xfc}; //24:0a:c4:09:61:fc - Nó Sensor 1
 
 typedef struct struct_message {
   float temperatura;
@@ -26,7 +27,7 @@ typedef struct struct_comando {
 } struct_comando;
 
 esp_now_peer_info_t peerNode1;
-volatile bool envioAtivo = false; // controla se o envio de dados está ativo
+volatile bool envioAtivo = false; 
 
 unsigned long tempoAlertaQueda = 0;
 const unsigned long TIMEOUT_ALERTA_MS = 10000;
@@ -77,7 +78,6 @@ volatile bool resetAlerta = false;
 
 unsigned long lastActivityTime = 0;
 
-// Watchdog do MPU6050
 unsigned long ultimaLeituraValidaMpu = 0;
 float ultimaMagnitudeConhecida = -1.0f;
 const unsigned long TIMEOUT_MPU_MS = 8000;
@@ -87,7 +87,6 @@ void IRAM_ATTR onTimerPulse() { lerPulso = true; }
 void IRAM_ATTR onTimerTemp() { lerTemperatura = true; }
 void IRAM_ATTR onTimerSend() { enviarDados_flag = true; }
 
-// COMANDOS ESP-NOW RECEBIDOS DO NÓ 1
 void onComandoRecv(const esp_now_recv_info *info, const uint8_t *incomingData, int len) {
   if (len == sizeof(struct_comando)) {
     struct_comando cmd;
@@ -169,6 +168,8 @@ void setupPulseSensor() {
 void setupEspNow() {
   WiFi.mode(WIFI_STA);
 
+  esp_wifi_set_channel(9, WIFI_SECOND_CHAN_NONE); 
+
   if (esp_now_init() != ESP_OK) {
     Serial.println("Erro ao iniciar ESP-NOW!");
     while (1) delay(1000);
@@ -178,14 +179,13 @@ void setupEspNow() {
 
   memset(&peerNode1, 0, sizeof(peerNode1));
   memcpy(peerNode1.peer_addr, MAC_NODE1, 6);
-  peerNode1.channel = 0;
+  
+  peerNode1.channel = 9; 
+  
   peerNode1.encrypt = false;
   peerNode1.ifidx = WIFI_IF_STA;
 
   esp_now_add_peer(&peerNode1);
-
-  Serial.print("MAC deste nó (Nó 2): ");
-  Serial.println(WiFi.macAddress());
 }
 
 void verificarSaudeMpu() {

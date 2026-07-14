@@ -15,10 +15,11 @@ interface Mensagem {
   corpo: string | null
   dataEnvio: string
   lida: boolean
+  guardada: boolean
 }
 
 type Vista = 'recebidas' | 'enviadas'
-type FiltroEstado = 'todas' | 'lidas' | 'nao_lidas'
+type FiltroEstado = 'todas' | 'lidas' | 'nao_lidas' | 'guardadas'
 
 function formatarDataHora(iso: string): string {
   const data = new Date(iso)
@@ -45,6 +46,7 @@ export default function Comunicacao({
   const [erro, setErro] = useState<string | null>(null)
   const [mostrarNovaMensagem, setMostrarNovaMensagem] = useState(false)
   const [mensagemExpandida, setMensagemExpandida] = useState<number | null>(null)
+  const [aGuardarId, setAGuardarId] = useState<number | null>(null)
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const idJaAbertoRef = useRef<number | null>(null)
@@ -124,9 +126,31 @@ export default function Comunicacao({
     }
   }
 
+  const alternarGuardada = async (idMensagem: number, e: React.MouseEvent) => {
+    e.stopPropagation()
+    setAGuardarId(idMensagem)
+
+    try {
+      const res = await fetch(`/api/mensagens/${idMensagem}/guardar?userId=${userId}`, {
+        method: 'PATCH',
+      })
+      if (res.ok) {
+        const atualizada: Mensagem = await res.json()
+        setMensagens((prev) =>
+          prev.map((m) => (m.idMensagem === idMensagem ? { ...m, guardada: atualizada.guardada } : m))
+        )
+      }
+    } catch {
+      // falha silenciosa
+    } finally {
+      setAGuardarId(null)
+    }
+  }
+
   const mensagensFiltradas = mensagens.filter((m) => {
     if (filtroEstado === 'lidas') return m.lida
     if (filtroEstado === 'nao_lidas') return !m.lida
+    if (filtroEstado === 'guardadas') return m.guardada
     return true
   })
 
@@ -183,6 +207,7 @@ export default function Comunicacao({
           <option value="todas">Todas as Mensagens</option>
           <option value="lidas">Apenas Lidas</option>
           <option value="nao_lidas">Apenas Não Lidas</option>
+          <option value="guardadas">Guardadas</option>
         </select>
       </div>
 
@@ -196,7 +221,7 @@ export default function Comunicacao({
       <div className="flex-1 overflow-y-auto flex flex-col gap-4 pr-2">
         {mensagensFiltradas.length === 0 && !erro && (
           <div className="flex-1 flex items-center justify-center text-sm text-gray-400">
-            {mensagens.length === 0 
+            {mensagens.length === 0
               ? (vista === 'recebidas' ? 'Sem mensagens recebidas.' : 'Sem mensagens enviadas.')
               : 'Nenhuma mensagem corresponde aos filtros selecionados.'}
           </div>
@@ -222,6 +247,15 @@ export default function Comunicacao({
                   <span className="font-bold text-gray-800">
                     {rotuloContacto}: {nomeContacto}
                   </span>
+                  {m.guardada && (
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+                      fill="currentColor" className="text-white/80"
+                    >
+                      <title>Mensagem guardada</title>
+                      <path d="M6 2a2 2 0 0 0-2 2v18l8-4 8 4V4a2 2 0 0 0-2-2H6z" />
+                    </svg>
+                  )}
                 </div>
                 <span className="text-sm text-gray-700">{formatarDataHora(m.dataEnvio)}</span>
               </div>
@@ -256,8 +290,35 @@ export default function Comunicacao({
               </div>
 
               {mensagemExpandida === m.idMensagem && (
-                <div className="px-4 pb-4 pt-1 border-t border-gray-200 text-sm text-gray-700 whitespace-pre-wrap">
-                  {m.corpo || 'Sem conteúdo.'}
+                <div className="px-4 pb-4 pt-1 border-t border-gray-200 flex flex-col gap-3">
+                  <p className="text-sm text-gray-700 whitespace-pre-wrap">
+                    {m.corpo || 'Sem conteúdo.'}
+                  </p>
+
+                  <button
+                    onClick={(e) => alternarGuardada(m.idMensagem, e)}
+                    disabled={aGuardarId === m.idMensagem}
+                    className={`self-start flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-colors cursor-pointer disabled:opacity-50 ${
+                      m.guardada
+                        ? 'bg-amber-100 text-amber-700 hover:bg-amber-200'
+                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                    }`}
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill={m.guardada ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M6 2a2 2 0 0 0-2 2v18l8-4 8 4V4a2 2 0 0 0-2-2H6z" />
+                    </svg>
+                    {aGuardarId === m.idMensagem
+                      ? 'A atualizar...'
+                      : m.guardada
+                        ? 'Mensagem guardada — clique para remover'
+                        : 'Guardar mensagem'}
+                  </button>
+
+                  {m.guardada && (
+                    <p className="text-xs text-gray-400">
+                      Mensagens guardadas não são apagadas na limpeza automática periódica.
+                    </p>
+                  )}
                 </div>
               )}
             </div>

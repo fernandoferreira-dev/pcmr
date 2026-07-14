@@ -32,6 +32,12 @@ public class Mensagem {
     @Column(name = "lida", nullable = false)
     private boolean lida = false;
 
+    @Column(name = "guardada", nullable = false)
+    private boolean guardada = false;
+
+    public boolean isGuardada() { return guardada; }
+    public void setGuardada(boolean guardada) { this.guardada = guardada; }
+
     public Long getIdMensagem() { return idMensagem; }
     public void setIdMensagem(Long idMensagem) { this.idMensagem = idMensagem; }
 
