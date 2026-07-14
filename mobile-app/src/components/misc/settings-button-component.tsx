@@ -43,7 +43,7 @@ export default function SettingsButtonComponent() {
                   </label>
                   <p>Modo Escuro</p>
                 </div>
-
+                <div className="option-seperator" />
                 <div className="option-container">
                   <select value={selectedOption} onChange={(e) => setSelectedOption(e.target.value)}>
                     <option value="opcao1">Português</option>
@@ -53,7 +53,7 @@ export default function SettingsButtonComponent() {
                   <p>Preferência de Linguagem</p>
                 </div>
               </div>
-
+              <div className="option-seperator" />
               <button className="log-out-btn">Terminar Sessão</button>
             </div>
           </div>

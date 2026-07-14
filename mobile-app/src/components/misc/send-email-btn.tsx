@@ -112,23 +112,31 @@ export default function SendEmailButtonComponent({ idRemetente }: { idRemetente:
 
         {isOpen && (
           <div className="overlay">
-            <div className="modal">
-              <p>| Enviar Email |</p>
-              <div className="settings">
+            <div className="modal modal--form">
+              <div className="modal-header">
+                <h2>Enviar Mensagem</h2>
+                <button
+                  onClick={() => { setIsOpen(false); resetForm(); }}
+                  className="modal-close-btn"
+                >
+                  ✕
+                </button>
+              </div>
 
-                <div className="option-container">
-                  <label>Destinatário:
-                    <input
-                      type="text"
-                      className="message-receiver"
-                      placeholder="Procurar por nome..."
-                      value={destinatario ? destinatario.nome : termo}
-                      onChange={(e) => {
-                        setDestinatario(null);
-                        setTermo(e.target.value);
-                      }}
-                    />
-                  </label>
+              <div className="settings">
+                <div className="modal-field">
+                  <label htmlFor="destinatario">Destinatário:</label>
+                  <input
+                    id="destinatario"
+                    type="text"
+                    className="message-receiver"
+                    placeholder="Procurar por nome..."
+                    value={destinatario ? destinatario.nome : termo}
+                    onChange={(e) => {
+                      setDestinatario(null);
+                      setTermo(e.target.value);
+                    }}
+                  />
                   {!destinatario && resultados.length > 0 && (
                     <ul className="search-results">
                       {resultados.map((u) => (
@@ -146,41 +154,47 @@ export default function SendEmailButtonComponent({ idRemetente }: { idRemetente:
                   )}
                 </div>
 
-                <div className="option-container">
-                  <label>Assunto:
-                    <input
-                      type="text"
-                      className="message-subject"
-                      value={assunto}
-                      onChange={(e) => setAssunto(e.target.value)}
-                    />
-                  </label>
+                <div className="modal-field">
+                  <label htmlFor="assunto">Assunto:</label>
+                  <input
+                    id="assunto"
+                    type="text"
+                    className="message-subject"
+                    value={assunto}
+                    onChange={(e) => setAssunto(e.target.value)}
+                  />
                 </div>
 
-                <div className="option-container">
-                  <label>Corpo da mensagem:
-                    <textarea
-                      className="message-body"
-                      value={corpo}
-                      onChange={(e) => setCorpo(e.target.value)}
-                    />
-                  </label>
+                <div className="modal-field">
+                  <label htmlFor="corpo">Corpo da mensagem:</label>
+                  <textarea
+                    id="corpo"
+                    className="email-body"
+                    value={corpo}
+                    onChange={(e) => setCorpo(e.target.value)}
+                  />
                 </div>
 
                 {erro && <p className="error-message">{erro}</p>}
+              </div>
 
-                <div className="settings-container">
+              <div className="modal-footer">
+                <button
+                  onClick={() => { setIsOpen(false); resetForm(); }}
+                  className="log-out-btn"
+                >
+                  Fechar
+                </button>
+                <div className="icon-btn-round">
                   <button
                     onClick={handleSendEmail}
                     disabled={!podeEnviar || aEnviar}
-                    className="settings-container-button"
+                    className="icon-btn-round-button"
                   >
                     <img src={SendIcon} alt="Enviar Email" className="settings-icon" />
                   </button>
                 </div>
               </div>
-
-              <button onClick={() => { setIsOpen(false); resetForm(); }}>Fechar</button>
             </div>
           </div>
         )}
