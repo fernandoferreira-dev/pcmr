@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import DiagnosticoLiveView from './DiagnosticoLiveView'
 import '../../styles/dashboard-styles/quick-diagnostic-styles.css'
+import '../../styles/dashboard-styles/dashboard-styles.css'
 
 type Passo = 'confirmar' | 'ao_vivo'
 
