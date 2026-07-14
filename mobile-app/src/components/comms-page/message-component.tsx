@@ -73,6 +73,7 @@ export default function MessageComponent() {
                 ])) as [MensagemDTO[], MensagemDTO[]];
                 const todas = [...enviadas, ...recebidas].sort(
                     (a, b) => new Date(b.dataEnvio).getTime() - new Date(a.dataEnvio).getTime()
+                    
                 );
                 setMensagens(todas);
             }
@@ -105,6 +106,16 @@ export default function MessageComponent() {
     const apagarMensagem = async (id: number) => {
         setMensagens((prev) => prev.filter((m) => m.idMensagem !== id));
     };
+
+    const formatDate = (dataEnvio: string) => {
+        return new Date(dataEnvio).toLocaleString('pt-PT', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+        });
+    }
 
     return (
         <>
@@ -144,7 +155,7 @@ export default function MessageComponent() {
                                         <img src={UserImg} alt="Sender" className="message-icon" />
                                         <span className="sender-name">{nome}</span>
                                     </div>
-                                    <span className="message-date">{msg.dataEnvio}</span>
+                                    <span className="message-date">{formatDate(msg.dataEnvio)}</span>
                                 </div>
                                 <div
                                     className="message-body"
