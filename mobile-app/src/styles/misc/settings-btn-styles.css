@@ -48,36 +48,68 @@
 }
 
 .log-out-btn {
-    color: #000000;
-    font-weight: bold;
-    padding: 0.5rem 1rem;
-    border: none;
-    background: none;
+  color: #000000;
+  font-weight: bold;
+  padding: 0.6rem 1rem;
+  border: none;
+  border-radius: 1rem;
+  background-color: #EFEFEF;
+  cursor: pointer;
+}
+
+.log-out-btn:hover {
+  background-color: #E2E2E2;
 }
 
 .overlay {
-    display: flex; 
-    position: fixed;
-    inset: 0;
-    background-color: rgba(0,0,0,0.5);
-    align-items: center;
-    justify-content: center;
-    z-index: 1000;
+  display: flex;
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0,0,0,0.5);
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
 }
 
 .modal {
-    display: flex;
-    flex-direction: column;
-    background-color: #FFFFFF;
-    color: #000000;
-    padding: 0.75rem;
-    border-radius: 8px;
-    text-align: center;
-    width: auto;
-    height: auto;
-    gap: 0.5rem;
-    position: relative;
-    z-index: 1001;
+  display: flex;
+  flex-direction: column;
+  background-color: #FFFFFF;
+  color: #000000;
+  padding: 1.5rem 1.75rem;
+  border-radius: 16px;
+  text-align: center;
+  width: 320px;
+  height: auto;
+  gap: 1rem;
+  position: relative;
+  z-index: 1001;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+}
+
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+.modal-header h2 {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 700;
+}
+
+.modal-close-btn {
+  position: absolute;
+  right: 0;
+  top: 0;
+  background: none;
+  border: none;
+  font-size: 1.25rem;
+  line-height: 1;
+  cursor: pointer;
+  color: #333;
 }
 
 .option-container {
@@ -86,15 +118,35 @@
     gap: 0.5rem;
 } 
 
-.option-container input {
-    width: auto;
+.option-container {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.option-container select {
+  order: -1;
+  flex: 1;
+  padding: 0.5rem 0.7rem;
+  color: #000000;
+  border: 1px solid #6C757D;
+  background-color: #CFCDCD;
+  border-radius: 1rem;
+  font-family: inherit;
+}
+
+.option-container p {
+  margin: 0;
+  white-space: nowrap;
 }
 
 .settings {
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-} 
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+}
 
 .settings p {
     align-self: center;
