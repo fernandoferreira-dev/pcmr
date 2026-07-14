@@ -53,13 +53,13 @@ export default function DiagnosticButtonComponent({
             <p className="checkingText">A verificar presença do paciente...</p>
           )}
 
-          {presente === true && (
+          {presente === false && (
             <div className="warningBox">
               Não foi detetada a presença de nenhum paciente. Aproxima-te do sensor e aguarda alguns segundos.
             </div>
           )}
 
-          {presente === false && (
+          {presente === true && (
             <p className="confirmText">
               Tem a certeza que pretende iniciar uma consulta rápida?
             </p>
