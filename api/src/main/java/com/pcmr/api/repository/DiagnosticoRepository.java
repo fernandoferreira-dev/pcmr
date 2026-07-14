@@ -15,4 +15,6 @@ public interface DiagnosticoRepository extends JpaRepository<Diagnostico, Long> 
         ORDER BY mes
         """, nativeQuery = true)
     List<Object[]> countPorMes();
+
+    List<Diagnostico> findByConsulta_Paciente_IdPessoaOrderByGdhDiagnosticoDesc(Long idPessoa);
 }
