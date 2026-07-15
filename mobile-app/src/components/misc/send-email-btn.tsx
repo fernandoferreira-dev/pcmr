@@ -159,7 +159,7 @@ export default function SendEmailButtonComponent({ idRemetente }: { idRemetente:
                   <input
                     id="assunto"
                     type="text"
-                    className="message-subject"
+                    className="email-subject"
                     value={assunto}
                     onChange={(e) => setAssunto(e.target.value)}
                   />

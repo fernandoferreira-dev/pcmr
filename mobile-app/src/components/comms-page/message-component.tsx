@@ -1,4 +1,5 @@
 import UserImg from "../../assets/user-notification.png";
+import { BsPinAngle, BsPinAngleFill } from "react-icons/bs";
 import { FaRegTrashAlt } from "react-icons/fa";
 import "../../styles/messages-page-styles/message-box-styles.css";
 import "../../styles/diagnostic-data-styles/data-containers-styles.css";
@@ -7,20 +8,22 @@ import { useAuth } from "../../context/auth-context";
 
 const API_URL = "http://localhost:8080";
 
-type FiltroOpcao = "env" | "rec" | "all";
+type FiltroOpcao = "env" | "rec" | "all" | "saved";
 
 interface MensagemDTO {
-    idMensagem: number;
-    idRemetente: number;
-    nomeRemetente: string;
-    emailRemetente: string;
-    idDestinatario: number;
-    nomeDestinatario: string;
-    emailDestinatario: string;
-    assunto: string;
-    corpo: string;
-    dataEnvio: string;
-    lida: boolean;
+    idMensagem: number
+    idRemetente: number
+    nomeRemetente: string
+    emailRemetente: string
+    idDestinatario: number
+    nomeDestinatario: string
+    emailDestinatario: string
+    assunto: string
+    corpo: string | null
+    dataEnvio: string
+    lida: boolean
+    guardada: boolean
+
 }
 
 export default function MessageComponent() {
@@ -32,6 +35,7 @@ export default function MessageComponent() {
     const [mensagens, setMensagens] = useState<MensagemDTO[]>([]);
     const [loading, setLoading] = useState<boolean>(false);
     const [erro, setErro] = useState<string | null>(null);
+    const [aGuardarId, setAGuardarId] = useState<number | null>(null)
 
     const fetchMensagens = useCallback(async () => {
         if (!userId) return;
@@ -57,8 +61,9 @@ export default function MessageComponent() {
                 }
                 setMensagens(await res.json() as MensagemDTO[]);
 
-                //filtra todas de uma maneira muito porca lol
-            } else {
+            }
+            //filtra todas de uma maneira muito porca lol
+            else if (selectedOption === "all") {
                 const [resEnv, resRec] = await Promise.all([
                     fetch(`${API_URL}/api/mensagens/enviadas?${params}`),
                     fetch(`${API_URL}/api/mensagens/recebidas?${params}`),
@@ -73,9 +78,30 @@ export default function MessageComponent() {
                 ])) as [MensagemDTO[], MensagemDTO[]];
                 const todas = [...enviadas, ...recebidas].sort(
                     (a, b) => new Date(b.dataEnvio).getTime() - new Date(a.dataEnvio).getTime()
-                    
+
                 );
                 setMensagens(todas);
+            }
+            //filtra mensagens guardadas (enviadas + recebidas, apenas as marcadas como guardada)
+            else if (selectedOption === "saved") {
+                const [resEnv, resRec] = await Promise.all([
+                    fetch(`${API_URL}/api/mensagens/enviadas?${params}`),
+                    fetch(`${API_URL}/api/mensagens/recebidas?${params}`),
+                ]);
+                if (!resEnv.ok || !resRec.ok) {
+                    throw new Error("Erro ao carregar mensagens guardadas");
+                }
+
+                const [enviadas, recebidas] = (await Promise.all([
+                    resEnv.json(),
+                    resRec.json(),
+                ])) as [MensagemDTO[], MensagemDTO[]];
+                const guardadas = [...enviadas, ...recebidas]
+                    .filter((m) => m.guardada)
+                    .sort(
+                        (a, b) => new Date(b.dataEnvio).getTime() - new Date(a.dataEnvio).getTime()
+                    );
+                setMensagens(guardadas);
             }
         } catch (e) {
             setErro(e instanceof Error ? e.message : "Erro desconhecido");
@@ -107,6 +133,33 @@ export default function MessageComponent() {
         setMensagens((prev) => prev.filter((m) => m.idMensagem !== id));
     };
 
+    const alternarGuardada = async (idMensagem: number, e: React.MouseEvent) => {
+        e.stopPropagation()
+        setAGuardarId(idMensagem)
+
+        try {
+            const res = await fetch(`/api/mensagens/${idMensagem}/guardar?userId=${userId}`, {
+                method: 'PATCH',
+            })
+            if (res.ok) {
+                const atualizada: MensagemDTO = await res.json()
+                setMensagens((prev) => {
+                    //tira a mensagem da lista quando deixa de tar guardada
+                    if (selectedOption === "saved" && !atualizada.guardada) {
+                        return prev.filter((m) => m.idMensagem !== idMensagem);
+                    }
+                    return prev.map((m) =>
+                        m.idMensagem === idMensagem ? { ...m, guardada: atualizada.guardada } : m
+                    );
+                })
+            }
+        } catch {
+            // falha silenciosa
+        } finally {
+            setAGuardarId(null)
+        }
+    }
+
     const formatDate = (dataEnvio: string) => {
         return new Date(dataEnvio).toLocaleString('pt-PT', {
             day: '2-digit',
@@ -126,8 +179,8 @@ export default function MessageComponent() {
                     value={pesquisa}
                     onChange={(e) => setPesquisa(e.target.value)}
                 />
+                Filtrar por:
                 <label className="option-container">
-                    Filtrar por:
                     <select
                         value={selectedOption}
                         onChange={(e) => setSelectedOption(e.target.value as FiltroOpcao)}
@@ -135,16 +188,18 @@ export default function MessageComponent() {
                         <option value="env">Enviadas</option>
                         <option value="rec">Recebidas</option>
                         <option value="all">Todas</option>
+                        <option value="saved">Guardadas</option>
                     </select>
                 </label>
             </div>
-
             <div className="messages-scroll-container">
                 {mensagens.map((msg) => {
                     const isRecebida =
-                        selectedOption === "all"
-                            ? msg.idDestinatario === userId
-                            : selectedOption === "rec";
+                        selectedOption === "env"
+                            ? false
+                            : selectedOption === "rec"
+                                ? true
+                                : msg.idDestinatario === userId;
                     const nome = isRecebida ? msg.nomeRemetente : msg.nomeDestinatario;
 
                     return (
@@ -174,6 +229,18 @@ export default function MessageComponent() {
                                                 }}
                                             />
                                             {isRecebida && !msg.lida && <div className="unread-dot"></div>}
+                                            {msg.guardada ? (
+                                                <BsPinAngleFill
+                                                    className="trash-icon"
+                                                    onClick={(e) => alternarGuardada(msg.idMensagem, e)}
+                                                />
+                                            ) :
+                                                (
+                                                    <BsPinAngle
+                                                        className="trash-icon"
+                                                        onClick={(e) => alternarGuardada(msg.idMensagem, e)}
+                                                    />
+                                                )}
                                         </div>
                                     </div>
                                     <div className="message-corpo">
