@@ -69,6 +69,7 @@
         <dependency>
             <groupId>org.springframework.integration</groupId>
             <artifactId>spring-integration-mqtt</artifactId>
+            <version>6.2.0</version>
         </dependency>
         
         <dependency>
@@ -80,6 +81,7 @@
         <dependency>
             <groupId>org.springframework.security</groupId>
             <artifactId>spring-security-crypto</artifactId>
+            <version>6.2.0</version>
         </dependency>
 
         <dependency>
