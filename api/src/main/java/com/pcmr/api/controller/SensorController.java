@@ -1,5 +1,5 @@
 package com.pcmr.api.controller;
-
+import org.springframework.web.server.ResponseStatusException;
 import com.pcmr.api.dto.EstadoSensorDTO;
 import com.pcmr.api.dto.NovoSensorRequestDTO;
 import com.pcmr.api.dto.SensorDTO;
@@ -77,19 +77,16 @@ public class SensorController {
         return ResponseEntity.ok(leitura);
     }
 
-    @GetMapping("/{deviceId}/ping")
-    public ResponseEntity<EstadoSensorDTO> ping(@PathVariable String deviceId) {
-
+    @GetMapping("/{idSensor}/ping")
+    public ResponseEntity<EstadoSensorDTO> ping(@PathVariable Long idSensor) {
         Sensor sensor = sensorRepository.findById(idSensor)
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
-        String deviceId = sensor.getDeviceId();
-        
-        // Tenta primeiro via leituras estruturadas (caso do wearable),
-        // e cai para o registo genérico de atividade nos restantes nós.
+        String deviceId = sensor.getNome();
+
         LeituraSensorService.LeituraAtual leitura = leituraSensorService.getUltimaLeitura(deviceId);
         OffsetDateTime ultimaOcorrencia = (leitura != null)
-                ? leitura.getAtualizadoEm()
-                : atividadeSensorService.getUltimaAtividade(deviceId);
+            ? leitura.getAtualizadoEm()
+            : atividadeSensorService.getUltimaAtividade(deviceId);
 
         EstadoSensorDTO dto = new EstadoSensorDTO();
         dto.setDeviceId(deviceId);
@@ -100,15 +97,14 @@ public class SensorController {
             dto.setSegundosDesdeUltimaLeitura(-1);
             return ResponseEntity.ok(dto);
         }
-
+    
         long segundos = Duration.between(ultimaOcorrencia, OffsetDateTime.now()).getSeconds();
-
         dto.setOnline(segundos <= LIMITE_ONLINE_SEGUNDOS);
         dto.setUltimaLeitura(ultimaOcorrencia.toString());
         dto.setSegundosDesdeUltimaLeitura(segundos);
-
+    
         return ResponseEntity.ok(dto);
-    }
+}
 
     @GetMapping("/procurar")
     public ResponseEntity<List<SensorDTO>> procurarSensores(
