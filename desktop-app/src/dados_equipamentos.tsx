@@ -19,8 +19,6 @@ interface EstadoSensor {
 export default function DadosEquipamentos() {
   const [searchTerm, setSearchTerm] = useState("");
 
-  // Lista de equipamentos monitorizados. Se vieres a ter mais que um
-  // sensor no futuro, isto pode passar a vir de um endpoint GET /api/sensores.
   const [equipamentos] = useState<EquipamentoItem[]>([
     {
       id: 1,

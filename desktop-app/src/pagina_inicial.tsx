@@ -35,11 +35,10 @@ type NavButtonProps = {
 function NavButton({ id, label, icon, isActive, onClick }: NavButtonProps) {
   return (
     <button
-      className={`cursor-pointer w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-colors  ${
-        isActive
+      className={`cursor-pointer w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-colors  ${isActive
           ? 'bg-[#8CA483] font-semibold text-black shadow-sm'
           : 'hover:bg-[#9CB39E] text-gray-800'
-      }`}
+        }`}
       onClick={() => onClick(id)}
     >
       {icon && (
@@ -210,7 +209,7 @@ const OverviewDashboard = ({ onAbrirConsulta }: OverviewDashboardProps) => {
           <div className="text-sm font-bold text-gray-600 mb-2">Consulta Rápida</div>
           <div className="flex-1 bg-[#AAB99F] rounded-xl border border-[#91a086] p-4 flex flex-col justify-between">
             <div className="w-10 h-10 bg-white/70 rounded-full flex items-center justify-center text-[#AAB99F] text-3xl font-bold shadow-sm">
-              <img src={cruzverde} alt="Diagnóstico" className="w-6 h-6 object-contain"/>
+              <img src={cruzverde} alt="Diagnóstico" className="w-6 h-6 object-contain" />
             </div>
             <button
               onClick={onAbrirConsulta}
@@ -239,8 +238,10 @@ export default function App({ userName, userId, onLogout }: PaginaInicialProps) 
 
   let content: ReactNode
   if (view === 'dados_diagnostico') content = <DadosDiagnostico />
-  else if (view === 'comunicacao') content = <Comunicacao userId={userId}/>
-  else if (view === 'dados_equipamentos') content = <DadosEquipamentos />
+  else if (view === 'comunicacao') content = (
+    <Comunicacao userId={userId} idMensagemInicial={mensagemParaAbrir} />
+  )
+  else if (view === 'dados_equipamentos' && !esMedico) content = <DadosEquipamentos/>
   else if (view === 'dados_pessoais') content = <DadosPessoais userId={userId} />
   else content = (
     <OverviewDashboard
@@ -293,19 +294,14 @@ export default function App({ userName, userId, onLogout }: PaginaInicialProps) 
                     <path d="M2 12h20" />
                   </svg>
                   <span className="text-sm font-medium whitespace-nowrap">
-                    {bioStatus === 'idle' ? 'Associar Impressão Digital' :
-                     bioStatus === 'sucesso' ? '✓ Registada' : 'Tentar Novamente'}
+                    {bioStatus === 'idle' ? 'Associar Impressão Digital' : bioStatus === 'sucesso' ? '✓ Registada' : 'Tentar Novamente'}
                   </span>
                 </button>
               ) : null}
 
               {bioStatus !== 'idle' && (
                 <div className={`text-xs px-3 py-1.5 rounded-lg ${
-                  bioStatus === 'aguardar_dedo' || bioStatus === 'a_processar'
-                    ? 'bg-blue-100 text-blue-800'
-                    : bioStatus === 'sucesso'
-                    ? 'bg-green-100 text-green-800'
-                    : 'bg-red-100 text-red-800'
+                  bioStatus === 'aguardar_dedo' || bioStatus === 'a_processar' ? 'bg-blue-100 text-blue-800' : bioStatus === 'sucesso' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
                 }`}>
                   <span>{bioMensagem}</span>
                   {(bioStatus === 'aguardar_dedo' || bioStatus === 'a_processar') && (
