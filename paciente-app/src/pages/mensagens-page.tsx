@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import "../assets/styles/index.css";
+import { NovaMensagemModal } from "../components";
 
 type Mensagem = {
     idMensagem: number;
@@ -18,6 +19,7 @@ function MensagensPage({ userId }: { userId: number }) {
     const [mensagens, setMensagens] = useState<Mensagem[]>([]);
     const [erro, setErro] = useState<string | null>(null);
     const [expandida, setExpandida] = useState<number | null>(null);
+    const [mostrarNovaMensagem, setMostrarNovaMensagem] = useState(false);
 
     useEffect(() => {
         let cancelado = false;
@@ -26,15 +28,19 @@ function MensagensPage({ userId }: { userId: number }) {
             try {
                 const endpoint = vista === "recebidas" ? "recebidas" : "enviadas";
                 const res = await fetch(`/api/mensagens/${endpoint}?userId=${userId}`);
-                if (!res.ok) throw new Error();
+                if (!res.ok) {
+                    if (cancelado) return;
+                    setErro("Não foi possível carregar as mensagens.");
+                    return;
+                }
                 const data = await res.json();
                 if (cancelado) return;
-
+                // eslint-disable-next-line react-hooks/set-state-in-effect
                 setMensagens(data);
                 setErro(null);
             } catch {
                 if (cancelado) return;
-
+                // eslint-disable-next-line react-hooks/set-state-in-effect
                 setErro("Não foi possível carregar as mensagens.");
             }
         })();
@@ -107,6 +113,28 @@ function MensagensPage({ userId }: { userId: number }) {
                     );
                 })}
             </div>
+
+            <button
+                onClick={() => setMostrarNovaMensagem(true)}
+                className="fixed bottom-20 right-4 w-14 h-14 rounded-full bg-background border border-primary-outline shadow-md flex items-center justify-center hover:opacity-90 transition-colors cursor-pointer"
+                title="Nova mensagem"
+            >
+                <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--color-primary)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="m22 2-7 20-4-9-9-4Z" />
+                    <path d="M22 2 11 13" />
+                </svg>
+            </button>
+
+            {mostrarNovaMensagem && (
+                <NovaMensagemModal
+                    idRemetente={userId}
+                    onClose={() => setMostrarNovaMensagem(false)}
+                    onEnviada={() => {
+                        setMostrarNovaMensagem(false);
+                        setVista("enviadas");
+                    }}
+                />
+            )}
         </div>
     );
 }
