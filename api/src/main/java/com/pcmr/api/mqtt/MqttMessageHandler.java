@@ -50,6 +50,9 @@ public class MqttMessageHandler {
                 if (deviceId != null) {
                     System.out.println("⚠️ [MQTT STATUS] O dispositivo '" + deviceId + "' reportou estado: " + payload);
                     
+                    // Regista atividade também pelos avisos de status MQTT
+                    atividadeSensorService.registarAtividade(deviceId);
+
                     if ("OFFLINE".equalsIgnoreCase(payload)) {
                         leituraSensorService.pararDiagnostico(deviceId);
                     }
@@ -64,7 +67,7 @@ public class MqttMessageHandler {
                 JsonNode json = objectMapper.readTree(payload);
                 boolean presente = json.get("presente").asBoolean();
                 presencaService.atualizarPresenca(presente);
-                System.out.println((presente ? "✓ Paciente presente" : "✗ Paciente ausente") + " (Nó 1)");
+                System.out.println((presente ? "✓Paciente presente" : "✗ Paciente ausente") + " (Nó 1)");
                 return;
             }
 
@@ -104,7 +107,10 @@ public class MqttMessageHandler {
             String deviceId = extrairDeviceId(topic);
             if (deviceId != null) {
                 
-                // Opção 2: Valida se o diagnóstico está ativo no LeituraSensorService para este ID (ex: "wearable01")
+                // 1. REGISTA A ATIVIDADE DO WEARABLE IMEDIATAMENTE (Garante que o Ping funciona!)
+                atividadeSensorService.registarAtividade(deviceId);
+                
+                // 2. Valida se o diagnóstico está ativo no LeituraSensorService para este ID (ex: "wearable01")
                 if (!leituraSensorService.isDiagnosticoAtivo(deviceId)) {
                     System.out.println("ℹ️ [DIAGNÓSTICO INATIVO] Dados de '" + deviceId + "' ignorados. Ative o diagnóstico clicando em 'Sim' no ecrã.");
                     return; 

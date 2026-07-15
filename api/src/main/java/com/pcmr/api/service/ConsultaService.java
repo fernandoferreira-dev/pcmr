@@ -23,6 +23,7 @@ public class ConsultaService {
     @Autowired private SensorRepository sensorRepository;
     @Autowired private LeituraSensorService leituraSensorService;
     @Autowired private JdbcTemplate jdbcTemplate;
+@Autowired private TipoUtilizadorRepository tipoUtilizadorRepository;
     
     // Repositórios injetados com os nomes corretos
     @Autowired private UserRepository userRepository;
@@ -145,7 +146,9 @@ public class ConsultaService {
             u.setPessoa(novaPessoa);
             u.setUsername(dto.getEmail());
             u.setPassword(UUID.randomUUID().toString()); 
-            
+            TipoUtilizador tipoPaciente = tipoUtilizadorRepository.findById(1L)
+                .orElseThrow(() -> new IllegalStateException("Erro: Tipo de utilizador 'Paciente' (ID 1) não encontrado na base de dados."));
+            u.setTipoUtilizador(tipoPaciente);
             u = userRepository.save(u);
 
             String token = String.format("%06d", new Random().nextInt(999999));
