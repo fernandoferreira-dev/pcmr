@@ -31,7 +31,7 @@ public class SensorController {
     @Autowired
     private SensorRepository sensorRepository;
 
-    private static final long LIMITE_ONLINE_SEGUNDOS = 10;
+    private static final long LIMITE_ONLINE_SEGUNDOS = 5; //cada 5 segundos porque o chefe disse
 
     @GetMapping
     public ResponseEntity<List<SensorDTO>> listar() {
@@ -79,6 +79,11 @@ public class SensorController {
 
     @GetMapping("/{deviceId}/ping")
     public ResponseEntity<EstadoSensorDTO> ping(@PathVariable String deviceId) {
+
+        Sensor sensor = sensorRepository.findById(idSensor)
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+        String deviceId = sensor.getDeviceId();
+        
         // Tenta primeiro via leituras estruturadas (caso do wearable),
         // e cai para o registo genérico de atividade nos restantes nós.
         LeituraSensorService.LeituraAtual leitura = leituraSensorService.getUltimaLeitura(deviceId);
