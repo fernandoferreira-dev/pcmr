@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import "../../styles/misc/settings-btn-styles.css"
+import '../../styles/status-page-styles/status-ping-styles.css'
 import SendIcon from "../../assets/send-icon.png"
 import EmailIcon from "../../assets/email-icon.png"
 

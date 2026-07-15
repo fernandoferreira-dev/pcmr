@@ -3,6 +3,7 @@ import { BsPinAngle, BsPinAngleFill } from "react-icons/bs";
 import { FaRegTrashAlt } from "react-icons/fa";
 import "../../styles/messages-page-styles/message-box-styles.css";
 import "../../styles/diagnostic-data-styles/data-containers-styles.css";
+import '../../styles/status-page-styles/status-ping-styles.css'
 import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "../../context/auth-context";
 

@@ -1,5 +1,164 @@
+.status-wrapper {
+    padding: 10px 10px;
+    border: none;
+    align-content: center;
+}
+
+.status-header-row {
+    display: flex;
+    flex-direction: row;
+    align-items: stretch;
+    gap: 0.75rem;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.status-btn-box {
+    box-sizing: border-box;
+    background: #FFF;
+    border-radius: 1.25rem;
+    flex-direction: column;
+    flex-shrink: 0;
+    justify-content: center;
+    align-items: center;
+    gap: .25rem;
+    width: 140px;
+    padding: .75rem;
+    display: flex;
+}
+
+.status-btn-box img {
+    width: 70px;
+    height: 60px;
+}
+
+.status-btn-box p {
+    margin: 0;
+    font-weight: 700;
+    font-size: 15px;
+}
+
+.status-btn-box button {
+    background-color: #e7ece7;
+    border: none;
+    border-radius: 0.5rem;
+    padding: 0.35rem 0.75rem;
+    font-size: 12px;
+    font-weight: 600;
+    color: #3f4a3f;
+    cursor: pointer;
+}
+
+.status-btn-box button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.status-search-wrapper {
+    box-sizing: border-box;
+    background-color: #fff;
+    border: 2px solid #b3b9b3;
+    border-radius: 1.25rem;
+    flex: 1;
+    align-items: center;
+    padding: 0 .75rem;
+    display: flex;
+    height: 50%;
+    align-self: flex-end;
+}
+
+.status-search-bar {
+    flex: 1;
+    border: none;
+    outline: none;
+    padding: 0.6rem 0;
+    font-size: 14px;
+    background: transparent;
+    box-sizing: border-box;
+}
+
+.status-search-results {
+    list-style: none;
+    margin: 0.75rem 0 0 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.status-sensor-card {
+    position: relative;
+    display: flex;
+    align-items: center;
+    background-color: #ffffff;
+    border: 2px solid #d6dad6;
+    border-radius: 1rem;
+    padding: 0.75rem 1rem;
+    cursor: pointer;
+    overflow: hidden;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.status-sensor-card:hover {
+    border-color: #97a897;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+}
+
+.status-sensor-bar {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 6px;
+    border-radius: 1rem 1rem 0 0;
+}
+
+.status-sensor-bar.is-ativo {
+    background: linear-gradient(90deg, #c93bc9, #f06292);
+}
+
+.status-sensor-bar.is-inativo {
+    background: linear-gradient(90deg, #b3b9b3, #8a908a);
+}
+
+.status-sensor-content {
+    display: flex;
+    flex-direction: column;
+    margin-top: 0.5rem;
+}
+
+.status-sensor-nome {
+    font-weight: 700;
+    font-size: 15px;
+    color: #000000;
+}
+
+.status-sensor-tipo {
+    font-size: 12px;
+    color: #6b716b;
+}
+
+.status-sensor-dot {
+    position: absolute;
+    top: 0.6rem;
+    right: 0.75rem;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+}
+
+.status-sensor-dot.is-ativo {
+    background-color: #4caf50;
+}
+
+.status-sensor-dot.is-inativo {
+    background-color: #e53935;
+}
+
 .status-ping-box {
-    display: flex; 
+    display: flex;
     flex-direction: column;
     border: 3px solid #b3b9b3;
     border-radius: 1rem;
@@ -8,6 +167,7 @@
     align-items: flex-start;
     width: 100%;
     box-sizing: border-box;
+    margin-top: 0.75rem;
 }
 
 .status-ping-messsage-box {

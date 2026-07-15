@@ -104,4 +104,21 @@ public class SensorController {
 
         return ResponseEntity.ok(dto);
     }
+
+    @GetMapping("/procurar")
+    public ResponseEntity<List<SensorDTO>> procurarSensores(
+        @RequestParam String nome,
+        @RequestParam(required = false) Long excluirId
+    ) {
+        List<Sensor> resultados = sensorRepository.findByNomeContainingIgnoreCase(nome);
+
+        List<SensorDTO> dtos = resultados.stream()
+            .filter(s -> excluirId == null || !s.getIdSensor().equals(excluirId))
+            .map(s -> new SensorDTO(
+                    s.getIdSensor(), s.getNome(), s.getLocalizacao(), s.getEstado()
+            ))
+            .collect(Collectors.toList());
+
+        return ResponseEntity.ok(dtos);
+    }
 }
