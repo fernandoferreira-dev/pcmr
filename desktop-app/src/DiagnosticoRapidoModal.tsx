@@ -36,12 +36,12 @@ export default function DiagnosticoRapidoModal({
     setLoading(true)
     try {
       // Abre a trava no backend para o nó de sinais vitais (ex: "node1")
-      const res = await fetch('/api/diagnosticos/node1/iniciar', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      })
+      const res = await fetch('/api/diagnosticos/wearable01/iniciar', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+  },
+})
 
       if (res.ok) {
         setPasso('ao_vivo')

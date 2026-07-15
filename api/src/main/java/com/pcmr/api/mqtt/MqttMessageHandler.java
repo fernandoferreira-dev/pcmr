@@ -44,6 +44,7 @@ public class MqttMessageHandler {
         if (topic == null) return;
 
         try {
+            // ================= STATUS MONITORING =================
             if (topic.endsWith("/status")) {
                 String deviceId = extrairDeviceId(topic);
                 if (deviceId != null) {
@@ -56,6 +57,7 @@ public class MqttMessageHandler {
                 return;
             }
 
+            // ================= NODE 1: PRESENÇA =================
             if (topic.equals("sensors/node1/presenca")) {
                 atividadeSensorService.registarAtividade(DEVICE_ID_NODE1);
 
@@ -66,6 +68,7 @@ public class MqttMessageHandler {
                 return;
             }
 
+            // ================= BIOMETRIA (LOGIN) =================
             if (topic.equals("sensor/login")) {
                 atividadeSensorService.registarAtividade(DEVICE_ID_NODE3);
 
@@ -79,6 +82,7 @@ public class MqttMessageHandler {
                 return;
             }
 
+            // ================= BIOMETRIA (ENROLL) =================
             if (topic.equals("sensor/enroll")) {
                 atividadeSensorService.registarAtividade(DEVICE_ID_NODE3);
 
@@ -96,13 +100,17 @@ public class MqttMessageHandler {
                 return;
             }
 
+            // ================= WEARABLE DATA (DIAGNÓSTICO OBRIGATÓRIO) =================
             String deviceId = extrairDeviceId(topic);
             if (deviceId != null) {
                 
+                // Opção 2: Valida se o diagnóstico está ativo no LeituraSensorService para este ID (ex: "wearable01")
                 if (!leituraSensorService.isDiagnosticoAtivo(deviceId)) {
+                    System.out.println("ℹ️ [DIAGNÓSTICO INATIVO] Dados de '" + deviceId + "' ignorados. Ative o diagnóstico clicando em 'Sim' no ecrã.");
                     return; 
                 }
 
+                // Se o diagnóstico estiver ativo, desserializa e regista
                 SensorReadingDTO leitura = objectMapper.readValue(payload, SensorReadingDTO.class);
 
                 LeituraSensorService.SensorReadingDTOWrapper wrapper = new LeituraSensorService.SensorReadingDTOWrapper();
@@ -112,10 +120,13 @@ public class MqttMessageHandler {
                 wrapper.fallState = leitura.getFallState();
                 wrapper.alertaQuedaAtivo = leitura.isAlertaQuedaAtivo();
 
+                // Grava o ponto de leitura na memória
                 leituraSensorService.registarLeitura(deviceId, wrapper);
 
+                // Regista a atividade do nó central que retransmitiu os dados
                 atividadeSensorService.registarAtividade(DEVICE_ID_NODE1);
 
+                // Dispara as avaliações de limites de segurança
                 alertaMonitorService.avaliarLimites(deviceId, wrapper.temperatura, wrapper.bpm);
             }
 
