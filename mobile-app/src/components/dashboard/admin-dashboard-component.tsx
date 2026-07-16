@@ -1,5 +1,5 @@
 // dashboard component
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import DiagnosticButtonComponent from './diagnostic-button-component';
 import '../../styles/dashboard-styles/dashboard-styles.css';
 import '../../styles/dashboard-styles/notification-box.css';
@@ -8,13 +8,44 @@ import { useAuth } from '../../context/auth-context';
 
 type Props = { username: string };
 
+interface SensorDTO {
+  idSensor: number;
+  nome: string;
+  localizacao: string;
+  estado: string;
+}
+
+interface EstadoSensorDTO {
+  deviceId: string;
+  online: boolean;
+  ultimaLeitura: string | null;
+  segundosDesdeUltimaLeitura: number;
+}
+
 export default function AdminDashboardComponent({ username }: Props) {
   const isServerOk = true;
-  const isSensorOk = true;
   const { user } = useAuth();
   const userId = user?.userId ?? null;
 
+  const [sensorSelecionado, setSensorSelecionado] = useState<SensorDTO | null>(null);
+  const [estadoPing, setEstadoPing] = useState<EstadoSensorDTO | null>(null);
+
   const [isDiagnosticOpen, setIsDiagnosticOpen] = useState(false);
+
+  const testarConexao = () => {
+    fetch(`/api/sensores/1/ping`) //mudar mais logo quando o lambido do fernando ligar o servidor
+      .then(res => res.ok ? res.json() : Promise.reject(res))
+      .then((data: EstadoSensorDTO) => setEstadoPing(data))
+      .catch(() => setEstadoPing(null));
+  };
+
+  // corre uma vez quando o estado renderiza na pagina
+  // pode causar problema se a coisa morrer enquanto o utilizador ta a usar app
+  useEffect(() => {
+    testarConexao();
+  }, []);
+
+  const isSensorOk = estadoPing?.online ?? false;
 
   const getStatusStyle = (isOk: boolean) => {
     switch (isOk) {
