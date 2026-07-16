@@ -40,29 +40,36 @@ public class MensagemService {
     }
 
     public MensagemDTO enviar(NovaMensagemRequestDTO req) {
-        if (req.getIdRemetente() == null || req.getIdDestinatario() == null) {
-            throw new IllegalArgumentException("Remetente e destinatário são obrigatórios");
-        }
-        if (req.getIdRemetente().equals(req.getIdDestinatario())) {
-            throw new IllegalArgumentException("Não pode enviar uma mensagem a si próprio");
-        }
-        if (req.getAssunto() == null || req.getAssunto().isBlank()) {
-            throw new IllegalArgumentException("O assunto é obrigatório");
-        }
-
-        Utilizador remetente = userRepository.findById(req.getIdRemetente())
-                .orElseThrow(() -> new IllegalArgumentException("Remetente não encontrado"));
-        Utilizador destinatario = userRepository.findById(req.getIdDestinatario())
-                .orElseThrow(() -> new IllegalArgumentException("Destinatário não encontrado"));
-
-        Mensagem mensagem = new Mensagem();
-        mensagem.setRemetente(remetente);
-        mensagem.setDestinatario(destinatario);
-        mensagem.setAssunto(req.getAssunto());
-        mensagem.setCorpo(req.getCorpo());
-
-        return paraDTO(mensagemRepository.save(mensagem));
+    if (req.getIdRemetente() == null || req.getIdDestinatario() == null) {
+        throw new IllegalArgumentException("Remetente e destinatário são obrigatórios");
     }
+    
+    Utilizador remetente = userRepository.findById(req.getIdRemetente())
+            .orElseThrow(() -> new IllegalArgumentException("Remetente não encontrado"));
+    
+    if (!"sistema".equalsIgnoreCase(remetente.getUsername()) && 
+         req.getIdRemetente().equals(req.getIdDestinatario())) {
+        throw new IllegalArgumentException("Não pode enviar uma mensagem a si próprio");
+    }
+
+    if (req.getAssunto() == null || req.getAssunto().isBlank()) {
+        throw new IllegalArgumentException("O assunto é obrigatório");
+    }
+
+    Utilizador destinatario = userRepository.findById(req.getIdDestinatario())
+            .orElseThrow(() -> new IllegalArgumentException("Destinatário não encontrado"));
+
+    Mensagem mensagem = new Mensagem();
+    mensagem.setRemetente(remetente);
+    mensagem.setDestinatario(destinatario);
+    mensagem.setAssunto(req.getAssunto());
+    mensagem.setCorpo(req.getCorpo());
+    
+    mensagem.setLida(false);
+    mensagem.setGuardada(false);
+
+    return paraDTO(mensagemRepository.save(mensagem));
+}
 
     public void marcarComoLida(Long idMensagem, Long idUtilizadorAtual) {
         Mensagem mensagem = mensagemRepository.findById(idMensagem)

@@ -92,17 +92,20 @@ public class MensagemController {
             @RequestParam String nome,
             @RequestParam(required = false) Long excluirId
     ) {
-        List<Utilizador> resultados = userRepository.findByPessoa_NomeContainingIgnoreCase(nome);
+        // No método procurarUtilizadores
+List<Utilizador> resultados = userRepository.findByPessoa_NomeContainingIgnoreCase(nome);
 
-        List<UtilizadorResumoDTO> dtos = resultados.stream()
-                .filter(u -> excluirId == null || !u.getIdUtilizador().equals(excluirId))
-                .map(u -> new UtilizadorResumoDTO(
-                        u.getIdUtilizador(),
-                        u.getPessoa().getNome(),
-                        u.getPessoa().getEmail(),
-                        u.getTipoUtilizador().getNome()
-                ))
-                .collect(Collectors.toList());
+List<UtilizadorResumoDTO> dtos = resultados.stream()
+        .filter(u -> excluirId == null || !u.getIdUtilizador().equals(excluirId))
+        // Filtro adicional: Não listar o utilizador "sistema" na busca de contactos do Admin
+        .filter(u -> !"sistema".equalsIgnoreCase(u.getUsername()))
+        .map(u -> new UtilizadorResumoDTO(
+                u.getIdUtilizador(),
+                u.getPessoa().getNome(),
+                u.getPessoa().getEmail(),
+                u.getTipoUtilizador().getNome()
+        ))
+        .collect(Collectors.toList());
 
         return ResponseEntity.ok(dtos);
     }
