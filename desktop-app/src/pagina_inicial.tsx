@@ -14,6 +14,7 @@ import Comunicacao from './comunicacao'
 import DadosEquipamentos from './dados_equipamentos'
 import { useBiometriaRegisto } from './hooks/useBiometria'
 import DiagnosticoRapidoModal from './DiagnosticoRapidoModal'
+import PresencaToast from './PresencaToast'
 
 const OverviewIcon = new URL("./assets/imagens/infographics.png", import.meta.url).href
 const DadosDiag = new URL("./assets/imagens/Patient-Profile-59.png", import.meta.url).href
@@ -345,6 +346,7 @@ export default function App({ userName, userId, tipo, onLogout }: PaginaInicialP
 
   return (
     <div className="h-screen w-screen bg-(--background) flex flex-col font-sans overflow-hidden relative">
+      <PresencaToast />
       <div className="flex-1 flex p-4 gap-6 overflow-hidden">
 
         {/* Barra Lateral */}

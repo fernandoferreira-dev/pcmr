@@ -3,13 +3,16 @@ package com.pcmr.api.service;
 import com.pcmr.api.dto.ConfiguracaoSistemaDTO;
 import com.pcmr.api.model.ConfiguracaoSistema;
 import com.pcmr.api.model.Sensor;
+import com.pcmr.api.mqtt.MqttPublisherService;
 import com.pcmr.api.repository.ConfiguracaoSistemaRepository;
 import com.pcmr.api.repository.SensorRepository;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -22,6 +25,10 @@ public class ConfiguracaoService {
     @Autowired
     private SensorRepository sensorRepository;
 
+    @Autowired
+    private MqttPublisherService mqttPublisher;
+
+    private final ObjectMapper objectMapper = new ObjectMapper();
     private final Map<Long, ConfiguracaoSistemaDTO> cachePorSensor = new ConcurrentHashMap<>();
 
     public ConfiguracaoSistemaDTO obterAtual(Long idSensor) {
@@ -36,8 +43,6 @@ public class ConfiguracaoService {
         return dto;
     }
 
-    // Usado pelo AlertaMonitorService, que só tem o nome (deviceId) do sensor.
-    // Devolve null se não houver sensor com esse nome
     public ConfiguracaoSistemaDTO obterAtualPorNome(String nomeSensor) {
         return sensorRepository.findByNome(nomeSensor)
                 .map(s -> obterAtual(s.getIdSensor()))
@@ -70,7 +75,24 @@ public class ConfiguracaoService {
         ConfiguracaoSistema guardada = repository.save(nova);
         ConfiguracaoSistemaDTO resultado = paraDTO(guardada);
         cachePorSensor.put(dto.getIdSensor(), resultado);
+
+        if ("WEARABLE".equals(sensor.getTipoMetrica())) {
+            publicarLimiteTemperatura(sensor.getNome(), dto.getTemperaturaMaxAlerta());
+        }
+
         return resultado;
+    }
+
+    private void publicarLimiteTemperatura(String nomeSensor, double temperaturaMax) {
+        try {
+            Map<String, Object> payload = new HashMap<>();
+            payload.put("temperaturaMaxAlerta", temperaturaMax);
+
+            String json = objectMapper.writeValueAsString(payload);
+            mqttPublisher.publishRetido("sensors/" + nomeSensor + "/limite-temperatura", json);
+        } catch (Exception e) {
+            System.err.println("✗ Erro ao publicar limite de temperatura: " + e.getMessage());
+        }
     }
 
     private ConfiguracaoSistema criarPadrao(Long idSensor) {
@@ -84,7 +106,14 @@ public class ConfiguracaoService {
         c.setBpmMaxAlerta(110);
         c.setBpmMinAlerta(50);
         c.setAtualizadoEm(OffsetDateTime.now());
-        return repository.save(c);
+
+        ConfiguracaoSistema guardada = repository.save(c);
+
+        if ("WEARABLE".equals(sensor.getTipoMetrica())) {
+            publicarLimiteTemperatura(sensor.getNome(), 37.8);
+        }
+
+        return guardada;
     }
 
     private ConfiguracaoSistemaDTO paraDTO(ConfiguracaoSistema c) {
