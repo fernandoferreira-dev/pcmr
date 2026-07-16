@@ -1,83 +1,62 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useMemo } from "react";
 import { Settings, Search, RefreshCw } from "lucide-react";
 
-// Interfaces vindas do Código 2
-interface SensorDTO {
-  idSensor: number;
+interface EquipamentoItem {
+  id: number;
+  deviceId: string;
   nome: string;
-  localizacao: string;
-  estado: string; // 'ATIVO' | 'INATIVO'
+  tipo: string;
 }
 
-interface EstadoSensorDTO {
-  deviceId: string;
+type EstadoPing = "idle" | "a_testar" | "online" | "offline";
+
+interface EstadoSensor {
   online: boolean;
   ultimaLeitura: string | null;
   segundosDesdeUltimaLeitura: number;
 }
 
-type EstadoPing = "idle" | "a_testar" | "online" | "offline";
-
 export default function DadosEquipamentos() {
   const [searchTerm, setSearchTerm] = useState("");
-  const [equipamentos, setEquipamentos] = useState<SensorDTO[]>([]);
-  
-  // Controlar o estado de ping e detalhes para cada sensor utilizando o idSensor como chave
-  const [estados, setEstados] = useState<Record<number, EstadoPing>>({});
-  const [detalhes, setDetalhes] = useState<Record<number, EstadoSensorDTO>>({});
-  
-  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Efeito de Busca com Debounce de 300ms (Funcionalidade do Código 2)
-  useEffect(() => {
-    if (debounceRef.current) {
-      clearTimeout(debounceRef.current);
-    }
+  const [equipamentos] = useState<EquipamentoItem[]>([
+    {
+      id: 1,
+      deviceId: "wearable01",
+      nome: "Wearable ESP32 — MPU6050 / DS18B20 / KY-039",
+      tipo: "Sensor de consulta",
+    },
+  ]);
 
-    if (!searchTerm.trim()) {
-      setEquipamentos([]);
-      return;
-    }
+  const [estados, setEstados] = useState<Record<string, EstadoPing>>({});
+  const [detalhes, setDetalhes] = useState<Record<string, EstadoSensor>>({});
 
-    debounceRef.current = setTimeout(() => {
-      fetch(`/api/sensores/procurar?nome=${encodeURIComponent(searchTerm)}`)
-        .then((res) => (res.ok ? res.json() : Promise.reject(res)))
-        .then((data: SensorDTO[]) => setEquipamentos(data))
-        .catch(() => setEquipamentos([]));
-    }, 300);
+  const filteredData = useMemo(() => {
+    return equipamentos.filter((item) =>
+      item.nome.toLowerCase().includes(searchTerm.toLowerCase()),
+    );
+  }, [searchTerm, equipamentos]);
 
-    return () => {
-      if (debounceRef.current) {
-        clearTimeout(debounceRef.current);
-      }
-    };
-  }, [searchTerm]);
-
-  // Testar Conexão Individual (Utilizando a API e o ID do Código 2)
-  const testarConexao = async (idSensor: number) => {
-    setEstados((prev) => ({ ...prev, [idSensor]: "a_testar" }));
+  const testarConexao = async (deviceId: string) => {
+    setEstados((prev) => ({ ...prev, [deviceId]: "a_testar" }));
 
     try {
-      const res = await fetch(`/api/sensores/${idSensor}/ping`);
+      const res = await fetch(`/api/sensores/${deviceId}/ping`);
       if (!res.ok) {
-        setEstados((prev) => ({ ...prev, [idSensor]: "offline" }));
+        setEstados((prev) => ({ ...prev, [deviceId]: "offline" }));
         return;
       }
 
-      const data: EstadoSensorDTO = await res.json();
-      setDetalhes((prev) => ({ ...prev, [idSensor]: data }));
-      setEstados((prev) => ({
-        ...prev,
-        [idSensor]: data.online ? "online" : "offline",
-      }));
+      const data: EstadoSensor = await res.json();
+      setDetalhes((prev) => ({ ...prev, [deviceId]: data }));
+      setEstados((prev) => ({ ...prev, [deviceId]: data.online ? "online" : "offline" }));
     } catch {
-      setEstados((prev) => ({ ...prev, [idSensor]: "offline" }));
+      setEstados((prev) => ({ ...prev, [deviceId]: "offline" }));
     }
   };
 
-  // Disparar o ping para todos os sensores atualmente listados na tela
   const testarTodos = () => {
-    equipamentos.forEach((item) => testarConexao(item.idSensor));
+    filteredData.forEach((item) => testarConexao(item.deviceId));
   };
 
   const getStatusColor = (estado: EstadoPing) => {
@@ -93,19 +72,19 @@ export default function DadosEquipamentos() {
     }
   };
 
-  const getTempoRespostaLabel = (idSensor: number, estado: EstadoPing) => {
+  const getTempoRespostaLabel = (deviceId: string, estado: EstadoPing) => {
     if (estado === "a_testar") return "A testar...";
     if (estado === "idle" || estado === undefined) return "—";
 
-    const detalhe = detalhes[idSensor];
+    const detalhe = detalhes[deviceId];
     if (!detalhe) return "—";
 
     if (detalhe.segundosDesdeUltimaLeitura < 0) return "Sem leituras";
     return `${detalhe.segundosDesdeUltimaLeitura}s atrás`;
   };
 
-  const getUltimaAtualizacaoLabel = (idSensor: number) => {
-    const detalhe = detalhes[idSensor];
+  const getUltimaAtualizacaoLabel = (deviceId: string) => {
+    const detalhe = detalhes[deviceId];
     if (!detalhe || !detalhe.ultimaLeitura) return "—";
     return new Date(detalhe.ultimaLeitura).toLocaleTimeString("pt-PT");
   };
@@ -129,8 +108,7 @@ export default function DadosEquipamentos() {
 
         <button
           onClick={testarTodos}
-          disabled={equipamentos.length === 0}
-          className="flex items-center gap-2 px-4 py-2 bg-[#AAB99F] hover:bg-[#9CB39E] disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-medium rounded-full shadow-sm transition-colors cursor-pointer"
+          className="flex items-center gap-2 px-4 py-2 bg-[#AAB99F] hover:bg-[#9CB39E] text-white text-sm font-medium rounded-full shadow-sm transition-colors cursor-pointer"
         >
           <RefreshCw size={16} />
           Testar Todos
@@ -166,7 +144,7 @@ export default function DadosEquipamentos() {
                 Nome
               </th>
               <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">
-                Localização
+                Tipo
               </th>
               <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">
                 Última Leitura
@@ -180,12 +158,12 @@ export default function DadosEquipamentos() {
             </tr>
           </thead>
           <tbody>
-            {equipamentos.length > 0 ? (
-              equipamentos.map((item) => {
-                const estado = estados[item.idSensor] ?? "idle";
+            {filteredData.length > 0 ? (
+              filteredData.map((item) => {
+                const estado = estados[item.deviceId] ?? "idle";
                 return (
                   <tr
-                    key={item.idSensor}
+                    key={item.id}
                     className="border-b border-gray-100 hover:bg-gray-50 transition-colors"
                   >
                     <td className="px-4 py-3">
@@ -202,17 +180,17 @@ export default function DadosEquipamentos() {
                       {item.nome}
                     </td>
                     <td className="px-4 py-3 text-sm text-gray-600">
-                      {item.localizacao || "Sem localização"}
+                      {item.tipo}
                     </td>
                     <td className="px-4 py-3 text-sm text-gray-600">
-                      {getTempoRespostaLabel(item.idSensor, estado)}
+                      {getTempoRespostaLabel(item.deviceId, estado)}
                     </td>
                     <td className="px-4 py-3 text-sm text-gray-600">
-                      {getUltimaAtualizacaoLabel(item.idSensor)}
+                      {getUltimaAtualizacaoLabel(item.deviceId)}
                     </td>
                     <td className="px-4 py-3">
                       <button
-                        onClick={() => testarConexao(item.idSensor)}
+                        onClick={() => testarConexao(item.deviceId)}
                         disabled={estado === "a_testar"}
                         className="px-3 py-1.5 bg-gray-100 hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed text-xs font-semibold text-gray-700 rounded-full transition-colors cursor-pointer"
                       >
@@ -225,9 +203,7 @@ export default function DadosEquipamentos() {
             ) : (
               <tr>
                 <td colSpan={6} className="px-4 py-8 text-center text-gray-500">
-                  {searchTerm.trim()
-                    ? `Nenhum resultado encontrado para "${searchTerm}"`
-                    : "Escreva algo na barra de pesquisa para buscar os equipamentos."}
+                  Nenhum resultado encontrado para "{searchTerm}"
                 </td>
               </tr>
             )}

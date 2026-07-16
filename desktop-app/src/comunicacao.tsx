@@ -290,37 +290,50 @@ export default function Comunicacao({
               </div>
 
               {mensagemExpandida === m.idMensagem && (
-                <div className="px-4 pb-4 pt-1 border-t border-gray-200 flex flex-col gap-3">
-                  <p className="text-sm text-gray-700 whitespace-pre-wrap">
-                    {m.corpo || 'Sem conteúdo.'}
-                  </p>
+  <div className="px-4 pb-4 pt-1 border-t border-gray-200 flex flex-col gap-3">
+    {(() => {
+      const temLink = m.corpo?.includes("LINK_ACAO:");
+      const partes = m.corpo?.split("LINK_ACAO:");
+      const texto = partes ? partes[0] : (m.corpo || "Sem conteúdo.");
+      const link = temLink ? partes![1].trim() : null;
 
-                  <button
-                    onClick={(e) => alternarGuardada(m.idMensagem, e)}
-                    disabled={aGuardarId === m.idMensagem}
-                    className={`self-start flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-colors cursor-pointer disabled:opacity-50 ${
-                      m.guardada
-                        ? 'bg-amber-100 text-amber-700 hover:bg-amber-200'
-                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                    }`}
-                  >
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill={m.guardada ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M6 2a2 2 0 0 0-2 2v18l8-4 8 4V4a2 2 0 0 0-2-2H6z" />
-                    </svg>
-                    {aGuardarId === m.idMensagem
-                      ? 'A atualizar...'
-                      : m.guardada
-                        ? 'Mensagem guardada — clique para remover'
-                        : 'Guardar mensagem'}
-                  </button>
+      return (
+        <>
+          <p className="text-sm text-gray-700 whitespace-pre-wrap">{texto}</p>
+          
+          {link && (
+            <button
+              onClick={async (e) => {
+                e.stopPropagation();
+                const res = await fetch(link);
+                if (res.ok) {
+                  alert("Registo aprovado com sucesso!");
+                  carregarMensagens(pesquisa, vista); 
+                } else {
+                  alert("Erro ao aprovar médico.");
+                }
+              }}
+              className="px-6 py-2 bg-[#AAB99F] text-white rounded-full text-sm font-bold hover:opacity-90 transition-opacity cursor-pointer"
+            >
+              Aceitar Médico
+            </button>
+          )}
+        </>
+      );
+    })()}
 
-                  {m.guardada && (
-                    <p className="text-xs text-gray-400">
-                      Mensagens guardadas não são apagadas na limpeza automática periódica.
-                    </p>
-                  )}
-                </div>
-              )}
+    {/* Botão de Guardar já existente */}
+    <button
+      onClick={(e) => alternarGuardada(m.idMensagem, e)}
+      disabled={aGuardarId === m.idMensagem}
+      className={`self-start flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium ${
+        m.guardada ? 'bg-amber-100 text-amber-700' : 'bg-gray-100 text-gray-600'
+      }`}
+    >
+      {m.guardada ? 'Mensagem guardada' : 'Guardar mensagem'}
+    </button>
+  </div>
+)}
             </div>
           )
         })}
