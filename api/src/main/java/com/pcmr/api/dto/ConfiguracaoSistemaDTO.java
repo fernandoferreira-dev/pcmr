@@ -1,12 +1,16 @@
 package com.pcmr.api.dto;
 
 public class ConfiguracaoSistemaDTO {
+    private Long idSensor;
     private double temperaturaMaxAlerta;
     private double temperaturaMinAlerta;
     private int bpmMaxAlerta;
     private int bpmMinAlerta;
     private String atualizadoEm;
     private Long idUtilizadorAtualizou;
+
+    public Long getIdSensor() { return idSensor; }
+    public void setIdSensor(Long idSensor) { this.idSensor = idSensor; }
 
     public double getTemperaturaMaxAlerta() { return temperaturaMaxAlerta; }
     public void setTemperaturaMaxAlerta(double temperaturaMaxAlerta) { this.temperaturaMaxAlerta = temperaturaMaxAlerta; }

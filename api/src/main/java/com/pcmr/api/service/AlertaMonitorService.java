@@ -1,6 +1,7 @@
 package com.pcmr.api.service;
 
 import com.pcmr.api.dto.AlertaRequestDTO;
+import com.pcmr.api.dto.ConfiguracaoSistemaDTO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -25,7 +26,8 @@ public class AlertaMonitorService {
     private final Map<String, OffsetDateTime> ultimoAlertaBpmBaixo = new ConcurrentHashMap<>();
 
     public void avaliarLimites(String deviceId, double temperatura, int bpm) {
-        var config = configuracaoService.obterAtual();
+        ConfiguracaoSistemaDTO config = configuracaoService.obterAtualPorNome(deviceId);
+        if (config == null) return; // sensor não registado/sem config aplicável
 
         if (temperatura > config.getTemperaturaMaxAlerta()) {
             registarSeNecessario(ultimoAlertaTemperaturaAlta, deviceId, () -> {

@@ -22,7 +22,8 @@ public class ConfiguracaoService {
     @Autowired
     private ConfiguracaoSistemaRepository repository;
 
-    private volatile ConfiguracaoSistemaDTO cache;
+    @Autowired
+    private SensorRepository sensorRepository;
 
     @Autowired
     private MqttPublisherService mqttPublisher;
@@ -34,11 +35,12 @@ public class ConfiguracaoService {
         ConfiguracaoSistemaDTO cache = cachePorSensor.get(idSensor);
         if (cache != null) return cache;
 
-        ConfiguracaoSistema atual = repository.findTopByOrderByAtualizadoEmDesc()
-                .orElseGet(this::criarPadrao);
+        ConfiguracaoSistema atual = repository.findTopBySensor_IdSensorOrderByAtualizadoEmDesc(idSensor)
+                .orElseGet(() -> criarPadrao(idSensor));
 
-        cache = paraDTO(atual);
-        return cache;
+        ConfiguracaoSistemaDTO dto = paraDTO(atual);
+        cachePorSensor.put(idSensor, dto);
+        return dto;
     }
 
     public ConfiguracaoSistemaDTO obterAtualPorNome(String nomeSensor) {
@@ -58,7 +60,11 @@ public class ConfiguracaoService {
             throw new IllegalArgumentException("O BPM mínimo deve ser inferior ao máximo");
         }
 
+        Sensor sensor = sensorRepository.findById(dto.getIdSensor())
+                .orElseThrow(() -> new IllegalArgumentException("Sensor não encontrado"));
+
         ConfiguracaoSistema nova = new ConfiguracaoSistema();
+        nova.setSensor(sensor);
         nova.setTemperaturaMaxAlerta(BigDecimal.valueOf(dto.getTemperaturaMaxAlerta()));
         nova.setTemperaturaMinAlerta(BigDecimal.valueOf(dto.getTemperaturaMinAlerta()));
         nova.setBpmMaxAlerta(dto.getBpmMaxAlerta());
@@ -94,6 +100,7 @@ public class ConfiguracaoService {
                 .orElseThrow(() -> new IllegalArgumentException("Sensor não encontrado"));
 
         ConfiguracaoSistema c = new ConfiguracaoSistema();
+        c.setSensor(sensor);
         c.setTemperaturaMaxAlerta(BigDecimal.valueOf(37.8));
         c.setTemperaturaMinAlerta(BigDecimal.valueOf(35.0));
         c.setBpmMaxAlerta(110);
@@ -111,6 +118,7 @@ public class ConfiguracaoService {
 
     private ConfiguracaoSistemaDTO paraDTO(ConfiguracaoSistema c) {
         ConfiguracaoSistemaDTO dto = new ConfiguracaoSistemaDTO();
+        dto.setIdSensor(c.getSensor().getIdSensor());
         dto.setTemperaturaMaxAlerta(c.getTemperaturaMaxAlerta().doubleValue());
         dto.setTemperaturaMinAlerta(c.getTemperaturaMinAlerta().doubleValue());
         dto.setBpmMaxAlerta(c.getBpmMaxAlerta());

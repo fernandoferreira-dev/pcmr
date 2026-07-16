@@ -16,8 +16,8 @@ public class ConfiguracaoController {
     private ConfiguracaoService configuracaoService;
 
     @GetMapping
-    public ResponseEntity<ConfiguracaoSistemaDTO> obter() {
-        return ResponseEntity.ok(configuracaoService.obterAtual());
+    public ResponseEntity<ConfiguracaoSistemaDTO> obter(@RequestParam Long idSensor) {
+        return ResponseEntity.ok(configuracaoService.obterAtual(idSensor));
     }
 
     @PutMapping

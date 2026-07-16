@@ -6,5 +6,5 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.Optional;
 
 public interface ConfiguracaoSistemaRepository extends JpaRepository<ConfiguracaoSistema, Long> {
-    Optional<ConfiguracaoSistema> findTopByOrderByAtualizadoEmDesc();
+    Optional<ConfiguracaoSistema> findTopBySensor_IdSensorOrderByAtualizadoEmDesc(Long idSensor);
 }
