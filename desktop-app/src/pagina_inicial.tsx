@@ -238,13 +238,6 @@ export default function App({ userName, userId, onLogout }: PaginaInicialProps) 
 
   let content: ReactNode
   if (view === 'dados_diagnostico') content = <DadosDiagnostico />
-<<<<<<< HEAD
-=======
-  else if (view === 'comunicacao') content = (
-    <Comunicacao userId={userId} idMensagemInicial={mensagemParaAbrir} />
-  )
-  else if (view === 'dados_equipamentos' && !esMedico) content = <DadosEquipamentos userId={userId}/>
->>>>>>> pcmr/APPDesktop(afterthechungus)
   else if (view === 'dados_pessoais') content = <DadosPessoais userId={userId} />
   else content = (
     <OverviewDashboard
