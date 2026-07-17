@@ -17,7 +17,7 @@ public class MqttPublisherService {
 
     private MqttClient client;
 
-    private MqttSecurityService mqttSecurityService;
+    private MqttSecurityService mqttSecurityService;w
 
     @PostConstruct
     public void init() {
