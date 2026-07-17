@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
+import '../../styles/misc/presenca-toast-styles.css'
 
 interface EstadoPresenca {
   presente: boolean
@@ -46,30 +47,24 @@ export default function PresencaToastComponent() {
   if (!mostrar) return null
 
   return (
-    <div className="fixed top-6 right-6 z-[100] animate-[fadeIn_0.3s_ease-out]">
-      <style>{`
-        @keyframes fadeIn {
-          from { opacity: 0; transform: translateY(-10px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
-      `}</style>
-      <div className="flex items-center gap-3 bg-white border border-green-300 rounded-2xl shadow-lg px-5 py-4 max-w-sm">
-        <div className="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center shrink-0">
+    <div className="toast-container">
+      <div className="toast-card">
+        <div className="toast-icon-wrap">
           <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#16a34a" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
             <circle cx="12" cy="7" r="4" />
           </svg>
         </div>
-        <div className="flex-1 min-w-0">
-          <p className="text-sm font-semibold text-gray-800">Paciente detetado</p>
-          <p className="text-xs text-gray-500">Presença confirmada no sensor de proximidade.</p>
+        <div className="toast-content">
+          <p className="toast-title">Paciente detetado</p>
+          <p className="toast-subtitle">Presença confirmada no sensor de proximidade.</p>
         </div>
         <button
           onClick={() => {
             setMostrar(false)
             if (timeoutRef.current) clearTimeout(timeoutRef.current)
           }}
-          className="text-gray-400 hover:text-gray-600 shrink-0 cursor-pointer"
+          className="toast-close"
           title="Fechar"
         >
           ✕

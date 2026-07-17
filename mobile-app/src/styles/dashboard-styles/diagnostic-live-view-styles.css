@@ -1,4 +1,8 @@
-@keyframes pulsoVerde {
+/* DiagnosticoLiveView.css */
+
+/* ---------- Animações ---------- */
+
+@keyframes pulso-verde {
   0% {
     box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.6);
     border-color: rgba(34, 197, 94, 0.9);
@@ -13,14 +17,14 @@
   }
 }
 
-@keyframes pulsoVermelho {
+@keyframes pulso-vermelho {
   0% {
-    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.6);
-    border-color: rgba(239, 68, 68, 0.9);
+    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.5);
+    border-color: rgba(239, 68, 68, 0.8);
   }
   70% {
-    box-shadow: 0 0 0 10px rgba(239, 68, 68, 0);
-    border-color: rgba(239, 68, 68, 0.4);
+    box-shadow: 0 0 0 12px rgba(239, 68, 68, 0);
+    border-color: rgba(239, 68, 68, 0.3);
   }
   100% {
     box-shadow: 0 0 0 0 rgba(239, 68, 68, 0);
@@ -28,7 +32,18 @@
   }
 }
 
-@keyframes pulse {
+@keyframes fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(-2px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes pulse-opacity {
   0%, 100% {
     opacity: 1;
   }
@@ -37,39 +52,30 @@
   }
 }
 
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(-4px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.pulsoVerdeAtivo {
-  animation: pulsoVerde 700ms ease-out;
+/* Nota: a duração original vinha de DURACAO_PULSO_MS (700ms), injetada via JS.
+   Como agora é CSS estático, o valor está fixo em 700ms — se alterares a
+   constante no TSX, atualiza também aqui. */
+.pulso-verde-ativo {
+  animation: pulso-verde 700ms ease-out;
   border: 2px solid transparent;
 }
 
-.pulsoVermelhoAtivo {
-  animation: pulsoVermelho 1500ms infinite ease-out;
+.pulso-vermelho-ativo {
+  animation: pulso-vermelho 1800ms infinite ease-in-out;
   border: 2px solid #ef4444;
-  background-color: #fef2f2;
 }
 
-.animatePulse {
-  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+.animate-fade-in {
+  animation: fade-in 0.2s ease-out;
 }
 
-.animateFadeIn {
-  animation: fadeIn 0.3s ease-out;
+.animate-pulse {
+  animation: pulse-opacity 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
 
-/* layout das coisas */
+/* ---------- Layout geral ---------- */
 
-.container {
+.diag-root {
   position: fixed;
   inset: 0;
   z-index: 50;
@@ -78,128 +84,53 @@
   flex-direction: column;
 }
 
-.header {
+.diag-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 1rem 1.5rem;
-  border-bottom: 1px solid #e5e7eb;
+  border-bottom: 1px solid #e5e7eb; /* gray-200 */
 }
 
-.title {
+.diag-title {
   font-size: 1.25rem;
   line-height: 1.75rem;
   font-weight: 700;
-  color: #1f2937;
+  color: #1f2937; /* gray-800 */
 }
 
-.closeButton {
-  color: #9ca3af;
-  font-size: 1.25rem;
-  line-height: 1.75rem;
+.diag-close-btn {
   background: none;
   border: none;
-  transition: color 0.15s ease-in-out;
+  padding: 0;
+  color: #9ca3af; /* gray-400 */
+  font-size: 1.25rem;
+  line-height: 1;
+  cursor: pointer;
 }
 
-.closeButton:hover {
-  color: #374151;
+.diag-close-btn:hover {
+  color: #374151; /* gray-700 */
 }
 
-.main {
+.diag-main {
   flex: 1 1 0%;
   overflow-y: auto;
   padding: 1.5rem;
 }
 
-/* alertas*/
-
-.alertsContainer {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
+.diag-erro {
   margin-bottom: 1.5rem;
-}
-
-.alertaQueda {
-  background-color: #fef2f2;
-  border: 1px solid #fca5a5;
-  color: #b91c1c;
-  border-radius: 1rem;
-  padding: 0.75rem 1rem;
-  font-weight: 700;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-}
-
-.alertaTemperatura {
-  background-color: #fff7ed;
-  border: 1px solid #fdba74;
-  color: #c2410c;
-  border-radius: 1rem;
-  padding: 0.75rem 1rem;
-  font-weight: 700;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-}
-
-.alertaBpm {
-  background-color: #fff1f2;
-  border: 1px solid #fda4af;
-  color: #be123c;
-  border-radius: 1rem;
-  padding: 0.75rem 1rem;
-  font-weight: 700;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-}
-
-.alertasBdWrapper {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-.alertaBdItem {
-  background-color: #fef2f2;
-  border: 1px solid #fca5a5;
-  color: #b91c1c;
-  border-radius: 1rem;
-  padding: 0.75rem 1rem;
-  font-size: 0.875rem;
-  line-height: 1.25rem;
-  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-}
-
-.alertaBdTipo {
-  font-weight: 600;
-}
-
-.alertaBdHora {
-  font-size: 0.75rem;
-  line-height: 1rem;
-  color: #fca5a5;
-  margin-left: 0.5rem;
-}
-
-.erroBox {
-  margin-bottom: 1.5rem;
-  background-color: #fefce8;
-  border: 1px solid #fde047;
-  color: #a16207;
+  background-color: #fefce8; /* yellow-50 */
+  border: 1px solid #fde047; /* yellow-300 */
+  color: #a16207; /* yellow-700 */
   border-radius: 1rem;
   padding: 0.75rem 1rem;
 }
 
-/* sensores */
+/* ---------- Grid dos cartões de biométricos ---------- */
 
-.cardsGrid {
+.diag-cartoes-grid {
   display: grid;
   grid-template-columns: repeat(1, minmax(0, 1fr));
   gap: 1rem;
@@ -207,147 +138,100 @@
 }
 
 @media (min-width: 640px) {
-  .cardsGrid {
+  .diag-cartoes-grid {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }
 
-.card {
-  border-radius: 1rem;
-  padding: 1rem;
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-  transition: all 0.3s ease;
-}
+/* ---------- Gráfico ---------- */
 
-.cardBgGray {
-  background-color: #f9fafb;
-}
-
-.cardBorderTransparent {
-  border: 2px solid transparent;
-}
-
-.cardLabel {
-  font-size: 0.75rem;
-  line-height: 1rem;
-  text-transform: uppercase;
-  letter-spacing: 0.025em;
-  transition: color 0.15s ease-in-out;
-}
-
-.cardLabelAlert {
-  color: #b91c1c;
-  font-weight: 700;
-}
-
-.cardLabelNormal {
-  color: #6b7280;
-}
-
-.cardValue {
-  font-size: 1.5rem;
-  line-height: 2rem;
-  font-weight: 700;
-  transition: color 0.15s ease-in-out;
-}
-
-.cardValueAlert {
-  color: #b91c1c;
-}
-
-.cardValueNormal {
-  color: #1f2937;
-}
-
-/* chart*/
-
-.chartSection {
-  background-color: #f9fafb;
+.diag-chart-card {
+  background-color: #f9fafb; /* gray-50 */
   border-radius: 1rem;
   padding: 1rem;
   margin-bottom: 1.5rem;
 }
 
-.chartHeaderRow {
+.diag-chart-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
   margin-bottom: 0.75rem;
 }
 
-.chartTitle {
+.diag-chart-title {
   font-size: 0.875rem;
   line-height: 1.25rem;
   font-weight: 600;
-  color: #4b5563;
+  color: #4b5563; /* gray-600 */
 }
 
-.metricToggleGroup {
+.diag-metric-tabs {
   display: flex;
   gap: 0.25rem;
   background-color: #ffffff;
   border-radius: 9999px;
   padding: 0.25rem;
-  border: 1px solid #e5e7eb;
+  border: 1px solid #e5e7eb; /* gray-200 */
 }
 
-.metricButton {
+.diag-metric-tab {
   padding: 0.25rem 0.75rem;
   border-radius: 9999px;
   font-size: 0.75rem;
   line-height: 1rem;
   font-weight: 500;
-  transition: background-color 0.15s ease-in-out, color 0.15s ease-in-out;
-  border: none;
+  transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out;
+  cursor: pointer;
   background: none;
+  border: none;
+  color: #6b7280; /* gray-500 */
 }
 
-.metricButtonActive {
-  background-color: #AAB99F;
+.diag-metric-tab:hover {
+  background-color: #f3f4f6; /* gray-100 */
+}
+
+.diag-metric-tab-active {
+  background-color: #aab99f;
   color: #ffffff;
 }
 
-.metricButtonInactive {
-  color: #6b7280;
+.diag-metric-tab-active:hover {
+  background-color: #aab99f;
 }
 
-.metricButtonInactive:hover {
-  background-color: #f3f4f6;
-}
-
-.chartPlaceholder {
+.diag-chart-empty {
   height: 280px;
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 0.875rem;
   line-height: 1.25rem;
-  color: #9ca3af;
+  color: #9ca3af; /* gray-400 */
 }
 
-/* footer e merdas assim*/
+/* ---------- Estado do sensor de queda ---------- */
 
-.fallStateBox {
-  background-color: #f9fafb;
+.diag-fall-box {
+  background-color: #f9fafb; /* gray-50 */
   border-radius: 1rem;
   padding: 0.75rem 1rem;
   font-size: 0.875rem;
   line-height: 1.25rem;
-  color: #4b5563;
+  color: #4b5563; /* gray-600 */
 }
 
-.fallStateValue {
+.diag-fall-value {
   font-weight: 500;
-  color: #1f2937;
+  color: #1f2937; /* gray-800 */
 }
 
-.lastUpdateText {
+.diag-last-update {
   margin-top: 1rem;
   font-size: 0.75rem;
   line-height: 1rem;
-  color: #9ca3af;
+  color: #9ca3af; /* gray-400 */
 }
 
 .end-consulta {
@@ -358,21 +242,124 @@
   bottom: 0;
 }
 
-.finishButton {
+/* ---------- Footer ---------- */
+.diag-finalizar-btn {
   padding: 0.5rem 1.5rem;
-  background-color: #AAB99F;
+  background-color: #aab99f;
+  border: none;
   border-radius: 9999px;
   color: #ffffff;
   font-weight: 500;
-  border: none;
-  transition: background-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+  transition: background-color 0.2s ease-in-out;
   box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  cursor: pointer;
 }
 
-.finishButton:hover {
-  background-color: #9CB39E;
+.diag-finalizar-btn:hover:not(:disabled) {
+  background-color: #9cb39e;
 }
 
-.finishButton:disabled {
+.diag-finalizar-btn:disabled {
   opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* ---------- Cartão de sensor ---------- */
+
+.diag-cartao {
+  border-radius: 1rem;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  transition: all 0.3s ease-in-out;
+  min-height: 120px;
+  justify-content: space-between;
+}
+
+.diag-cartao-calibrando {
+  background-color: rgba(243, 244, 246, 0.7); /* gray-100/70 */
+  border: 2px dashed #d1d5db; /* gray-300 */
+}
+
+.diag-cartao-alerta {
+  background-color: #fef2f2; /* red-50 */
+  border: 2px solid transparent; /* a cor real vem da animação pulso-vermelho-ativo */
+}
+
+.diag-cartao-pulsando {
+  background-color: #f9fafb; /* gray-50 */
+  border: 2px solid transparent; /* a cor real vem da animação pulso-verde-ativo */
+}
+
+.diag-cartao-default {
+  background-color: #f9fafb; /* gray-50 */
+  border: 2px solid transparent;
+}
+
+.diag-cartao-inner {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.diag-cartao-top-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.diag-cartao-titulo {
+  font-size: 0.75rem;
+  line-height: 1rem;
+  text-transform: uppercase;
+  letter-spacing: 0.025em;
+  font-weight: 600;
+  color: #6b7280; /* gray-500 */
+}
+
+.diag-cartao-titulo-alerta {
+  color: #b91c1c; /* red-700 */
+}
+
+.diag-cartao-calibrando-badge {
+  font-size: 0.625rem;
+  color: #9ca3af; /* gray-400 */
+  font-weight: 500;
+  background-color: #e5e7eb; /* gray-200 */
+  padding: 0.125rem 0.5rem;
+  border-radius: 9999px;
+}
+
+.diag-cartao-valor {
+  font-size: 1.875rem;
+  line-height: 2.25rem;
+  font-weight: 700;
+  color: #1f2937; /* gray-800 (default) */
+}
+
+.diag-cartao-valor-calibrando {
+  color: #9ca3af; /* gray-400 */
+}
+
+.diag-cartao-valor-alerta {
+  color: #dc2626; /* red-600 */
+}
+
+.diag-cartao-alerta-msg {
+  font-size: 0.75rem;
+  line-height: 1rem;
+  color: #b91c1c; /* red-700 */
+  background-color: rgba(254, 226, 226, 0.6); /* red-100/60 */
+  border: 1px solid #fecaca; /* red-200 */
+  border-radius: 0.5rem;
+  padding: 0.5rem;
+  font-weight: 500;
+  line-height: 1.6;
+  margin-top: 0.25rem;
+}
+
+.diag-cartao-alerta-icon {
+  font-weight: 700;
+  margin-right: 0.25rem;
 }

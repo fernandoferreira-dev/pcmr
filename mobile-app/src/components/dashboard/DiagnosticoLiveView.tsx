@@ -8,7 +8,7 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
-import FinalizarConsultaModal from "./FinalizarConsultaModal";
+import FinalizarConsultaModal from "../../components/dashboard/FinalizarConsultaModal";
 import "../../styles/dashboard-styles/diagnostic-live-view-styles.css";
 
 interface LeituraSensor {
@@ -25,12 +25,6 @@ interface PontoGrafico {
   temperatura: number;
   bpm: number;
   magnitudeG: number;
-}
-
-interface AlertaSessao {
-  tipoAlerta: string;
-  mensagem: string;
-  dataHora: string;
 }
 
 type MetricaKey = "temperatura" | "bpm" | "magnitudeG";
@@ -62,15 +56,15 @@ const METRICAS: {
   cor: string;
   unidade: string;
 }[] = [
-    { key: "temperatura", label: "Temperatura", cor: "#f97316", unidade: "°C" },
-    { key: "bpm", label: "Frequência Cardíaca", cor: "#dc2626", unidade: "bpm" },
-    {
-      key: "magnitudeG",
-      label: "Magnitude (aceleração)",
-      cor: "#2563eb",
-      unidade: "G",
-    },
-  ];
+  { key: "temperatura", label: "Temperatura", cor: "#f97316", unidade: "°C" },
+  { key: "bpm", label: "Frequência Cardíaca", cor: "#dc2626", unidade: "bpm" },
+  {
+    key: "magnitudeG",
+    label: "Magnitude (aceleração)",
+    cor: "#2563eb",
+    unidade: "G",
+  },
+];
 
 export default function DiagnosticoLiveView({
   onClose,
@@ -85,19 +79,17 @@ export default function DiagnosticoLiveView({
   const [mostrarFinalizar, setMostrarFinalizar] = useState(false);
   const [metricaAtiva, setMetricaAtiva] = useState<MetricaKey>("temperatura");
   const [pulsando, setPulsando] = useState(false);
-  const [alertas, setAlertas] = useState<AlertaSessao[]>([]);
 
   // Estado para controlar se o período de calibração terminou
   const [calibrado, setCalibrado] = useState(false);
 
-  // Estados dos alertas ativos em tempo real (mensagens ativas por sensor)
+  // Estados dos alertas ativos em tempo real (Strings com as mensagens ativas por sensor)
   const [mensagemAlertaTemp, setMensagemAlertaTemp] = useState<string | null>(null);
   const [mensagemAlertaBpm, setMensagemAlertaBpm] = useState<string | null>(null);
 
   const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const pulsoTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const ultimaHoraRef = useRef<string | null>(null);
-  const inicioSessaoRef = useRef(new Date().toISOString());
 
   // Refs para monitorizar se o alerta já foi enviado uma vez para a base de dados (evita SPAM)
   const alertaTempAltaEnviado = useRef(false);
@@ -114,8 +106,8 @@ export default function DiagnosticoLiveView({
     return () => clearTimeout(timer);
   }, []);
 
-  // FUNÇÕES DE REGISTO
-  const registarAlertaBD = async (tipo: string, valor: number, mensagem: string) => {
+  // Enviar alerta de forma assíncrona para a base de dados
+  const registarAlertaNoServidor = async (tipo: string, valor: number, mensagem: string) => {
     try {
       await fetch('/api/alertas', {
         method: 'POST',
@@ -129,7 +121,7 @@ export default function DiagnosticoLiveView({
         })
       });
     } catch (e) {
-      console.error("Erro ao submeter o alerta para a Base de Dados:", e);
+      console.error("Erro ao guardar o alerta na BD:", e);
     }
   };
 
@@ -154,7 +146,7 @@ export default function DiagnosticoLiveView({
             setMensagemAlertaTemp(msg);
 
             if (!alertaTempAltaEnviado.current) {
-              registarAlertaBD('TEMPERATURA_ALTA', data.temperatura, msg);
+              registarAlertaNoServidor('TEMPERATURA_ALTA', data.temperatura, msg);
               alertaTempAltaEnviado.current = true;
             }
             alertaTempBaixaEnviado.current = false; // Reset o limite oposto
@@ -164,7 +156,7 @@ export default function DiagnosticoLiveView({
             setMensagemAlertaTemp(msg);
 
             if (!alertaTempBaixaEnviado.current) {
-              registarAlertaBD('TEMPERATURA_BAIXA', data.temperatura, msg);
+              registarAlertaNoServidor('TEMPERATURA_BAIXA', data.temperatura, msg);
               alertaTempBaixaEnviado.current = true;
             }
             alertaTempAltaEnviado.current = false; // Reset o limite oposto
@@ -182,7 +174,7 @@ export default function DiagnosticoLiveView({
             setMensagemAlertaBpm(msg);
 
             if (!alertaBpmAltoEnviado.current) {
-              registarAlertaBD('BPM_ALTO', data.bpm, msg);
+              registarAlertaNoServidor('BPM_ALTO', data.bpm, msg);
               alertaBpmAltoEnviado.current = true;
             }
             alertaBpmBaixoEnviado.current = false;
@@ -192,7 +184,7 @@ export default function DiagnosticoLiveView({
             setMensagemAlertaBpm(msg);
 
             if (!alertaBpmBaixoEnviado.current) {
-              registarAlertaBD('BPM_BAIXO', data.bpm, msg);
+              registarAlertaNoServidor('BPM_BAIXO', data.bpm, msg);
               alertaBpmBaixoEnviado.current = true;
             }
             alertaBpmAltoEnviado.current = false;
@@ -223,7 +215,6 @@ export default function DiagnosticoLiveView({
               : atualizado;
           });
 
-          // Efeito visual de dados novos recebidos
           setPulsando(true);
           if (pulsoTimeoutRef.current) clearTimeout(pulsoTimeoutRef.current);
           pulsoTimeoutRef.current = setTimeout(
@@ -245,42 +236,17 @@ export default function DiagnosticoLiveView({
     };
   }, [idMedico, calibrado]);
 
-  useEffect(() => {
-    const buscarAlertas = async () => {
-      try {
-        const res = await fetch(`/api/alertas?deviceId=${DEVICE_ID}&desde=${inicioSessaoRef.current}`);
-        if (!res.ok) return;
-        const data = await res.json();
-
-        // Garante que os dados recebidos são uma estrutura de array antes de aplicar no estado
-        if (Array.isArray(data)) {
-          setAlertas(data);
-        }
-      } catch {
-        // falha silenciosa
-      }
-    };
-
-    buscarAlertas();
-    const interval = setInterval(buscarAlertas, 4000);
-    return () => clearInterval(interval);
-  }, []);
-
-
-  // --- ESTADOS DERIVADOS PARA JSX ---
-  const emQueda = leitura?.alertaQuedaAtivo ?? false;
-
   const metrica = METRICAS.find((m) => m.key === metricaAtiva)!;
 
   return (
-    <div className="container">
-      <header className="header">
-        <h1 className="title">
-          Consulta Rápida
+    <div className="diag-root">
+      <header className="diag-header">
+        <h1 className="diag-title">
+          Consulta Rápida — Dados em Tempo Real
         </h1>
         <button
           onClick={onClose}
-          className="closeButton"
+          className="diag-close-btn"
           title="Fechar"
         >
           ✕
@@ -291,62 +257,22 @@ export default function DiagnosticoLiveView({
         <button
           disabled={!leitura}
           onClick={() => setMostrarFinalizar(true)}
-          className="finishButton"
+          className="diag-finalizar-btn"
         >
           Terminar Consulta
         </button>
       </div>
-      <main className="main">
 
-        {/* Painel Superior de Alertas Ativos */}
-        <div className="alertsContainer">
-          {emQueda && (
-            <div className={`${"alertaQueda"} ${"animatePulse"}`}>
-              ALERTA: Movimento de queda severa detetado no paciente!
-            </div>
-          )}
-          {mensagemAlertaTemp && (
-            <div className="alertaTemperatura">
-              ALERTA: {mensagemAlertaTemp}
-            </div>
-          )}
-          {mensagemAlertaBpm && (
-            <div className="alertaBpm">
-              ALERTA: {mensagemAlertaBpm}
-            </div>
-          )}
-
-          {/* Banner de alertas originados na BD */}
-          {alertas.length > 0 && (
-            <div className="alertasBdWrapper">
-              {alertas.map((a, idx) => (
-                <div
-                  key={idx}
-                  className={`${"alertaBdItem"} ${"animateFadeIn"}`}
-                >
-                  <span className="alertaBdTipo">
-                    {a.tipoAlerta ? a.tipoAlerta.replace(/_/g, " ") : "ALERTA"}:
-                  </span>{" "}
-                  {a.mensagem}
-                  {a.dataHora && (
-                    <span className="alertaBdHora">
-                      ({new Date(a.dataHora).toLocaleTimeString('pt-PT')})
-                    </span>
-                  )}
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-
+      {/* Main agora é fixo, sem afetar ou esmagar o layout original */}
+      <main className="diag-main">
         {erro && (
-          <div className="erroBox">
+          <div className="diag-erro">
             {erro}
           </div>
         )}
 
-        {/* Cartões dos Sensores Biométricos */}
-        <div className="cardsGrid">
+        {/* CARTÕES DOS BIOMÉTRICOS INTEGRADOS COM SISTEMA DE ALERTAS */}
+        <div className="diag-cartoes-grid">
           <CartaoSensor
             titulo="Temperatura"
             valor={leitura ? `${leitura.temperatura.toFixed(1)} °C` : "—"}
@@ -371,17 +297,20 @@ export default function DiagnosticoLiveView({
         </div>
 
         {/* Gráfico de Evolução Temporal */}
-        <div className="chartSection">
-          <div className="chartHeaderRow">
-            <div className="metricToggleGroup">
+        <div className="diag-chart-card">
+          <div className="diag-chart-header">
+            <div className="diag-chart-title">
+              Evolução — {metrica.label}
+            </div>
+
+            <div className="diag-metric-tabs">
               {METRICAS.map((m) => (
                 <button
                   key={m.key}
                   onClick={() => setMetricaAtiva(m.key)}
-                  className={`${"metricButton"} ${metricaAtiva === m.key
-                    ? "metricButtonActive"
-                    : "metricButtonInactive"
-                    }`}
+                  className={`diag-metric-tab ${
+                    metricaAtiva === m.key ? "diag-metric-tab-active" : ""
+                  }`}
                 >
                   {m.label}
                 </button>
@@ -420,27 +349,29 @@ export default function DiagnosticoLiveView({
               </LineChart>
             </ResponsiveContainer>
           ) : (
-            <div className="chartPlaceholder">
+            <div className="diag-chart-empty">
               A recolher dados suficientes para o gráfico...
             </div>
           )}
         </div>
-        <div className="fallStateBox">
+
+        <div className="diag-fall-box">
           Estado do sensor de queda:{" "}
-          <span className="fallStateValue">
+          <span className="diag-fall-value">
             {leitura
               ? (FALL_STATE_LABELS[leitura.fallState] ?? "Desconhecido")
               : "—"}
           </span>
         </div>
+
         {leitura && (
-          <p className="lastUpdateText">
+          <p className="diag-last-update">
             Última atualização:{" "}
             {new Date(leitura.atualizadoEm).toLocaleTimeString()}
           </p>
         )}
-
       </main>
+
 
       {mostrarFinalizar && (
         <FinalizarConsultaModal
@@ -471,38 +402,49 @@ function CartaoSensor({
 }: CartaoProps) {
   const emAlerta = !!mensagemAlerta;
 
-  const estadoClass = estaCalibrando
-    ? "cardCalibrando"
+  const estadoClasse = estaCalibrando
+    ? "diag-cartao-calibrando"
     : emAlerta
-      ? "pulsoVermelhoAtivo"
-      : pulsando
-        ? `${"cardBgGray"} ${"pulsoVerdeAtivo"}`
-        : `${"cardBgGray"} ${"cardBorderTransparent"}`;
+    ? "diag-cartao-alerta pulso-vermelho-ativo"
+    : pulsando
+    ? "diag-cartao-pulsando pulso-verde-ativo"
+    : "diag-cartao-default";
 
   return (
-    <div className={`${"card"} ${estadoClass}`}>
-      <div className="cardHeaderRow">
-        <span
-          className={`${"cardLabel"} ${emAlerta ? "cardLabelAlert" : "cardLabelNormal"
+    <div className={`diag-cartao ${estadoClasse}`}>
+      <div className="diag-cartao-inner">
+        <div className="diag-cartao-top-row">
+          <span
+            className={`diag-cartao-titulo ${
+              emAlerta ? "diag-cartao-titulo-alerta" : ""
             }`}
-        >
-          {titulo}
-        </span>
-        {estaCalibrando && (
-          <span className="calibrandoBadge">A calibrar...</span>
-        )}
-      </div>
-      <span
-        className={`${"cardValue"} ${emAlerta ? "cardValueAlert" : "cardValueNormal"
+          >
+            {titulo}
+          </span>
+          {estaCalibrando && (
+            <span className="diag-cartao-calibrando-badge animate-pulse">
+              A calibrar...
+            </span>
+          )}
+        </div>
+        <span
+          className={`diag-cartao-valor ${
+            estaCalibrando
+              ? "diag-cartao-valor-calibrando"
+              : emAlerta
+              ? "diag-cartao-valor-alerta"
+              : ""
           }`}
-      >
-        {estaCalibrando ? "—" : valor}
-      </span>
+        >
+          {estaCalibrando ? "—" : valor}
+        </span>
+      </div>
 
-      {/* Mensagem de alerta específica do sensor */}
+      {/* Caixa de Mensagem Interna do Cartão - Aparece de forma dinâmica se houver desvio */}
       {emAlerta && !estaCalibrando && (
-        <div className="alertaMensagemBox">
-          <span className="alertaMensagemIcone">⚠️ Alerta:</span> {mensagemAlerta}
+        <div className="diag-cartao-alerta-msg animate-fade-in">
+          <span className="diag-cartao-alerta-icon">⚠️ Alerta:</span>
+          {mensagemAlerta}
         </div>
       )}
     </div>
