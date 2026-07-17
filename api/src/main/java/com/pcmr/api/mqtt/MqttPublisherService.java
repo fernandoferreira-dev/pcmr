@@ -17,6 +17,8 @@ public class MqttPublisherService {
 
     private MqttClient client;
 
+    private MqttSecurityService mqttSecurityService;
+
     @PostConstruct
     public void init() {
         try {
@@ -37,10 +39,11 @@ public class MqttPublisherService {
             return;
         }
         try {
-            MqttMessage message = new MqttMessage(payload.getBytes());
+            String payloadCifrado = mqttSecurityService.cifrarEEmpacotar(payload);
+            MqttMessage message = new MqttMessage(payloadCifrado.getBytes());
             message.setQos(1);
             client.publish(topic, message);
-            System.out.println("Publicado MQTT [" + topic + "]: " + payload);
+            System.out.println("Publicado MQTT (cifrado) [" + topic + "]: " + payload);
         } catch (Exception e) {
             System.err.println("Erro ao publicar MQTT: " + e.getMessage());
         }

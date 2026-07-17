@@ -31,6 +31,9 @@ public class MqttMessageHandler {
     @Autowired
     private AlertaMonitorService alertaMonitorService;
 
+    @Autowired
+    private MqttSecurityService mqttSecurityService;
+
     private static final String DEVICE_ID_NODE1 = "node1-presenca";
     private static final String DEVICE_ID_NODE3 = "esp32-pico-fingerprint";
 
@@ -38,22 +41,44 @@ public class MqttMessageHandler {
 
     @ServiceActivator(inputChannel = "mqttInputChannel")
     public void handleMessage(Message<?> message) {
-        String payload = message.getPayload().toString();
+        String payloadBruto = message.getPayload().toString();
         String topic = message.getHeaders().get("mqtt_receivedTopic", String.class);
 
-        if (topic == null) return;
+        if (topic == null) {
+            return;
+        }
+
+        String payload;
+
+        // Decifrar e validar a mensagem MQTT
+        try {
+            payload = mqttSecurityService.desempacotarEDecifrar(payloadBruto);
+        } catch (Exception e) {
+            System.err.println(
+                    "Erro ao decifrar/validar mensagem MQTT no tópico '"
+                            + topic + "': " + e.getMessage()
+            );
+            return; // descarta mensagens inválidas
+        }
 
         try {
+            // Nó de presença
             if (topic.equals("sensors/node1/presenca")) {
                 atividadeSensorService.registarAtividade(DEVICE_ID_NODE1);
 
                 JsonNode json = objectMapper.readTree(payload);
                 boolean presente = json.get("presente").asBoolean();
+
                 presencaService.atualizarPresenca(presente);
-                System.out.println((presente ? "✓ Paciente presente" : "✗ Paciente ausente") + " (Nó 1)");
+
+                System.out.println(
+                        (presente ? "✓ Paciente presente" : "✗ Paciente ausente")
+                                + " (Nó 1)"
+                );
                 return;
             }
 
+            // Login biométrico
             if (topic.equals("sensor/login")) {
                 atividadeSensorService.registarAtividade(DEVICE_ID_NODE3);
 
@@ -67,14 +92,21 @@ public class MqttMessageHandler {
                 return;
             }
 
+            // Registo biométrico
             if (topic.equals("sensor/enroll")) {
                 atividadeSensorService.registarAtividade(DEVICE_ID_NODE3);
 
                 JsonNode json = objectMapper.readTree(payload);
 
                 if (json.has("erro") && json.get("erro").asBoolean()) {
-                    String motivo = json.has("motivo") ? json.get("motivo").asText() : "desconhecido";
-                    System.err.println("✗ Enroll falhou no ESP32. Motivo: " + motivo);
+                    String motivo = json.has("motivo")
+                            ? json.get("motivo").asText()
+                            : "desconhecido";
+
+                    System.err.println(
+                            "✗ Enroll falhou no ESP32. Motivo: " + motivo
+                    );
+
                     biometriaService.completarRegisto(-1, false);
                     return;
                 }
@@ -84,11 +116,16 @@ public class MqttMessageHandler {
                 return;
             }
 
+            // Leituras dos sensores
             String deviceId = extrairDeviceId(topic);
-            if (deviceId != null) {
-                SensorReadingDTO leitura = objectMapper.readValue(payload, SensorReadingDTO.class);
 
-                LeituraSensorService.SensorReadingDTOWrapper wrapper = new LeituraSensorService.SensorReadingDTOWrapper();
+            if (deviceId != null) {
+                SensorReadingDTO leitura =
+                        objectMapper.readValue(payload, SensorReadingDTO.class);
+
+                LeituraSensorService.SensorReadingDTOWrapper wrapper =
+                        new LeituraSensorService.SensorReadingDTOWrapper();
+
                 wrapper.temperatura = leitura.getTemperatura();
                 wrapper.bpm = leitura.getBpm();
                 wrapper.magnitudeG = leitura.getMagnitudeG();
@@ -99,11 +136,18 @@ public class MqttMessageHandler {
 
                 atividadeSensorService.registarAtividade(DEVICE_ID_NODE1);
 
-                alertaMonitorService.avaliarLimites(deviceId, wrapper.temperatura, wrapper.bpm);
+                alertaMonitorService.avaliarLimites(
+                        deviceId,
+                        wrapper.temperatura,
+                        wrapper.bpm
+                );
             }
 
         } catch (Exception e) {
-            System.err.println("Erro ao processar payload MQTT no tópico '" + topic + "': " + e.getMessage());
+            System.err.println(
+                    "Erro ao processar payload MQTT no tópico '"
+                            + topic + "': " + e.getMessage()
+            );
         }
     }
 
