@@ -93,9 +93,9 @@ public class MensagemController {
             @RequestParam(required = false) Long excluirId
     ) {
         // No método procurarUtilizadores
-List<Utilizador> resultados = userRepository.findByPessoa_NomeContainingIgnoreCase(nome);
+        List<Utilizador> resultados = userRepository.findByPessoa_NomeContainingIgnoreCase(nome);
 
-List<UtilizadorResumoDTO> dtos = resultados.stream()
+        List<UtilizadorResumoDTO> dtos = resultados.stream()
         .filter(u -> excluirId == null || !u.getIdUtilizador().equals(excluirId))
         // Filtro adicional: Não listar o utilizador "sistema" na busca de contactos do Admin
         .filter(u -> !"sistema".equalsIgnoreCase(u.getUsername()))

@@ -1,7 +1,6 @@
 import { useState } from "react";
 import "../styles/login-page/login-page-styles.css";
 import LoginButtonComponent from "../components/login-page/login-button-component";
-import FooterComponent from "../components/misc/footer-component";
 import appImage from "../assets/logo.png";
 import RegisterButtonComponent from "../components/login-page/register-button-component";
 import CreateAccountComponent from "../components/login-page/create-account-btn-component";
@@ -25,6 +24,14 @@ export default function LoginPage({ onLogin, onAccountCreated }: Props) {
   const [password, setPassword] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  //Estados do registo de medicos
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [novoNome, setNovoNome] = useState("");
+  const [novoEmail, setNovoEmail] = useState("");
+  const [novoUsername, setNovoUsername] = useState("");
+  const [novaPassword, setNovaPassword] = useState("");
+  const [modalStatus, setModalStatus] = useState<{ tipo: 'erro' | 'sucesso', msg: string } | null>(null);
 
   const handleLogin = async () => {
     setErrorMessage("");
@@ -80,6 +87,44 @@ export default function LoginPage({ onLogin, onAccountCreated }: Props) {
     }
   };
 
+  const solicitarCriacaoMedico = async () => {
+    setModalStatus(null);
+    if (!novoNome || !novoEmail || !novoUsername || !novaPassword) {
+      setModalStatus({ tipo: 'erro', msg: 'Todos os campos são obrigatórios.' });
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      const res = await fetch("/api/registo/solicitar", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          nome: novoNome,
+          email: novoEmail,
+          username: novoUsername,
+          password: novaPassword
+        }),
+      });
+
+      if (res.ok) {
+        setModalStatus({ tipo: 'sucesso', msg: 'Pedido enviado! Espere que o Administrador aceite o seu pedido!' });
+        setNovoNome("");
+        setNovoEmail("");
+        setNovoUsername("");
+        setNovaPassword("");
+        setTimeout(() => setIsModalOpen(false), 3000);
+      } else {
+        const data = await res.json();
+        setModalStatus({ tipo: 'erro', msg: data.erro || "Erro ao solicitar criação." });
+      }
+    } catch {
+      setModalStatus({ tipo: 'erro', msg: 'Falha de comunicação com o servidor.' });
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
+  
   return (
     <>
       <h1 style={{ color: "#4E5452" }}>Medycist</h1>
@@ -122,7 +167,12 @@ export default function LoginPage({ onLogin, onAccountCreated }: Props) {
               onAccountCreated={onAccountCreated}
             />
           </div>
-          <RegisterButtonComponent />
+          <button
+            onClick={() => setIsModalOpen(true)}
+            className="registerbtn"
+          >
+            Solicitar conta de Médico
+          </button>
           {errorMessage && (
             <p className="error-message" role="alert">
               {errorMessage}
@@ -130,6 +180,57 @@ export default function LoginPage({ onLogin, onAccountCreated }: Props) {
           )}
         </div>
       </div>
+      {/*popup do registo de medico*/}
+      {isModalOpen && (
+        <div className="modal-overlay">
+          <div className="modal-content">
+            <h3 className="modal-title">Nova Conta de Médico</h3>
+            <p className="modal-subtitle">Preencha os dados. O pedido será enviado ao administrador para aprovação.</p>
+            <input
+              className="modal-input"
+              placeholder="Nome Completo"
+              value={novoNome} onChange={e => setNovoNome(e.target.value)}
+            />
+            <input
+              className="modal-input"
+              placeholder="Email"
+              type="email"
+              value={novoEmail} onChange={e => setNovoEmail(e.target.value)}
+            />
+            <input
+              className="modal-input"
+              placeholder="Username"
+              value={novoUsername} onChange={e => setNovoUsername(e.target.value)}
+            />
+            <input
+              className="modal-input"
+              placeholder="Password"
+              type="password"
+              value={novaPassword} onChange={e => setNovaPassword(e.target.value)}
+            />
+            {modalStatus && (
+              <div className={`modal-status ${modalStatus.tipo === 'erro' ? 'modal-status-erro' : 'modal-status-sucesso'}`}>
+                {modalStatus.msg}
+              </div>
+            )}
+            <div className="modal-actions">
+              <button
+                onClick={() => setIsModalOpen(false)}
+                className="btn-cancelar"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={solicitarCriacaoMedico}
+                disabled={isSubmitting}
+                className="btn-enviar"
+              >
+                {isSubmitting ? "A enviar..." : "Enviar Pedido"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }

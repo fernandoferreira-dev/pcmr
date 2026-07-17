@@ -46,12 +46,10 @@
     font-size: 12px;
     font-weight: 600;
     color: #3f4a3f;
-    cursor: pointer;
 }
 
 .status-btn-box button:disabled {
     opacity: 0.6;
-    cursor: not-allowed;
 }
 
 .status-search-wrapper {
@@ -96,7 +94,6 @@
     border: 2px solid #d6dad6;
     border-radius: 1rem;
     padding: 0.75rem 1rem;
-    cursor: pointer;
     overflow: hidden;
     transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
