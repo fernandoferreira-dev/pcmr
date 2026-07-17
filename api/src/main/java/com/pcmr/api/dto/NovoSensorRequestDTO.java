@@ -14,4 +14,7 @@ public class NovoSensorRequestDTO {
 
     public String getLocalizacao() { return localizacao; }
     public void setLocalizacao(String localizacao) { this.localizacao = localizacao; }
+
+    public String getTipoMetrica() { return tipoMetrica; }
+    public void setTipoMetrica(String tipoMetrica) { this.tipoMetrica = tipoMetrica; }
 }

@@ -1,5 +1,5 @@
 package com.pcmr.api.controller;
-import org.springframework.web.server.ResponseStatusException;
+
 import com.pcmr.api.dto.EstadoSensorDTO;
 import com.pcmr.api.dto.NovoSensorRequestDTO;
 import com.pcmr.api.dto.RenomearSensorRequestDTO;
@@ -17,6 +17,7 @@ import java.time.Duration;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @RestController
@@ -32,7 +33,8 @@ public class SensorController {
     @Autowired
     private SensorRepository sensorRepository;
 
-    private static final long LIMITE_ONLINE_SEGUNDOS = 5; //cada 5 segundos porque o chefe disse
+    private static final long LIMITE_ONLINE_SEGUNDOS = 10;
+    private static final Set<String> TIPOS_VALIDOS = Set.of("WEARABLE", "PRESENCA", "BIOMETRICO", "GENERICO");
 
     @GetMapping
     public ResponseEntity<List<SensorDTO>> listar() {
@@ -57,11 +59,21 @@ public class SensorController {
             ));
         }
 
+        String tipo = req.getTipoMetrica();
+        if (tipo == null || tipo.isBlank()) {
+            tipo = "GENERICO";
+        } else if (!TIPOS_VALIDOS.contains(tipo)) {
+            return ResponseEntity.badRequest().body(Map.of(
+                    "erro", "tipoMetrica inválido. Valores aceites: " + TIPOS_VALIDOS
+            ));
+        }
+
         Sensor novo = new Sensor();
         novo.setNome(req.getNome());
         novo.setNomeExibicao(req.getNomeExibicao());
         novo.setLocalizacao(req.getLocalizacao());
         novo.setEstado("ATIVO");
+        novo.setTipoMetrica(tipo);
 
         Sensor guardado = sensorRepository.save(novo);
         return ResponseEntity.ok(new SensorDTO(
@@ -100,16 +112,12 @@ public class SensorController {
         return ResponseEntity.ok(leitura);
     }
 
-    @GetMapping("/{idSensor}/ping")
-    public ResponseEntity<EstadoSensorDTO> ping(@PathVariable Long idSensor) {
-        Sensor sensor = sensorRepository.findById(idSensor)
-            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
-        String deviceId = sensor.getNome();
-
+    @GetMapping("/{deviceId}/ping")
+    public ResponseEntity<EstadoSensorDTO> ping(@PathVariable String deviceId) {
         LeituraSensorService.LeituraAtual leitura = leituraSensorService.getUltimaLeitura(deviceId);
         OffsetDateTime ultimaOcorrencia = (leitura != null)
-            ? leitura.getAtualizadoEm()
-            : atividadeSensorService.getUltimaAtividade(deviceId);
+                ? leitura.getAtualizadoEm()
+                : atividadeSensorService.getUltimaAtividade(deviceId);
 
         EstadoSensorDTO dto = new EstadoSensorDTO();
         dto.setDeviceId(deviceId);
@@ -120,29 +128,13 @@ public class SensorController {
             dto.setSegundosDesdeUltimaLeitura(-1);
             return ResponseEntity.ok(dto);
         }
-    
+
         long segundos = Duration.between(ultimaOcorrencia, OffsetDateTime.now()).getSeconds();
+
         dto.setOnline(segundos <= LIMITE_ONLINE_SEGUNDOS);
         dto.setUltimaLeitura(ultimaOcorrencia.toString());
         dto.setSegundosDesdeUltimaLeitura(segundos);
-    
+
         return ResponseEntity.ok(dto);
-}
-
-    @GetMapping("/procurar")
-    public ResponseEntity<List<SensorDTO>> procurarSensores(
-        @RequestParam String nome,
-        @RequestParam(required = false) Long excluirId
-    ) {
-        List<Sensor> resultados = sensorRepository.findByNomeContainingIgnoreCase(nome);
-
-        List<SensorDTO> dtos = resultados.stream()
-            .filter(s -> excluirId == null || !s.getIdSensor().equals(excluirId))
-            .map(s -> new SensorDTO(
-                    s.getIdSensor(), s.getNome(), s.getLocalizacao(), s.getEstado()
-            ))
-            .collect(Collectors.toList());
-
-        return ResponseEntity.ok(dtos);
     }
 }
