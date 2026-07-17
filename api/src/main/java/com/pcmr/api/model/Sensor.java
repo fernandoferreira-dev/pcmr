@@ -23,6 +23,12 @@ public class Sensor {
     @Column(name = "tipo_metrica", nullable = false)
     private String tipoMetrica = "GENERICO"; // WEARABLE | PRESENCA | BIOMETRICO | GENERICO
 
+    @Column(name = "nome_exibicao")
+    private String nomeExibicao;
+
+    public String getNomeExibicao() { return nomeExibicao; }
+    public void setNomeExibicao(String nomeExibicao) { this.nomeExibicao = nomeExibicao; }
+
     public Long getIdSensor() { return idSensor; }
     public void setIdSensor(Long idSensor) { this.idSensor = idSensor; }
 

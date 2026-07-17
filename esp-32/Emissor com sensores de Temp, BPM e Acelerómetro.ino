@@ -10,7 +10,9 @@
 #include <esp_sleep.h>
 #include <esp_task_wdt.h>
 
-uint8_t MAC_NODE1[] = {0x24, 0x0a, 0xc4, 0x09, 0x61, 0xfc}; //24:0a:c4:09:61:fc - Nó Sensor 1
+const char* WIFI_SSID_ALVO = "Vodafone-07FD83"; 
+
+uint8_t MAC_NODE1[] = {0x24, 0x0a, 0xc4, 0x09, 0x61, 0xfc}; // Nó Gateway (Nó 1)
 
 typedef struct struct_message {
   float temperatura;
@@ -20,7 +22,6 @@ typedef struct struct_message {
   bool alertaQuedaAtivo;
 } struct_message;
 struct_message dadosSms;
-int lastFallState = 0;
 
 typedef struct struct_comando {
   int comando; // 0 = parar, 1 = começar
@@ -29,10 +30,7 @@ typedef struct struct_comando {
 esp_now_peer_info_t peerNode1;
 volatile bool envioAtivo = false; 
 
-unsigned long tempoAlertaQueda = 0;
-const unsigned long TIMEOUT_ALERTA_MS = 10000;
-
-//MPU-6050
+// MPU-6050
 Adafruit_MPU6050 mpu;
 #define FREE_FALL_THRESHOLD 0.5f
 #define IMPACT_THRESHOLD 2.5f
@@ -46,16 +44,16 @@ FallState fallState = IDLE;
 unsigned long stateStartTime = 0;
 volatile bool quedaDetectada = false;
 
+// Sensor de Temperatura
 #define ONE_WIRE_BUS 4
 OneWire oneWire(ONE_WIRE_BUS);
 DallasTemperature sensors(&oneWire);
 int numberOfDevices = 0;
 DeviceAddress tempDeviceAddress;
+unsigned long tempoConversaoTemp = 0;
+bool aguardandoLeituraTemp = false;
 
-bool conversaoTemperaturaPendente = false;
-unsigned long inicioConversaoTemp = 0;
-const unsigned long TEMPO_CONVERSAO_DS18B20 = 750;
-
+// Sensor de Batimentos Cardiacos
 #define SENSOR_PIN 34
 int baseline = 0;
 bool inPeak = false;
@@ -65,6 +63,7 @@ int beatIndex = 0;
 int beatCount = 0;
 unsigned long lastBpmCalc = 0;
 
+// Temporizadores (Timers)
 hw_timer_t *timerMPU = NULL;
 hw_timer_t *timerPulse = NULL;
 hw_timer_t *timerTemp = NULL;
@@ -74,15 +73,8 @@ volatile bool lerMPU = false;
 volatile bool lerPulso = false;
 volatile bool lerTemperatura = false;
 volatile bool enviarDados_flag = false;
-volatile bool resetAlerta = false;
 
-unsigned long lastActivityTime = 0;
-
-unsigned long ultimaLeituraValidaMpu = 0;
-float ultimaMagnitudeConhecida = -1.0f;
-const unsigned long TIMEOUT_MPU_MS = 8000;
-
-void IRAM_ATTR onTimerMPU() { lerMPU = true; lastActivityTime = millis(); }
+void IRAM_ATTR onTimerMPU() { lerMPU = true; }
 void IRAM_ATTR onTimerPulse() { lerPulso = true; }
 void IRAM_ATTR onTimerTemp() { lerTemperatura = true; }
 void IRAM_ATTR onTimerSend() { enviarDados_flag = true; }
@@ -94,10 +86,10 @@ void onComandoRecv(const esp_now_recv_info *info, const uint8_t *incomingData, i
 
     if (cmd.comando == 1) {
       envioAtivo = true;
-      Serial.println("\nComando START recebido do Nó 1. A enviar leituras.");
+      Serial.println("\n[ESP-NOW] Comando START recebido! A iniciar leituras...");
     } else {
       envioAtivo = false;
-      Serial.println("\nComando STOP recebido do Nó 1. A pausar leituras.");
+      Serial.println("\n[ESP-NOW] Comando STOP recebido. Em espera...");
     }
   }
 }
@@ -105,19 +97,19 @@ void onComandoRecv(const esp_now_recv_info *info, const uint8_t *incomingData, i
 void setupTimersHW() {
   timerMPU = timerBegin(1000000);
   timerAttachInterrupt(timerMPU, &onTimerMPU);
-  timerAlarm(timerMPU, 50000, true, 0);
+  timerAlarm(timerMPU, 50000, true, 0); // 50ms para quedas
 
   timerPulse = timerBegin(1000000);
   timerAttachInterrupt(timerPulse, &onTimerPulse);
-  timerAlarm(timerPulse, 10000, true, 0);
+  timerAlarm(timerPulse, 10000, true, 0); // 10ms para o pulso
 
   timerTemp = timerBegin(1000000);
   timerAttachInterrupt(timerTemp, &onTimerTemp);
-  timerAlarm(timerTemp, 5000000, true, 0);
+  timerAlarm(timerTemp, 2000000, true, 0); // 2 segundos (Temperatura)
 
   timerSend = timerBegin(1000000);
   timerAttachInterrupt(timerSend, &onTimerSend);
-  timerAlarm(timerSend, 2000000, true, 0);
+  timerAlarm(timerSend, 1000000, true, 0); // 1 segundo para envio de dados
 }
 
 void setupWatchdog() {
@@ -126,12 +118,7 @@ void setupWatchdog() {
     .idle_core_mask = (1 << portNUM_PROCESSORS) - 1,
     .trigger_panic = true,
   };
-
-  esp_err_t result = esp_task_wdt_reconfigure(&wdt_config);
-  if (result == ESP_ERR_NOT_FOUND) {
-    esp_task_wdt_init(&wdt_config);
-  }
-
+  esp_task_wdt_reconfigure(&wdt_config);
   if (esp_task_wdt_status(NULL) == ESP_ERR_NOT_FOUND) {
     esp_task_wdt_add(NULL);
   }
@@ -149,7 +136,7 @@ void setupMPU() {
 
 void setupTemperatureSensor() {
   sensors.begin();
-  sensors.setWaitForConversion(false);
+  sensors.setWaitForConversion(false); // Ativa modo não-bloqueante
   numberOfDevices = sensors.getDeviceCount();
 }
 
@@ -165,10 +152,25 @@ void setupPulseSensor() {
   baseline = sum / 200;
 }
 
+int32_t obterCanalDoRouter(const char* ssid) {
+  Serial.printf("A fazer varrimento para encontrar o canal de '%s'...\n", ssid);
+  int n = WiFi.scanNetworks();
+  for (int i = 0; i < n; i++) {
+    if (WiFi.SSID(i) == ssid) {
+      int32_t canalEncontrado = WiFi.channel(i);
+      Serial.printf("-> Router encontrado no canal: %d\n", canalEncontrado);
+      return canalEncontrado;
+    }
+  }
+  Serial.println("Router não detetado no scan. A usar canal 9 por padrão.");
+  return 9; 
+}
+
 void setupEspNow() {
   WiFi.mode(WIFI_STA);
-
-  esp_wifi_set_channel(9, WIFI_SECOND_CHAN_NONE); 
+  
+  int32_t canalDinamico = obterCanalDoRouter(WIFI_SSID_ALVO);
+  esp_wifi_set_channel(canalDinamico, WIFI_SECOND_CHAN_NONE);
 
   if (esp_now_init() != ESP_OK) {
     Serial.println("Erro ao iniciar ESP-NOW!");
@@ -177,49 +179,26 @@ void setupEspNow() {
 
   esp_now_register_recv_cb(onComandoRecv);
 
+  esp_now_register_send_cb([](const wifi_tx_info_t *tx_info, esp_now_send_status_t status) {
+    Serial.print("[ESP-NOW] Entrega ao Gateway: ");
+    Serial.println(status == ESP_NOW_SEND_SUCCESS ? "SUCESSO" : "FALHOU");
+  });
+
   memset(&peerNode1, 0, sizeof(peerNode1));
   memcpy(peerNode1.peer_addr, MAC_NODE1, 6);
-  
-  peerNode1.channel = 9; 
-  
+  peerNode1.channel = canalDinamico; 
   peerNode1.encrypt = false;
   peerNode1.ifidx = WIFI_IF_STA;
 
   esp_now_add_peer(&peerNode1);
-}
-
-void verificarSaudeMpu() {
-  unsigned long agora = millis();
-
-  if (fabs(dadosSms.magnitudeG - ultimaMagnitudeConhecida) > 0.01f) {
-    ultimaMagnitudeConhecida = dadosSms.magnitudeG;
-    ultimaLeituraValidaMpu = agora;
-  } else if (agora - ultimaLeituraValidaMpu > TIMEOUT_MPU_MS) {
-    Serial.println("Erro no MPU6050. A tentar reiniciar I2C...");
-
-    Wire.end();
-    delay(50);
-    Wire.begin();
-    delay(50);
-
-    if (mpu.begin()) {
-      mpu.setAccelerometerRange(MPU6050_RANGE_8_G);
-      mpu.setGyroRange(MPU6050_RANGE_500_DEG);
-      mpu.setFilterBandwidth(MPU6050_BAND_21_HZ);
-      Serial.println("MPU6050 reiniciado com sucesso.");
-    } else {
-      Serial.println("Falha ao reiniciar MPU6050.");
-    }
-
-    ultimaLeituraValidaMpu = agora;
-  }
+  Serial.printf(">>> Canal ESP-NOW configurado dinamicamente para o Nó 2: %d\n", canalDinamico);
 }
 
 void setup(void) {
   Serial.begin(115200);
   delay(1000);
 
-  setupEspNow();
+  setupEspNow(); 
   setupMPU();
   setupTemperatureSensor();
   setupPulseSensor();
@@ -227,14 +206,12 @@ void setup(void) {
   setupWatchdog();
 
   dadosSms.alertaQuedaAtivo = false;
-  dadosSms.temperatura = 0.0f;
+  dadosSms.temperatura = 0.0f; 
   dadosSms.bpm = 0;
   dadosSms.magnitudeG = 1.0f;
   dadosSms.fallState = 0;
-  lastActivityTime = millis();
-  ultimaLeituraValidaMpu = millis();
 
-  Serial.println("EMISSOR COMPLETO CONFIGURADO (ESP-NOW)");
+  Serial.println("WEARABLE PRONTO (A ESCUTAR GATEWAY NO CANAL DINÂMICO)");
 }
 
 float getAccelMagnitude(sensors_event_t &accel) {
@@ -246,7 +223,11 @@ float getAccelMagnitude(sensors_event_t &accel) {
 
 void processarDetecaoQueda() {
   sensors_event_t accel, gyro, temp;
-  mpu.getEvent(&accel, &gyro, &temp);
+  
+  if (!mpu.getEvent(&accel, &gyro, &temp)) {
+    return;
+  }
+  
   dadosSms.magnitudeG = getAccelMagnitude(accel);
   unsigned long now = millis();
 
@@ -302,7 +283,7 @@ void lerSensorPulso() {
   }
   else if (inPeak && signal < (threshold - hysteresis)) { inPeak = false; }
 
-  if (now - lastBpmCalc > 2000 && beatCount > 1) {
+  if (now - lastBpmCalc > 1000 && beatCount > 1) {
     lastBpmCalc = now;
     long avgInterval = 0;
     int samples = min(beatCount, 8);
@@ -317,55 +298,66 @@ void lerSensorPulso() {
 
 void enviarDadosESPNOW() {
   if (!envioAtivo) return;
-
   esp_now_send(MAC_NODE1, (uint8_t*)&dadosSms, sizeof(dadosSms));
-  Serial.println("Dados enviados via ESP-NOW para o Nó 1");
 }
 
 void loop(void) {
   esp_task_wdt_reset();
 
-  unsigned long now = millis();
+  if (!envioAtivo && !quedaDetectada) {
+    static unsigned long ultimoPrint = 0;
+    if (millis() - ultimoPrint > 5000) {
+      Serial.println("Aguardando comando START do Gateway (Rádio em Escuta Ativa)...");
+      ultimoPrint = millis();
+    }
+    lerMPU = false; lerPulso = false; lerTemperatura = false; enviarDados_flag = false;
+    delay(50); 
+    return;
+  }
 
   if (quedaDetectada) {
     quedaDetectada = false;
-    Serial.println("\nQUEDA DETETADA!\n");
+    Serial.println("\n[ALERTA] QUEDA DETETADA! A enviar pacote de emergência...\n");
     dadosSms.alertaQuedaAtivo = true;
-    tempoAlertaQueda = now;
     enviarDadosESPNOW();
   }
 
-  if (resetAlerta) {
-    resetAlerta = false;
-    dadosSms.alertaQuedaAtivo = false;
-    enviarDadosESPNOW();
+  if (lerMPU) { 
+    lerMPU = false; 
+    processarDetecaoQueda(); 
+  }
+  
+  if (lerPulso) { 
+    lerPulso = false; 
+    lerSensorPulso(); 
   }
 
-  if (lerMPU) { lerMPU = false; processarDetecaoQueda(); }
-  verificarSaudeMpu();
-  if (lerPulso) { lerPulso = false; lerSensorPulso(); }
-
-  if (lerTemperatura && !conversaoTemperaturaPendente) {
+  if (lerTemperatura && !aguardandoLeituraTemp) {
     lerTemperatura = false;
     sensors.requestTemperatures();
-    inicioConversaoTemp = now;
-    conversaoTemperaturaPendente = true;
+    tempoConversaoTemp = millis();
+    aguardandoLeituraTemp = true;
   }
 
-  if (conversaoTemperaturaPendente && (now - inicioConversaoTemp >= TEMPO_CONVERSAO_DS18B20)) {
-    conversaoTemperaturaPendente = false;
+  if (aguardandoLeituraTemp && (millis() - tempoConversaoTemp >= 750)) {
+    aguardandoLeituraTemp = false;
     numberOfDevices = sensors.getDeviceCount();
     if (numberOfDevices > 0 && sensors.getAddress(tempDeviceAddress, 0)) {
       float tempLida = sensors.getTempC(tempDeviceAddress);
-      dadosSms.temperatura = (tempLida == DEVICE_DISCONNECTED_C) ? 0.0f : tempLida;
-    } else {
-      dadosSms.temperatura = 0.0f;
+      if (tempLida != DEVICE_DISCONNECTED_C) {
+        dadosSms.temperatura = tempLida; 
+      }
     }
   }
 
   if (enviarDados_flag) {
     enviarDados_flag = false;
     enviarDadosESPNOW();
+    
+    // Reset da flag de alerta
+    if (dadosSms.alertaQuedaAtivo) {
+      dadosSms.alertaQuedaAtivo = false;
+    }
   }
 
   delay(1);

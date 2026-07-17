@@ -1,11 +1,14 @@
-import { useState, useMemo } from "react";
-import { Settings, Search, RefreshCw } from "lucide-react";
+import { useState, useEffect, useMemo } from "react";
+import { Settings, Search, RefreshCw, Pencil, Check, X } from "lucide-react";
+import ConfiguracoesModal from "./ConfiguracoesModal";
 
-interface EquipamentoItem {
-  id: number;
-  deviceId: string;
+interface SensorNo {
+  idSensor: number;
   nome: string;
-  tipo: string;
+  nomeExibicao: string | null;
+  localizacao: string | null;
+  tipo?: string;
+  estado: string;
 }
 
 type EstadoPing = "idle" | "a_testar" | "online" | "offline";
@@ -16,26 +19,37 @@ interface EstadoSensor {
   segundosDesdeUltimaLeitura: number;
 }
 
-export default function DadosEquipamentos() {
+export default function DadosEquipamentos({ userId }: { userId: number }) {
   const [searchTerm, setSearchTerm] = useState("");
-
-  const [equipamentos] = useState<EquipamentoItem[]>([
-    {
-      id: 1,
-      deviceId: "wearable01",
-      nome: "Wearable ESP32 — MPU6050 / DS18B20 / KY-039",
-      tipo: "Sensor de consulta",
-    },
-  ]);
-
+  const [sensores, setSensores] = useState<SensorNo[]>([]);
+  const [mostrarConfig, setMostrarConfig] = useState(false);
   const [estados, setEstados] = useState<Record<string, EstadoPing>>({});
   const [detalhes, setDetalhes] = useState<Record<string, EstadoSensor>>({});
 
+  const [idAEditar, setIdAEditar] = useState<number | null>(null);
+  const [nomeEditando, setNomeEditando] = useState("");
+  const [aGuardarNome, setAGuardarNome] = useState(false);
+
+  const carregarSensores = async () => {
+    try {
+      const res = await fetch("/api/sensores");
+      if (!res.ok) return;
+      const data: SensorNo[] = await res.json();
+      setSensores(data);
+    } catch {
+    }
+  };
+
+  useEffect(() => {
+    carregarSensores();
+  }, []);
+
   const filteredData = useMemo(() => {
-    return equipamentos.filter((item) =>
-      item.nome.toLowerCase().includes(searchTerm.toLowerCase()),
-    );
-  }, [searchTerm, equipamentos]);
+    return sensores.filter((item) => {
+      const nomeMostrado = item.nomeExibicao || item.nome;
+      return nomeMostrado.toLowerCase().includes(searchTerm.toLowerCase());
+    });
+  }, [searchTerm, sensores]);
 
   const testarConexao = async (deviceId: string) => {
     setEstados((prev) => ({ ...prev, [deviceId]: "a_testar" }));
@@ -56,19 +70,53 @@ export default function DadosEquipamentos() {
   };
 
   const testarTodos = () => {
-    filteredData.forEach((item) => testarConexao(item.deviceId));
+    filteredData.forEach((item) => testarConexao(item.nome));
+  };
+
+  const iniciarEdicaoNome = (item: SensorNo, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setIdAEditar(item.idSensor);
+    setNomeEditando(item.nomeExibicao || "");
+  };
+
+  const cancelarEdicaoNome = (e?: React.MouseEvent) => {
+    e?.stopPropagation();
+    setIdAEditar(null);
+    setNomeEditando("");
+  };
+
+  const guardarNomeExibicao = async (idSensor: number, e?: React.MouseEvent) => {
+    e?.stopPropagation();
+    setAGuardarNome(true);
+
+    try {
+      const res = await fetch(`/api/sensores/${idSensor}/nome-exibicao`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ nomeExibicao: nomeEditando }),
+      });
+
+      if (res.ok) {
+        const atualizado: SensorNo = await res.json();
+        setSensores((prev) =>
+          prev.map((s) => (s.idSensor === idSensor ? { ...s, nomeExibicao: atualizado.nomeExibicao } : s))
+        );
+      }
+    } catch {
+      // falha silenciosa
+    } finally {
+      setAGuardarNome(false);
+      setIdAEditar(null);
+      setNomeEditando("");
+    }
   };
 
   const getStatusColor = (estado: EstadoPing) => {
     switch (estado) {
-      case "online":
-        return "bg-green-500";
-      case "offline":
-        return "bg-red-500";
-      case "a_testar":
-        return "bg-yellow-500 animate-pulse";
-      default:
-        return "bg-gray-400";
+      case "online": return "bg-green-500";
+      case "offline": return "bg-red-500";
+      case "a_testar": return "bg-yellow-500 animate-pulse";
+      default: return "bg-gray-400";
     }
   };
 
@@ -79,7 +127,7 @@ export default function DadosEquipamentos() {
     const detalhe = detalhes[deviceId];
     if (!detalhe) return "—";
 
-    if (detalhe.segundosDesdeUltimaLeitura < 0) return "Sem leituras";
+    if (detalhe.segundosDesdeUltimaLeitura < 0) return "Sem leituras / atividade";
     return `${detalhe.segundosDesdeUltimaLeitura}s atrás`;
   };
 
@@ -98,9 +146,10 @@ export default function DadosEquipamentos() {
             Testar Conexão
           </h1>
           <button
-            className="p-2 hover:bg-white rounded-full transition-colors"
-            title="Settings"
-            aria-label="Connection settings"
+            onClick={() => setMostrarConfig(true)}
+            className="p-2 hover:bg-white rounded-full transition-colors cursor-pointer"
+            title="Definições"
+            aria-label="Definições do sistema"
           >
             <Settings size={20} className="text-gray-700" />
           </button>
@@ -127,7 +176,7 @@ export default function DadosEquipamentos() {
             placeholder="Pesquisar por nome..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-10 pr-4 py-2.5 bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+            className="w-full pl-10 pr-4 py-2.5 bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm cursor-text"
           />
         </div>
       </div>
@@ -137,33 +186,25 @@ export default function DadosEquipamentos() {
         <table className="w-full border-collapse">
           <thead>
             <tr className="border-b border-gray-200 bg-gray-50">
-              <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">
-                Estado
-              </th>
-              <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">
-                Nome
-              </th>
-              <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">
-                Tipo
-              </th>
-              <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">
-                Última Leitura
-              </th>
-              <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">
-                Última Atualização
-              </th>
-              <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">
-                Ação
-              </th>
+              <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Estado</th>
+              <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Nome</th>
+              <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Localização</th>
+              <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Tipo</th>
+              <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Última Leitura</th>
+              <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Última Atualização</th>
+              <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Ação</th>
             </tr>
           </thead>
           <tbody>
             {filteredData.length > 0 ? (
               filteredData.map((item) => {
-                const estado = estados[item.deviceId] ?? "idle";
+                const estado = estados[item.nome] ?? "idle";
+                const aEditarEsteItem = idAEditar === item.idSensor;
+                const nomeMostrado = item.nomeExibicao || item.nome;
+
                 return (
                   <tr
-                    key={item.id}
+                    key={item.idSensor}
                     className="border-b border-gray-100 hover:bg-gray-50 transition-colors"
                   >
                     <td className="px-4 py-3">
@@ -177,20 +218,60 @@ export default function DadosEquipamentos() {
                       />
                     </td>
                     <td className="px-4 py-3 text-sm text-gray-900">
-                      {item.nome}
+                      {aEditarEsteItem ? (
+                        <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+                          <input
+                            autoFocus
+                            value={nomeEditando}
+                            onChange={(e) => setNomeEditando(e.target.value)}
+                            placeholder={item.nome}
+                            className="border border-gray-300 rounded-lg px-2 py-1 text-sm w-40"
+                          />
+                          <button
+                            onClick={(e) => guardarNomeExibicao(item.idSensor, e)}
+                            disabled={aGuardarNome}
+                            className="text-green-600 hover:text-green-800 cursor-pointer disabled:opacity-50"
+                            title="Guardar"
+                          >
+                            <Check size={16} />
+                          </button>
+                          <button
+                            onClick={(e) => cancelarEdicaoNome(e)}
+                            className="text-gray-400 hover:text-red-500 cursor-pointer"
+                            title="Cancelar"
+                          >
+                            <X size={16} />
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-2 group">
+                          <div className="flex flex-col">
+                            <span className="font-medium">{nomeMostrado}</span>
+                            {item.nomeExibicao && (
+                              <span className="text-xs text-gray-400">{item.nome}</span>
+                            )}
+                          </div>
+                          <button
+                            onClick={(e) => iniciarEdicaoNome(item, e)}
+                            className="text-gray-300 hover:text-gray-600 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+                            title="Editar nome de exibição"
+                          >
+                            <Pencil size={13} />
+                          </button>
+                        </div>
+                      )}
+                    </td>
+                    <td className="px-4 py-3 text-sm text-gray-600">{item.localizacao || "—"}</td>
+                    <td className="px-4 py-3 text-sm text-gray-600">{item.tipo || "—"}</td>
+                    <td className="px-4 py-3 text-sm text-gray-600">
+                      {getTempoRespostaLabel(item.nome, estado)}
                     </td>
                     <td className="px-4 py-3 text-sm text-gray-600">
-                      {item.tipo}
-                    </td>
-                    <td className="px-4 py-3 text-sm text-gray-600">
-                      {getTempoRespostaLabel(item.deviceId, estado)}
-                    </td>
-                    <td className="px-4 py-3 text-sm text-gray-600">
-                      {getUltimaAtualizacaoLabel(item.deviceId)}
+                      {getUltimaAtualizacaoLabel(item.nome)}
                     </td>
                     <td className="px-4 py-3">
                       <button
-                        onClick={() => testarConexao(item.deviceId)}
+                        onClick={() => testarConexao(item.nome)}
                         disabled={estado === "a_testar"}
                         className="px-3 py-1.5 bg-gray-100 hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed text-xs font-semibold text-gray-700 rounded-full transition-colors cursor-pointer"
                       >
@@ -202,7 +283,7 @@ export default function DadosEquipamentos() {
               })
             ) : (
               <tr>
-                <td colSpan={6} className="px-4 py-8 text-center text-gray-500">
+                <td colSpan={7} className="px-4 py-8 text-center text-gray-500">
                   Nenhum resultado encontrado para "{searchTerm}"
                 </td>
               </tr>
@@ -210,6 +291,17 @@ export default function DadosEquipamentos() {
           </tbody>
         </table>
       </div>
+
+      {/* Settings Modal */}
+      {mostrarConfig && (
+        <ConfiguracoesModal
+          idUtilizador={userId}
+          onClose={() => {
+            setMostrarConfig(false);
+            carregarSensores();
+          }}
+        />
+      )}
     </div>
   );
 }
