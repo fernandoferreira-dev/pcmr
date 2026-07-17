@@ -287,6 +287,15 @@ export default function DiagnosticoLiveView({
         </button>
       </header>
 
+      <div className="end-consulta">
+        <button
+          disabled={!leitura}
+          onClick={() => setMostrarFinalizar(true)}
+          className="finishButton"
+        >
+          Terminar Consulta
+        </button>
+      </div>
       <main className="main">
 
         {/* Painel Superior de Alertas Ativos */}
@@ -416,7 +425,6 @@ export default function DiagnosticoLiveView({
             </div>
           )}
         </div>
-
         <div className="fallStateBox">
           Estado do sensor de queda:{" "}
           <span className="fallStateValue">
@@ -425,24 +433,14 @@ export default function DiagnosticoLiveView({
               : "—"}
           </span>
         </div>
-
         {leitura && (
           <p className="lastUpdateText">
             Última atualização:{" "}
             {new Date(leitura.atualizadoEm).toLocaleTimeString()}
           </p>
         )}
-      </main>
 
-      <footer className="footer">
-        <button
-          disabled={!leitura}
-          onClick={() => setMostrarFinalizar(true)}
-          className="finishButton"
-        >
-          Terminar Consulta
-        </button>
-      </footer>
+      </main>
 
       {mostrarFinalizar && (
         <FinalizarConsultaModal

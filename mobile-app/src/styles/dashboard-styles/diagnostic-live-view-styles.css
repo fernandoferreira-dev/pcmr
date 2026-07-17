@@ -350,11 +350,12 @@
   color: #9ca3af;
 }
 
-.footer {
-  padding: 1rem 1.5rem;
-  border-top: 1px solid #e5e7eb;
-  display: flex;
-  justify-content: flex-end;
+.end-consulta {
+  padding: 10px;
+  text-align: center;
+  max-width: 1126px;
+  margin: 0 auto;
+  bottom: 0;
 }
 
 .finishButton {
