@@ -1,6 +1,7 @@
 // dashboard component
 import { useState, useEffect } from 'react';
 import DiagnosticButtonComponent from './diagnostic-button-component';
+import PresencaToastComponent from './presenca-toast-component';
 import '../../styles/dashboard-styles/dashboard-styles.css';
 import '../../styles/dashboard-styles/notification-box.css';
 import NotificationBoxComponent from './notifications-box-component';
@@ -85,6 +86,7 @@ export default function AdminDashboardComponent({ username }: Props) {
             </div>
           </div>
           <NotificationBoxComponent />
+          <PresencaToastComponent />
         </div>
       </div>
     </>
