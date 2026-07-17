@@ -2,6 +2,7 @@ package com.pcmr.api.controller;
 
 import com.pcmr.api.dto.EstadoSensorDTO;
 import com.pcmr.api.dto.NovoSensorRequestDTO;
+import com.pcmr.api.dto.RenomearSensorRequestDTO;
 import com.pcmr.api.dto.SensorDTO;
 import com.pcmr.api.model.Sensor;
 import com.pcmr.api.repository.SensorRepository;
@@ -38,7 +39,10 @@ public class SensorController {
     @GetMapping
     public ResponseEntity<List<SensorDTO>> listar() {
         List<SensorDTO> dtos = sensorRepository.findAll().stream()
-                .map(s -> new SensorDTO(s.getIdSensor(), s.getNome(), s.getLocalizacao(), s.getEstado(), s.getTipoMetrica()))
+                .map(s -> new SensorDTO(
+                        s.getIdSensor(), s.getNome(), s.getNomeExibicao(),
+                        s.getLocalizacao(), s.getEstado(), s.getTipoMetrica()
+                ))
                 .collect(Collectors.toList());
         return ResponseEntity.ok(dtos);
     }
@@ -66,14 +70,32 @@ public class SensorController {
 
         Sensor novo = new Sensor();
         novo.setNome(req.getNome());
+        novo.setNomeExibicao(req.getNomeExibicao());
         novo.setLocalizacao(req.getLocalizacao());
         novo.setEstado("ATIVO");
         novo.setTipoMetrica(tipo);
 
         Sensor guardado = sensorRepository.save(novo);
         return ResponseEntity.ok(new SensorDTO(
-                guardado.getIdSensor(), guardado.getNome(), guardado.getLocalizacao(),
-                guardado.getEstado(), guardado.getTipoMetrica()
+                guardado.getIdSensor(), guardado.getNome(), guardado.getNomeExibicao(),
+                guardado.getLocalizacao(), guardado.getEstado(), guardado.getTipoMetrica()
+        ));
+    }
+
+    @PatchMapping("/{id}/nome-exibicao")
+    public ResponseEntity<?> renomear(@PathVariable Long id, @RequestBody RenomearSensorRequestDTO req) {
+        Sensor sensor = sensorRepository.findById(id).orElse(null);
+        if (sensor == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("erro", "Sensor não encontrado"));
+        }
+
+        String novoNome = req.getNomeExibicao();
+        sensor.setNomeExibicao((novoNome == null || novoNome.isBlank()) ? null : novoNome.trim());
+        Sensor guardado = sensorRepository.save(sensor);
+
+        return ResponseEntity.ok(new SensorDTO(
+                guardado.getIdSensor(), guardado.getNome(), guardado.getNomeExibicao(),
+                guardado.getLocalizacao(), guardado.getEstado(), guardado.getTipoMetrica()
         ));
     }
 

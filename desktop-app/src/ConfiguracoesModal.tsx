@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react'
 interface SensorNo {
   idSensor: number
   nome: string
+  nomeExibicao: string | null // <-- NOVO: adicionado
   localizacao: string | null
   estado: string
   tipoMetrica: 'WEARABLE' | 'PRESENCA' | 'BIOMETRICO' | 'GENERICO'
@@ -52,8 +53,12 @@ export default function ConfiguracoesModal({
   const [erroSensor, setErroSensor] = useState<string | null>(null)
   const [estadosPing, setEstadosPing] = useState<Record<string, EstadoPing>>({})
 
-  // Configuração por sensor selecionado
   const [sensorSelecionadoId, setSensorSelecionadoId] = useState<number | null>(null)
+
+  const [nomeExibicaoInput, setNomeExibicaoInput] = useState('')
+  const [aRenomear, setARenomear] = useState(false)
+  const [erroRenomear, setErroRenomear] = useState<string | null>(null)
+  const [sucessoRenomear, setSucessoRenomear] = useState(false)
 
   const [configWearable, setConfigWearable] = useState<ConfiguracaoWearable | null>(null)
   const [temperaturaMaxInput, setTemperaturaMaxInput] = useState('')
@@ -91,6 +96,10 @@ export default function ConfiguracoesModal({
     setAba('configurar')
     setErroConfig(null)
     setSucessoConfig(false)
+    setErroRenomear(null)
+    setSucessoRenomear(false)
+    setNomeExibicaoInput(sensor.nomeExibicao || '')
+
     setConfigWearable(null)
     setConfigPresenca(null)
 
@@ -118,6 +127,41 @@ export default function ConfiguracoesModal({
       } catch {
         setErroConfig('Erro ao carregar configuração.')
       }
+    }
+  }
+
+  const guardarNomeExibicao = async () => {
+    if (!sensorSelecionadoId) return
+
+    setARenomear(true)
+    setErroRenomear(null)
+    setSucessoRenomear(false)
+
+    try {
+      const res = await fetch(`/api/sensores/${sensorSelecionadoId}/nome-exibicao`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ nomeExibicao: nomeExibicaoInput }),
+      })
+
+      const data = await res.json()
+
+      if (!res.ok) {
+        setErroRenomear(data.erro || 'Não foi possível renomear o sensor.')
+        return
+      }
+
+      // Atualiza a lista na UI
+      setSensores((prev) =>
+        prev.map((s) => (s.idSensor === sensorSelecionadoId ? { ...s, nomeExibicao: data.nomeExibicao } : s))
+      )
+      
+      setSucessoRenomear(true)
+      setTimeout(() => setSucessoRenomear(false), 2000)
+    } catch {
+      setErroRenomear('Erro de comunicação com o servidor.')
+    } finally {
+      setARenomear(false)
     }
   }
 
@@ -300,7 +344,7 @@ export default function ConfiguracoesModal({
                 aba === 'configurar' ? 'bg-[#AAB99F] text-white' : 'bg-gray-100 text-gray-600'
               }`}
             >
-              Configurar Sensor {sensorSelecionado ? `— ${sensorSelecionado.nome}` : ''}
+              Configurar Sensor {sensorSelecionado ? `— ${sensorSelecionado.nomeExibicao || sensorSelecionado.nome}` : ''}
             </button>
           </div>
         </div>
@@ -319,7 +363,11 @@ export default function ConfiguracoesModal({
                       <div className="flex items-center gap-3 min-w-0">
                         <div className={`w-3 h-3 rounded-full shrink-0 ${corEstado(estado)}`} />
                         <div className="min-w-0">
-                          <div className="text-sm font-semibold text-gray-800 truncate">{s.nome}</div>
+                          {/* Modificado para mostrar o nome de exibição caso exista */}
+                          <div className="text-sm font-semibold text-gray-800 truncate">
+                            {s.nomeExibicao ? `${s.nomeExibicao} ` : s.nome}
+                            {s.nomeExibicao && <span className="font-normal text-xs text-gray-400">({s.nome})</span>}
+                          </div>
                           <div className="text-xs text-gray-500 truncate">
                             {s.localizacao || 'Sem localização definida'} · {TIPOS_LABEL[s.tipoMetrica]}
                           </div>
@@ -333,14 +381,13 @@ export default function ConfiguracoesModal({
                         >
                           {estado === 'a_testar' ? 'A testar...' : 'Ping'}
                         </button>
-                        {(s.tipoMetrica === 'WEARABLE' || s.tipoMetrica === 'PRESENCA') && (
-                          <button
-                            onClick={() => selecionarSensorParaConfigurar(s)}
-                            className="px-3 py-1.5 bg-[#AAB99F] hover:bg-[#9CB39E] text-white text-xs font-semibold rounded-full transition-colors cursor-pointer"
-                          >
-                            Configurar
-                          </button>
-                        )}
+                        {/* Removida a limitação de tipo de métrica para que TODOS possam ser renomeados */}
+                        <button
+                          onClick={() => selecionarSensorParaConfigurar(s)}
+                          className="px-3 py-1.5 bg-[#AAB99F] hover:bg-[#9CB39E] text-white text-xs font-semibold rounded-full transition-colors cursor-pointer"
+                        >
+                          Configurar
+                        </button>
                       </div>
                     </div>
                   )
@@ -396,9 +443,39 @@ export default function ConfiguracoesModal({
           )}
 
           {aba === 'configurar' && sensorSelecionado && (
-            <div className="flex flex-col gap-4">
+            <div className="flex flex-col gap-6">
+              
+              {/* NOVO: Bloco de Renomear o Sensor (Comum a todos) */}
+              <div className="flex flex-col gap-3 pb-5 border-b border-gray-100">
+                <div>
+                  <p className="text-sm font-semibold text-gray-700">Nome de Exibição</p>
+                  <p className="text-xs text-gray-500">
+                    O identificador real (usado em MQTT e pings) manterá o valor <strong>{sensorSelecionado.nome}</strong>.
+                  </p>
+                </div>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={nomeExibicaoInput}
+                    onChange={(e) => setNomeExibicaoInput(e.target.value)}
+                    placeholder="Ex: Sensor do Quarto"
+                    className="border border-gray-300 rounded-xl px-3 py-2 text-sm flex-1"
+                  />
+                  <button
+                    onClick={guardarNomeExibicao}
+                    disabled={aRenomear}
+                    className="px-4 py-2 bg-[#AAB99F] hover:bg-[#9CB39E] disabled:opacity-50 text-white text-sm font-semibold rounded-xl transition-colors cursor-pointer"
+                  >
+                    {aRenomear ? 'A guardar...' : 'Guardar Nome'}
+                  </button>
+                </div>
+                {erroRenomear && <p className="text-sm text-red-600">{erroRenomear}</p>}
+                {sucessoRenomear && <p className="text-sm text-green-600">✓ Nome de exibição atualizado.</p>}
+              </div>
+
+              {/* Configurações específicas de WEARABLE */}
               {sensorSelecionado.tipoMetrica === 'WEARABLE' && (
-                <>
+                <div className="flex flex-col gap-4">
                   <p className="text-sm text-gray-500">
                     Valores mínimo e máximo para <strong>{sensorSelecionado.nome}</strong> que,
                     quando ultrapassados, geram um alerta clínico.
@@ -467,11 +544,12 @@ export default function ConfiguracoesModal({
                   >
                     {aGuardar ? 'A guardar...' : 'Guardar Limites'}
                   </button>
-                </>
+                </div>
               )}
 
+              {/* Configurações específicas de PRESENCA */}
               {sensorSelecionado.tipoMetrica === 'PRESENCA' && (
-                <>
+                <div className="flex flex-col gap-4">
                   <p className="text-sm text-gray-500">
                     Parâmetros de deteção de presença para <strong>{sensorSelecionado.nome}</strong>.
                     Alterações são enviadas de imediato ao ESP32 via MQTT.
@@ -517,8 +595,16 @@ export default function ConfiguracoesModal({
                   >
                     {aGuardar ? 'A guardar...' : 'Guardar e Enviar ao Sensor'}
                   </button>
-                </>
+                </div>
               )}
+
+              {/* Se não tem parâmetros técnicos, avisa que não há mais opções */}
+              {sensorSelecionado.tipoMetrica !== 'WEARABLE' && sensorSelecionado.tipoMetrica !== 'PRESENCA' && (
+                <p className="text-sm text-gray-400 text-center py-4">
+                  Não existem parâmetros de calibração técnica para o tipo <strong>{TIPOS_LABEL[sensorSelecionado.tipoMetrica]}</strong>.
+                </p>
+              )}
+
             </div>
           )}
         </div>
