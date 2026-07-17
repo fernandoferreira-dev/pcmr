@@ -64,17 +64,16 @@ export default function AdminDashboardComponent({ username }: Props) {
       <div className="main-page">
         <h1>Bem vindo, {username || "Admin"}</h1>
         <div className="mainbox">
+          <PresencaToastComponent />
           <button onClick={() => setIsDiagnosticOpen(true)} className="diagnosticbtn">
             Consulta Rápida
           </button>
-
           {isDiagnosticOpen && userId !== null && (
             <DiagnosticButtonComponent
               onClose={() => setIsDiagnosticOpen(false)}
               idMedico={userId}
             />
           )}
-
           <div className="main-page-states">
             <div className="main-page-states-box">
               <h2>Estado do servidor: </h2>
@@ -86,7 +85,6 @@ export default function AdminDashboardComponent({ username }: Props) {
             </div>
           </div>
           <NotificationBoxComponent />
-          <PresencaToastComponent />
         </div>
       </div>
     </>
