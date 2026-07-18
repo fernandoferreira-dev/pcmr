@@ -16,6 +16,60 @@
   --heading: system-ui, 'Segoe UI', Roboto, sans-serif;
   --mono: ui-monospace, Consolas, monospace;
 
+  /* ── App theme tokens (light defaults) ──────────────────
+     Every component in the app should read colors from
+     these variables instead of hard-coded hex values, so
+     that toggling "Modo Escuro" recolors the whole UI. */
+  --app-bg: #CFCDCD;
+  --surface: #ffffff;
+  --surface-alt: #E8E8E8;
+  --surface-input: #f4f4f4;
+  --surface-input-alt: #CFCDCD;
+
+  --text-strong: #000000;
+  --text-body: #333333;
+  --text-muted: #4E5452;
+  --text-muted-2: #4a4a4a;
+  --text-on-accent: #ffffff;
+
+  --border-soft: #B2C8B2;
+  --border-strong: #6C757D;
+
+  --accent-green: #2e8b57;
+  --accent-green-soft: #a9c6a9;
+  --accent-green-badge: #A8B8A0;
+  --accent-green-badge-2: #C1D2C3;
+
+  --btn-dark: #4E5452;
+  --btn-dark-hover: #333333;
+  --danger: #D9534F;
+
+  --table-bg: #ffffff;
+  --table-header-bg: #d9d9d9;
+  --table-border: #bdbdbd;
+  --table-border-soft: #e3e3e3;
+  --table-row-border: #dddddd;
+  --table-row-hover: #f6f6f6;
+  --table-text: #303030;
+  --table-text-muted: #4a4a4a;
+  --table-wrapper-bg: #f4f4f4;
+
+  --navbar-bg: #ffffff;
+  --navbar-border: #e0e0e0;
+  --navbar-text: #888888;
+  --navbar-text-active: #222222;
+  --navfooter-bg: #444444;
+
+  --message-text: #34435C;
+  --message-heading: #223456;
+  --unread-dot: #ff3b3b;
+
+  --switch-track: #cccccc;
+  --switch-thumb: #ffffff;
+  --switch-on: #4caf50;
+
+  --overlay-bg: rgba(0, 0, 0, 0.5);
+
   font: 18px/145% var(--sans);
   letter-spacing: 0.18px;
   color-scheme: light dark;
@@ -31,20 +85,72 @@
   }
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --text: #9ca3af;
-    --text-h: #f3f4f6;
-    --bg: #16171d;
-    --border: #2e303a;
-    --code-bg: #1f2028;
-    --accent: #c084fc;
-    --accent-bg: rgba(192, 132, 252, 0.15);
-    --accent-border: rgba(192, 132, 252, 0.5);
-    --social-bg: rgba(47, 48, 58, 0.5);
-    --shadow:
-      rgba(0, 0, 0, 0.4) 0 10px 15px -3px, rgba(0, 0, 0, 0.25) 0 4px 6px -2px;
-  }
+/* Dark mode is driven entirely by the "dark-theme" class that the
+   settings toggle adds to <body>. Every token above gets a dark
+   counterpart here so the whole UI (not just the page background)
+   switches together. */
+body.dark-theme {
+  --text: #9ca3af;
+  --text-h: #f3f4f6;
+  --bg: #16171d;
+  --border: #2e303a;
+  --code-bg: #1f2028;
+  --accent: #c084fc;
+  --accent-bg: rgba(192, 132, 252, 0.15);
+  --accent-border: rgba(192, 132, 252, 0.5);
+  --social-bg: rgba(47, 48, 58, 0.5);
+  --shadow:
+    rgba(0, 0, 0, 0.4) 0 10px 15px -3px, rgba(0, 0, 0, 0.25) 0 4px 6px -2px;
+
+  --app-bg: #16171d;
+  --surface: #1f2028;
+  --surface-alt: #23252e;
+  --surface-input: #2a2c36;
+  --surface-input-alt: #23252e;
+
+  --text-strong: #f3f4f6;
+  --text-body: #d1d5db;
+  --text-muted: #9ca3af;
+  --text-muted-2: #9ca3af;
+  --text-on-accent: #ffffff;
+
+  --border-soft: #3a4a3a;
+  --border-strong: #55606b;
+
+  --accent-green: #4ade80;
+  --accent-green-soft: #3f4a3c;
+  --accent-green-badge: #364035;
+  --accent-green-badge-2: #3f4a3c;
+
+  --btn-dark: #3a3d3b;
+  --btn-dark-hover: #4a4e4b;
+  --danger: #e06666;
+
+  --table-bg: #1f2028;
+  --table-header-bg: #2a2c36;
+  --table-border: #3a3c46;
+  --table-border-soft: #33353f;
+  --table-row-border: #2e303a;
+  --table-row-hover: #262832;
+  --table-text: #d1d5db;
+  --table-text-muted: #9ca3af;
+  --table-wrapper-bg: #1a1b22;
+
+  --navbar-bg: #1a1b22;
+  --navbar-border: #2e303a;
+  --navbar-text: #9ca3af;
+  --navbar-text-active: #f3f4f6;
+  --navfooter-bg: #0f1014;
+
+  --message-text: #c7d2e0;
+  --message-heading: #dbe4f5;
+  --unread-dot: #ff5c5c;
+
+  --switch-track: #4b5563;
+  --switch-thumb: #f3f4f6;
+  --switch-on: #4caf50;
+
+  --overlay-bg: rgba(0, 0, 0, 0.65);
 
   #social .button-icon {
     filter: invert(1) brightness(2);
@@ -52,20 +158,13 @@
 }
 
 html, body, #root {
-  background-color: #CFCDCD;
+  background-color: var(--app-bg);
   min-height: 100%;
-}
-
-body {
   transition: background-color 0.2s ease;
 }
 
-body.dark-theme {
-  background-color: #16171d;
-}
-
-body.dark-theme #root {
-  background-color: #16171d;
+body {
+  margin: 0;
 }
 
 #root {
@@ -78,10 +177,6 @@ body.dark-theme #root {
   display: flex;
   flex-direction: column;
   box-sizing: border-box;
-}
-
-body {
-  margin: 0;
 }
 
 h1,

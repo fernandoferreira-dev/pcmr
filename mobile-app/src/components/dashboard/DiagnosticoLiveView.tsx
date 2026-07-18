@@ -299,10 +299,6 @@ export default function DiagnosticoLiveView({
         {/* Gráfico de Evolução Temporal */}
         <div className="diag-chart-card">
           <div className="diag-chart-header">
-            <div className="diag-chart-title">
-              Evolução — {metrica.label}
-            </div>
-
             <div className="diag-metric-tabs">
               {METRICAS.map((m) => (
                 <button
