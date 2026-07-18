@@ -2,11 +2,22 @@ import { useEffect, useState } from "react";
 import SettingsIcon from "../../assets/settings.png"
 import "../../styles/misc/settings-btn-styles.css"
 import "../../styles/login-page/login-page-styles.css"
+import { useAuth } from "../../context/auth-context";
 
 export default function SettingsButtonComponent() {
+  const { logout } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
-  const [darkEnabled, setIsEnabled] = useState(false);
-  const [selectedOption, setSelectedOption] = useState("opcao1");
+  const [darkEnabled, setIsEnabled] = useState<boolean>(() => {
+    const saved = localStorage.getItem("darkTheme");
+
+    if (saved !== null) {
+      return saved === "true";
+    }
+
+    //defaults to the prefered theme set by the browser
+    return window.matchMedia?.("(prefers-color-scheme: dark)").matches ?? false;
+
+  }); const [selectedOption, setSelectedOption] = useState("opcao1");
 
   useEffect(() => {
     document.body.classList.toggle("dark-theme", darkEnabled);
@@ -54,7 +65,7 @@ export default function SettingsButtonComponent() {
                 </div>
               </div>
               <div className="option-seperator" />
-              <button className="log-out-btn">Terminar Sessão</button>
+              <button className="log-out-btn" onClick={() => { setIsOpen(false); logout(); }}>Terminar Sessão</button>
             </div>
           </div>
         )}
