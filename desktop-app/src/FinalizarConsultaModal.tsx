@@ -4,7 +4,6 @@ interface Pessoa {
   idPessoa: number;
   nome: string;
   email: string;
-  cargo?: string;
 }
 
 type Modo = "procurar" | "novo";

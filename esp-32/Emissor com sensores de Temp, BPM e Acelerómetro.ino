@@ -10,6 +10,7 @@
 #include <esp_sleep.h>
 #include <esp_task_wdt.h>
 
+// Nome do teu router para o Wearable procurar o canal
 const char* WIFI_SSID_ALVO = "Vodafone-07FD83"; 
 
 uint8_t MAC_NODE1[] = {0x24, 0x0a, 0xc4, 0x09, 0x61, 0xfc}; // Nó Gateway (Nó 1)
@@ -53,7 +54,7 @@ DeviceAddress tempDeviceAddress;
 unsigned long tempoConversaoTemp = 0;
 bool aguardandoLeituraTemp = false;
 
-// Sensor de Batimentos Cardiacos
+// Sensor de Pulso Cardíaco
 #define SENSOR_PIN 34
 int baseline = 0;
 bool inPeak = false;
@@ -136,7 +137,7 @@ void setupMPU() {
 
 void setupTemperatureSensor() {
   sensors.begin();
-  sensors.setWaitForConversion(false); // Ativa modo não-bloqueante
+  sensors.setWaitForConversion(false); // Ativa modo não-bloqueante real
   numberOfDevices = sensors.getDeviceCount();
 }
 
@@ -162,7 +163,7 @@ int32_t obterCanalDoRouter(const char* ssid) {
       return canalEncontrado;
     }
   }
-  Serial.println("Router não detetado no scan. A usar canal 9 por padrão.");
+  Serial.println("-> Router não detetado no scan. A usar canal 9 por padrão.");
   return 9; 
 }
 
@@ -224,6 +225,7 @@ float getAccelMagnitude(sensors_event_t &accel) {
 void processarDetecaoQueda() {
   sensors_event_t accel, gyro, temp;
   
+  // Lê o MPU. Se falhar, apenas sai da função sem alterar a magnitude ou forçar erros
   if (!mpu.getEvent(&accel, &gyro, &temp)) {
     return;
   }
@@ -310,6 +312,7 @@ void loop(void) {
       Serial.println("Aguardando comando START do Gateway (Rádio em Escuta Ativa)...");
       ultimoPrint = millis();
     }
+    // Desligar os alarmes dos timers enquanto parado limpa as flags presas e evita picos ao arrancar
     lerMPU = false; lerPulso = false; lerTemperatura = false; enviarDados_flag = false;
     delay(50); 
     return;
@@ -322,6 +325,7 @@ void loop(void) {
     enviarDadosESPNOW();
   }
 
+  // A função verificarSaudeMpu() foi completamente removida daqui!
   if (lerMPU) { 
     lerMPU = false; 
     processarDetecaoQueda(); 
