@@ -390,15 +390,24 @@ void setupWiFi() {
 void reconnectMQTT() {
   while (!client.connected()) {
     Serial.println("A tentar conectar ao broker MQTT...");
-    if (client.connect(MQTT_CLIENT_ID, topicStatus, 1, true, "OFFLINE")) {
+
+    // Encriptar as mensagens de status
+    String offlineMsg = cifrarEEmpacotar("OFFLINE");
+    String onlineMsg = cifrarEEmpacotar("ONLINE");
+
+    // Usar LWT com payload encriptado
+    if (client.connect(MQTT_CLIENT_ID, topicStatus, 1, true, offlineMsg.c_str())) {
       Serial.println("MQTT conectado!");
-      client.publish(topicStatus, "ONLINE", true);
+
+      // Publicar ONLINE com encriptação
+      client.publish(topicStatus, onlineMsg.c_str(), true);
       client.subscribe(topicConfig);
       client.subscribe(topicLimiteTemperatura); // NOVO
       registrarPeerNode2Dinamico();
     } else {
       Serial.print("Falhou, rc=");
       Serial.println(client.state());
+      Serial.println("Nova tentativa em 5s...");
       delay(5000);
     }
   }

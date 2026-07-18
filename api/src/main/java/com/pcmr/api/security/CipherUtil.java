@@ -16,12 +16,12 @@ public class CipherUtil {
 
     private final SecretKeySpec chave;
 
-    public CipherUtil(String chaveBase64) throws Exception {
-        byte[] chaveBytes = Base64.getDecoder().decode(chaveBase64);
-        DESedeKeySpec keySpec = new DESedeKeySpec(chaveBytes);
-        SecretKeyFactory factory = SecretKeyFactory.getInstance(ALGORITMO);
-        this.chave = new SecretKeySpec(factory.generateSecret(keySpec).getEncoded(), ALGORITMO);
-    }
+        public CipherUtil(String chaveBase64) throws Exception {
+            byte[] chaveBytes = Base64.getDecoder().decode(chaveBase64);
+            DESedeKeySpec keySpec = new DESedeKeySpec(chaveBytes);
+            SecretKeyFactory factory = SecretKeyFactory.getInstance(ALGORITMO);
+            this.chave = new SecretKeySpec(factory.generateSecret(keySpec).getEncoded(), ALGORITMO);
+        }
 
     public byte[] gerarIv() {
         byte[] iv = new byte[IV_TAMANHO_BYTES];

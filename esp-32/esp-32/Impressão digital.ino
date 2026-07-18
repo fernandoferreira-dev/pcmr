@@ -343,14 +343,19 @@ void reconnectMQTT() {
   while (!client.connected()) {
     Serial.println("A conectar ao broker MQTT...");
 
-    // REGISTO DO LWT (Last Will & Testament)
-    if (client.connect("esp32-pico-fingerprint", TOPIC_PUBLISH_STATUS, 1, true, "OFFLINE")) {
+    // Encriptar as mensagens de status
+    String offlineMsg = cifrarEEmpacotar("OFFLINE");
+    String onlineMsg = cifrarEEmpacotar("ONLINE");
+
+    // REGISTO DO LWT (Last Will & Testament) com encriptação
+    if (client.connect("esp32-pico-fingerprint", TOPIC_PUBLISH_STATUS, 1, true, offlineMsg.c_str())) {
       Serial.println("✓ MQTT conectado!");
-      client.publish(TOPIC_PUBLISH_STATUS, "ONLINE", true);
+      client.publish(TOPIC_PUBLISH_STATUS, onlineMsg.c_str(), true);
       client.subscribe(TOPIC_SUBSCRIBE_MODE);
     } else {
       Serial.print("✗ Falhou, rc=");
       Serial.print(client.state());
+      Serial.println(" Nova tentativa em 5s...");
       delay(5000);
     }
   }
