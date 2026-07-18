@@ -17,6 +17,7 @@ import java.util.concurrent.TimeoutException;
 
 @RestController
 @RequestMapping("/api/biometria")
+@CrossOrigin(origins = "http://localhost:3001")
 public class BiometriaController {
 
     @Autowired
