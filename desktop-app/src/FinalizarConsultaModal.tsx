@@ -37,20 +37,15 @@ export default function FinalizarConsultaModal({
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const procurarPacientes = useCallback(async (nome: string) => {
-    try {
-      const res = await fetch(
-        `/api/pacientes/procurar?nome=${encodeURIComponent(nome)}`,
-      );
-      if (!res.ok) return;
-      const data: Pessoa[] = await res.json();
-      
-      const apenasPacientes = data.filter(
-        (p) => !p.cargo || p.cargo.toLowerCase() === "paciente"
-      );
-
-      setResultados(apenasPacientes);
-    } catch {}
-  }, []);
+  try {
+    const res = await fetch(
+      `/api/pacientes/procurar?nome=${encodeURIComponent(nome)}`,
+    );
+    if (!res.ok) return;
+    const data: Pessoa[] = await res.json();
+    setResultados(data);
+  } catch {}
+}, []);
 
   useEffect(() => {
     if (modo !== "procurar") return;

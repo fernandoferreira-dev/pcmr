@@ -17,9 +17,6 @@ public class PacienteController {
 
     @GetMapping("/procurar")
     public ResponseEntity<List<Pessoa>> procurar(@RequestParam(required = false) String nome) {
-        if (nome == null || nome.isBlank()) {
-            return ResponseEntity.ok(pessoaRepository.findAll());
-        }
-        return ResponseEntity.ok(pessoaRepository.findByNomeContainingIgnoreCase(nome));
+        return ResponseEntity.ok(pessoaRepository.findPacientesPorNome(nome));
     }
 }

@@ -82,19 +82,21 @@ export default function DiagnosticoLiveView({
   // Estado para controlar se o período de calibração terminou
   const [calibrado, setCalibrado] = useState(false);
 
-  // Estados dos alertas ativos em tempo real (Strings com as mensagens ativas por sensor)
+  // Estados dos alertas ativos em tempo real
   const [mensagemAlertaTemp, setMensagemAlertaTemp] = useState<string | null>(null);
   const [mensagemAlertaBpm, setMensagemAlertaBpm] = useState<string | null>(null);
+  const [alertaQueda, setAlertaQueda] = useState(false); // MOVIDO PARA CÁ
 
   const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const pulsoTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const ultimaHoraRef = useRef<string | null>(null);
 
-  // Refs para monitorizar se o alerta já foi enviado uma vez para a base de dados (evita SPAM)
+  // Refs para monitorizar se o alerta já foi enviado uma vez para a base de dados
   const alertaTempAltaEnviado = useRef(false);
   const alertaTempBaixaEnviado = useRef(false);
   const alertaBpmAltoEnviado = useRef(false);
   const alertaBpmBaixoEnviado = useRef(false);
+  const alertaQuedaEnviado = useRef(false); // MOVIDO PARA CÁ
 
   // Temporizador para calibração inicial de 10 segundos
   useEffect(() => {
@@ -136,6 +138,22 @@ export default function DiagnosticoLiveView({
         setLeitura(data);
         setErro(null);
 
+        // QUEDA
+        if (data.alertaQuedaAtivo) {
+          setAlertaQueda(true);
+          if (!alertaQuedaEnviado.current) {
+            registarAlertaNoServidor(
+            'QUEDA_DETETADA',
+            data.magnitudeG,
+            `Queda detetada — magnitude de impacto: ${data.magnitudeG.toFixed(2)}G`
+            );
+            alertaQuedaEnviado.current = true;
+          }
+        } else {
+          setAlertaQueda(false);
+          alertaQuedaEnviado.current = false;
+        }
+
         // Apenas processa os alertas lógicos após os 10s de calibração inicial
         if (calibrado) {
           
@@ -148,7 +166,7 @@ export default function DiagnosticoLiveView({
               registarAlertaNoServidor('TEMPERATURA_ALTA', data.temperatura, msg);
               alertaTempAltaEnviado.current = true;
             }
-            alertaTempBaixaEnviado.current = false; // Reset o limite oposto
+            alertaTempBaixaEnviado.current = false;
 
           } else if (data.temperatura < LIMITES_ALERTA.tempMinima) {
             const msg = `Temperatura de ${data.temperatura.toFixed(1)}°C está abaixo do mínimo de ${LIMITES_ALERTA.tempMinima.toFixed(1)}°C`;
@@ -158,16 +176,15 @@ export default function DiagnosticoLiveView({
               registarAlertaNoServidor('TEMPERATURA_BAIXA', data.temperatura, msg);
               alertaTempBaixaEnviado.current = true;
             }
-            alertaTempAltaEnviado.current = false; // Reset o limite oposto
+            alertaTempAltaEnviado.current = false;
 
           } else {
-            // Se estiver nos valores corretos, o alerta desaparece sozinho automaticamente!
             setMensagemAlertaTemp(null);
             alertaTempAltaEnviado.current = false;
             alertaTempBaixaEnviado.current = false;
           }
 
-          // --- PROCESSAMENTO DOS BATIMENTOS CARDÍACOS (BPM) ---
+          // BATIMENTOS CARDÍACOS
           if (data.bpm > LIMITES_ALERTA.bpmMaximo) {
             const msg = `Frequência de ${data.bpm} bpm excede o limite máximo de ${LIMITES_ALERTA.bpmMaximo} bpm`;
             setMensagemAlertaBpm(msg);
@@ -189,7 +206,6 @@ export default function DiagnosticoLiveView({
             alertaBpmAltoEnviado.current = false;
 
           } else {
-            // Se estiver nos valores corretos, o alerta desaparece sozinho automaticamente!
             setMensagemAlertaBpm(null);
             alertaBpmAltoEnviado.current = false;
             alertaBpmBaixoEnviado.current = false;
@@ -267,7 +283,6 @@ export default function DiagnosticoLiveView({
         </button>
       </header>
 
-      {/* Main agora é fixo, sem afetar ou esmagar o layout original */}
       <main className="flex-1 overflow-y-auto p-6">
         {erro && (
           <div className="mb-6 bg-yellow-50 border border-yellow-300 text-yellow-700 rounded-2xl px-4 py-3">
@@ -275,7 +290,22 @@ export default function DiagnosticoLiveView({
           </div>
         )}
 
-        {/* CARTÕES DOS BIOMÉTRICOS INTEGRADOS COM SISTEMA DE ALERTAS */}
+        {alertaQueda && (
+        <div className="mb-6 bg-red-600 text-white rounded-2xl px-5 py-4 flex items-center gap-3 shadow-lg animate-pulse">
+          <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="shrink-0">
+            <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z" />
+            <line x1="12" x2="12" y1="9" y2="13" />
+            <line x1="12" x2="12.01" y1="17" y2="17" />
+            </svg>
+            <div>
+              <p className="font-bold text-base">QUEDA DETETADA</p>
+              <p className="text-sm text-red-100">
+                {leitura ? `Magnitude registada: ${leitura.magnitudeG.toFixed(2)}G` : "A verificar dados do sensor..."}
+              </p>
+          </div>
+        </div>
+      )}
+
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
           <CartaoSensor
             titulo="Temperatura"
@@ -300,7 +330,6 @@ export default function DiagnosticoLiveView({
           />
         </div>
 
-        {/* Gráfico de Evolução Temporal */}
         <div className="bg-gray-50 rounded-2xl p-4 mb-6">
           <div className="flex items-center justify-between mb-3">
             <div className="text-sm font-semibold text-gray-600">
@@ -445,10 +474,9 @@ function CartaoSensor({
         </span>
       </div>
 
-      {/* Caixa de Mensagem Interna do Cartão - Aparece de forma dinâmica se houver desvio */}
       {emAlerta && !estaCalibrando && (
         <div className="text-xs text-red-700 bg-red-100/60 border border-red-200 rounded-lg p-2 font-medium leading-relaxed mt-1 animate-fade-in">
-          <span className="font-bold mr-1">⚠️ Alerta:</span>
+          <span className="font-bold mr-1">Alerta:</span>
           {mensagemAlerta}
         </div>
       )}
