@@ -48,6 +48,12 @@ public class MqttMessageHandler {
             return;
         }
 
+        // Ignorar tópicos de status (LWT e monitoramento MQTT)
+        if (topic.contains("/status")) {
+            System.out.println("ℹ Mensagem de status ignorada (não processada): " + topic);
+            return;
+        }
+
         String payload;
 
         // Decifrar e validar a mensagem MQTT
