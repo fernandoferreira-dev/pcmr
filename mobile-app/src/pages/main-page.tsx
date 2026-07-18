@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import AdminDashboardComponent from "../components/dashboard/admin-dashboard-component";
 import NavBarComponent from "../components/misc/nav-bar-component";
 import ContactPage from "./contact-page";
@@ -7,7 +7,9 @@ import InfoPage from "./info-page";
 import ClientInfoPage from "./client-info-page";
 import SettingsButtonComponent from "../components/misc/settings-button-component";
 import SendEmailButtonComponent from "../components/misc/send-email-btn";
+import NotificationToast from "../components/misc/notification-toast";
 import { useAuth } from "../context/auth-context";
+import { useNotificationStore } from "../context/notification-store";
 import "../styles/misc/header-styles.css";
 import appImage from "../assets/logosemback.png"
 
@@ -16,9 +18,18 @@ type Props = { username: string; phonenumber: string; email: string; birthDate: 
 export default function MainPage({ username, phonenumber, email, birthDate, selectedOption }: Props) {
   const { user } = useAuth();
   const userId = user?.userId ?? null;
+  const fetchHistory = useNotificationStore((state) => state.fetchHistory);
+  const connect = useNotificationStore((state) => state.connect);
+  const disconnect = useNotificationStore((state) => state.disconnect);
   const [view, setView] = useState<
     "home" | "comms" | "status" | "doctor" | "records"
   >("home");
+
+  useEffect(() => {
+    fetchHistory();
+    connect();
+    return () => disconnect();
+  }, [fetchHistory, connect, disconnect]);
 
   const pageTitles = {
     home: "Dashboard",
@@ -53,6 +64,7 @@ export default function MainPage({ username, phonenumber, email, birthDate, sele
 
   return (
     <>
+      <NotificationToast />
       <div className="header-container">
         <div className="header-row">
           <h1 className="header-page-title">
