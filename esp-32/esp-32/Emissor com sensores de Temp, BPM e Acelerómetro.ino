@@ -10,6 +10,7 @@
 #include <esp_sleep.h>
 #include <esp_task_wdt.h>
 
+
 const char* WIFI_SSID_ALVO = "Vodafone-07FD83";
 
 uint8_t MAC_NODE1[] = {0x24, 0x0a, 0xc4, 0x09, 0x61, 0xfc}; // Nó Gateway (Nó 1)

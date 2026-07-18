@@ -4,7 +4,7 @@
 #include <HardwareSerial.h>
 #include <DFRobot_ID809.h>
 #include <mbedtls/base64.h>
-#include <mbedtls/des.h>
+#include <mbedtls/cipher.h>
 #include <esp_system.h>
 #include <ArduinoJson.h>
 
@@ -80,41 +80,35 @@ static uint32_t crc32_calcular(const uint8_t* dados, size_t tamanho) {
 }
 
 static int des3_cifrar(const uint8_t* entrada, size_t tamEntrada, const uint8_t iv[8], uint8_t* saida) {
-  size_t padTam = 8 - (tamEntrada % 8);
-  size_t tamComPad = tamEntrada + padTam;
+  mbedtls_cipher_context_t ctx;
+  mbedtls_cipher_init(&ctx);
 
-  uint8_t* buffer = (uint8_t*) malloc(tamComPad);
-  memcpy(buffer, entrada, tamEntrada);
-  for (size_t i = tamEntrada; i < tamComPad; i++) buffer[i] = (uint8_t)padTam;
+  const mbedtls_cipher_info_t* info = mbedtls_cipher_info_from_type(MBEDTLS_CIPHER_DES_EDE3_CBC);
+  mbedtls_cipher_setup(&ctx, info);
+  mbedtls_cipher_setkey(&ctx, CHAVE_3DES, 192, MBEDTLS_ENCRYPT); // 192 bits = 24 bytes
+  mbedtls_cipher_set_padding_mode(&ctx, MBEDTLS_PADDING_PKCS7);
 
-  mbedtls_des3_context ctx;
-  mbedtls_des3_init(&ctx);
-  mbedtls_des3_set3key_enc(&ctx, CHAVE_3DES);
+  size_t tamSaida = 0;
+  mbedtls_cipher_crypt(&ctx, iv, 8, entrada, tamEntrada, saida, &tamSaida);
 
-  uint8_t ivCopy[8];
-  memcpy(ivCopy, iv, 8);
-
-  mbedtls_des3_crypt_cbc(&ctx, MBEDTLS_DES_ENCRYPT, tamComPad, ivCopy, buffer, saida);
-
-  mbedtls_des3_free(&ctx);
-  free(buffer);
-  return tamComPad;
+  mbedtls_cipher_free(&ctx);
+  return tamSaida;
 }
 
 static int des3_decifrar(const uint8_t* entrada, size_t tamEntrada, const uint8_t iv[8], uint8_t* saida) {
-  mbedtls_des3_context ctx;
-  mbedtls_des3_init(&ctx);
-  mbedtls_des3_set3key_dec(&ctx, CHAVE_3DES);
+  mbedtls_cipher_context_t ctx;
+  mbedtls_cipher_init(&ctx);
 
-  uint8_t ivCopy[8];
-  memcpy(ivCopy, iv, 8);
+  const mbedtls_cipher_info_t* info = mbedtls_cipher_info_from_type(MBEDTLS_CIPHER_DES_EDE3_CBC);
+  mbedtls_cipher_setup(&ctx, info);
+  mbedtls_cipher_setkey(&ctx, CHAVE_3DES, 192, MBEDTLS_DECRYPT);
+  mbedtls_cipher_set_padding_mode(&ctx, MBEDTLS_PADDING_PKCS7);
 
-  mbedtls_des3_crypt_cbc(&ctx, MBEDTLS_DES_DECRYPT, tamEntrada, ivCopy, entrada, saida);
-  mbedtls_des3_free(&ctx);
+  size_t tamSaida = 0;
+  mbedtls_cipher_crypt(&ctx, iv, 8, entrada, tamEntrada, saida, &tamSaida);
 
-  uint8_t padTam = saida[tamEntrada - 1];
-  if (padTam > 0 && padTam <= 8) return tamEntrada - padTam;
-  return tamEntrada;
+  mbedtls_cipher_free(&ctx);
+  return (int)tamSaida;
 }
 
 static String cifrarEEmpacotar(const char* jsonPlano) {
