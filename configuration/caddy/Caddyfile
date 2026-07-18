@@ -1,7 +1,7 @@
-localhost {
+app.fernandoferreira.dev {
     reverse_proxy desktop-app:80
 }
 
-localhoes {
+mobile.fernandoferreira.dev {
     reverse_proxy mobile-app:80
 }
