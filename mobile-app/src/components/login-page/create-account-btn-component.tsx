@@ -175,11 +175,12 @@ export default function CreateAccountComponent({ onAccountCreated }: Props) {
                   </label>
                 </div>
                 {feedback && <p>{feedback}</p>}
-                <button type="submit" disabled={isSubmitting}>
+                <button className="btn" type="submit" disabled={isSubmitting}>
                   {isSubmitting ? "A criar..." : "Criar Conta"}
                 </button>
                 <button
                   type="button"
+                  className="btn"
                   onClick={(e) => {
                     e.preventDefault();
                     setIsOpen(false);

@@ -63,6 +63,18 @@ public class MensagemController {
         }
     }
 
+    @PatchMapping("/{id}/guardar")
+    public ResponseEntity<?> alternarGuardada(@PathVariable Long id, @RequestParam Long userId) {
+        try {
+            MensagemDTO dto = mensagemService.alternarGuardada(id, userId);
+            return ResponseEntity.ok(dto);
+        } catch (IllegalStateException e) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("erro", e.getMessage()));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(Map.of("erro", e.getMessage()));
+        }
+    }
+
     @DeleteMapping("/{id}")
     public ResponseEntity<?> apagar(@PathVariable Long id, @RequestParam Long userId) {
         try {
@@ -80,17 +92,20 @@ public class MensagemController {
             @RequestParam String nome,
             @RequestParam(required = false) Long excluirId
     ) {
+        // No método procurarUtilizadores
         List<Utilizador> resultados = userRepository.findByPessoa_NomeContainingIgnoreCase(nome);
 
         List<UtilizadorResumoDTO> dtos = resultados.stream()
-                .filter(u -> excluirId == null || !u.getIdUtilizador().equals(excluirId))
-                .map(u -> new UtilizadorResumoDTO(
-                        u.getIdUtilizador(),
-                        u.getPessoa().getNome(),
-                        u.getPessoa().getEmail(),
-                        u.getTipoUtilizador().getNome()
-                ))
-                .collect(Collectors.toList());
+        .filter(u -> excluirId == null || !u.getIdUtilizador().equals(excluirId))
+        // Filtro adicional: Não listar o utilizador "sistema" na busca de contactos do Admin
+        .filter(u -> !"sistema".equalsIgnoreCase(u.getUsername()))
+        .map(u -> new UtilizadorResumoDTO(
+                u.getIdUtilizador(),
+                u.getPessoa().getNome(),
+                u.getPessoa().getEmail(),
+                u.getTipoUtilizador().getNome()
+        ))
+        .collect(Collectors.toList());
 
         return ResponseEntity.ok(dtos);
     }

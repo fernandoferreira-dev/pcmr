@@ -5,7 +5,6 @@ export default function ContactPage() {
     return (
         <>
             <div className="message-wrapper">
-                <h1>Mensagens recentes</h1>
                 <MessageComponent />
             </div>
         </>

@@ -7,6 +7,7 @@ import com.pcmr.api.model.HistoricoSensor;
 import com.pcmr.api.repository.DiagnosticoRepository;
 import com.pcmr.api.repository.HistoricoSensorRepository;
 import com.pcmr.api.repository.PessoaRepository;
+import com.pcmr.api.service.LeituraSensorService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -29,6 +30,21 @@ public class DiagnosticoController {
 
     @Autowired
     private HistoricoSensorRepository historicoSensorRepository;
+
+    @Autowired
+    private LeituraSensorService leituraSensorService;
+
+    @PostMapping("/{deviceId}/iniciar")
+    public ResponseEntity<?> iniciarDiagnostico(@PathVariable String deviceId) {
+        leituraSensorService.iniciarDiagnostico(deviceId);
+        return ResponseEntity.ok(Map.of("status", "iniciado", "deviceId", deviceId));
+    }
+
+    @PostMapping("/{deviceId}/parar")
+    public ResponseEntity<?> pararDiagnostico(@PathVariable String deviceId) {
+        leituraSensorService.pararDiagnostico(deviceId);
+        return ResponseEntity.ok(Map.of("status", "parado", "deviceId", deviceId));
+    }
 
     @GetMapping
     public List<DiagnosticoResponseDTO> listarTodos() {

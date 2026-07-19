@@ -4,8 +4,8 @@ services:
       context: ./api
       dockerfile: Dockerfile
     container_name: spring_app_container
-    expose:
-      - "8080"
+    ports:
+      - "8080:8080"
     volumes:
       - ./api/src:/app/src
     environment:
@@ -33,6 +33,9 @@ services:
       - "3000:80"
     expose:
       - "80"
+    volumes:
+      - ./desktop-app/src:/app/src
+      - ./desktop-app/index.html:/app/index.html
     depends_on:
       - spring-app
       - mqtt5
@@ -47,24 +50,9 @@ services:
     container_name: mobile_app_container
     ports:
       - "3001:80"
-    expose:
-      - "80"
-    depends_on:
-      - spring-app
-      - mqtt5
-    networks:
-      - pcmr-network
-    restart: unless-stopped
-
-  paciente-app:
-    build:
-      context: ./paciente-app
-      dockerfile: Dockerfile
-    container_name: paciente-app-container
-    ports:
-      - "3002:80"
-    expose:
-      - "80"
+    volumes:
+      - ./mobile-app/src:/app/src
+      - ./mobile-app/index.html:/app/index.html
     depends_on:
       - spring-app
       - mqtt5

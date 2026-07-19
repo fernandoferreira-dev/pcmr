@@ -6,67 +6,87 @@ type Diagnostic = {
     patient: string;
     date: string;
     status: string;
-    temperature: number;
-    bpm: number;
-    magnitude: number;
     cause: string;
-}
+};
 
 type DiagnosticoResponseDTO = {
     id: number;
     patient: string;
     date: string;
     status: string;
-    temperatura: number;
-    bpm: number;
-    magnitudeG: number;
     relacaoCausaEfeito: string;
+};
+
+// TODO: replace with your real deployed backend URL (not localhost)
+const API_BASE_URL = "http://localhost:8080";
+
+const EXPORT_BASE_URL = `${window.location.origin}${import.meta.env.BASE_URL}export`.replace(/([^:])\/{2,}/g, "$1/");
+
+// Lets AppInventor's injected object be referenced without a TS error
+declare global {
+    interface Window {
+        AppInventor?: {
+            setWebViewString: (value: string) => void;
+        };
+    }
 }
 
 export default function DiagnosticsTableComponent() {
     const [diagnostics, setDiagnostics] = useState<Diagnostic[]>([]);
-    const [patientLoaded, setPatientLoaded] = useState(false);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
     const [search, setSearch] = useState("");
 
-    const applyPatients = (patients: Diagnostic[]) => {
-        setDiagnostics(patients);
-    };
-
     const loadDiagnostics = () => {
-        fetch(`http://localhost:8080/api/diagnosticos`)
+        setLoading(true);
+
+        fetch(`${API_BASE_URL}/api/diagnosticos`)
             .then(async (response) => {
                 if (!response.ok) {
-                    throw new Error("Unable to load patients");
+                    throw new Error("Unable to load diagnostics");
                 }
+
                 const data = (await response.json()) as DiagnosticoResponseDTO[];
-                const nextPatients: Diagnostic[] = data.map((item) => ({
+
+                const diagnosticsMapped: Diagnostic[] = data.map((item) => ({
                     id: item.id,
                     patient: item.patient || "",
                     date: item.date || "",
                     status: item.status || "",
-                    temperature: item.temperatura ?? 0,
-                    bpm: item.bpm ?? 0,
-                    magnitude: item.magnitudeG ?? 0,
                     cause: item.relacaoCausaEfeito || "",
                 }));
-                applyPatients(nextPatients);
-                sessionStorage.setItem('pacientes', JSON.stringify(nextPatients));
-                setPatientLoaded(true);
+
+                setDiagnostics(diagnosticsMapped);
+                setError(null);
             })
-            .catch(() => {
-                setPatientLoaded(true);
+            .catch((err) => {
+                console.error(err);
+                setError("Não foi possível carregar os diagnósticos.");
+            })
+            .finally(() => {
+                setLoading(false);
             });
-    }
+    };
 
     useEffect(() => {
         loadDiagnostics();
-    }, [patientLoaded]);
+    }, []);
 
     const formatDate = (isoDate: string) => {
         if (!isoDate) return "";
+
         const parsed = new Date(isoDate);
+
         if (isNaN(parsed.getTime())) return isoDate;
-        return parsed.toLocaleString();
+
+        return (
+            parsed.toLocaleDateString("pt-PT") +
+            " " +
+            parsed.toLocaleTimeString("pt-PT", {
+                hour: "2-digit",
+                minute: "2-digit",
+            })
+        );
     };
 
     const filteredDiagnostics = diagnostics.filter((diagnostic) => {
@@ -75,53 +95,88 @@ export default function DiagnosticsTableComponent() {
             diagnostic.patient.toLowerCase().includes(query) ||
             formatDate(diagnostic.date).toLowerCase().includes(query) ||
             diagnostic.status.toLowerCase().includes(query) ||
-            diagnostic.temperature.toString().includes(query) ||
-            diagnostic.bpm.toString().includes(query) ||
-            diagnostic.magnitude.toString().includes(query) ||
             diagnostic.cause.toLowerCase().includes(query)
         );
     });
+
+    const handleExportClick = (diagnostic: Diagnostic) => {
+        const exportUrl = `${EXPORT_BASE_URL}/${diagnostic.id}`;
+
+        if (window.AppInventor) {
+            window.AppInventor.setWebViewString(exportUrl);
+        } else {
+            window.open(exportUrl, "_blank");
+        }
+    };
 
     return (
         <>
             <div className="search-container">
                 <input
                     type="text"
-                    placeholder="Filtrar consultas..."
                     className="search-bar"
+                    placeholder="Filtrar consultas..."
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
                 />
-                <button className="search-button" onClick={loadDiagnostics}>Atualizar</button>
+                <button className="search-button" onClick={loadDiagnostics}>
+                    Atualizar
+                </button>
             </div>
-            <div className="tableContainer">
-                <table className="patientsTable">
-                    <thead>
-                        <tr>
-                            <th>Pacientes</th>
-                            <th>Horário</th>
-                            <th>Status</th>
-                            <th>Temperatura</th>
-                            <th>Batimentos cardíacos</th>
-                            <th>Magnitude</th>
-                            <th>Causa-efeito</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {filteredDiagnostics.map((diagnostic) => (
-                            <tr key={diagnostic.id}>
-                                <td>{diagnostic.patient}</td>
-                                <td>{formatDate(diagnostic.date)}</td>
-                                <td>{diagnostic.status}</td>
-                                <td>{diagnostic.temperature}</td>
-                                <td>{diagnostic.bpm}</td>
-                                <td>{diagnostic.magnitude}</td>
-                                <td>{diagnostic.cause}</td>
-                            </tr>
-                        ))}
-                    </tbody>
-                </table>
-            </div>
+            {error && <div className="dashboard-error">{error}</div>}
+            <section className="table-section">
+                <h1 className="table-title">Histórico de Diagnósticos</h1>
+                <div className="table-wrapper">
+                    <div className="table-scroll">
+                        <div className="table-container">
+                            <div className="table-header">
+                                <span>Paciente</span>
+                                <span>Horário</span>
+                                <span>Observações</span>
+                                <span>Causa-Efeito</span>
+                            </div>
+                            <div className="table-body">
+                                {loading ? (
+                                    <p className="table-loading">A carregar dados...</p>
+                                ) : filteredDiagnostics.length === 0 ? (
+                                    <p className="table-empty">
+                                        Nenhum diagnóstico encontrado.
+                                    </p>
+                                ) : (
+                                    filteredDiagnostics.map((diagnostic) => (
+                                        <div key={diagnostic.id} className="table-row">
+                                            <div className="table-patient">
+                                                <button
+                                                    className="export-button"
+                                                    onClick={() => handleExportClick(diagnostic)}
+                                                >
+                                                    Exportar
+                                                </button>
+                                                <span className="patient-name">
+                                                    {diagnostic.patient}
+                                                </span>
+                                            </div>
+                                            <span>{formatDate(diagnostic.date)}</span>
+                                            <span
+                                                className="table-status"
+                                                title={diagnostic.status}
+                                            >
+                                                {diagnostic.status}
+                                            </span>
+                                            <span
+                                                className="table-status"
+                                                title={diagnostic.cause}
+                                            >
+                                                {diagnostic.cause}
+                                            </span>
+                                        </div>
+                                    ))
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
         </>
     );
 }

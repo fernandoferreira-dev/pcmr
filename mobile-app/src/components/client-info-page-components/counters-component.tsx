@@ -42,7 +42,6 @@ export default function CountersComponent() {
                                 ? "Erro"
                                 : data?.totalDiagnosticos}
                     </p>
-                    <p>percentagem</p>
                 </div>
                 <div className="data-container">
                     <h2>Quantidade de utilizadores</h2>
@@ -53,7 +52,6 @@ export default function CountersComponent() {
                                 ? "Erro"
                                 : data?.totalPacientes}
                     </p>
-                    <p>percentagem</p>
                 </div>
             </div>
         </>

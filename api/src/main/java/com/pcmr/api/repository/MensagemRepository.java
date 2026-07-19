@@ -18,4 +18,6 @@ public interface MensagemRepository extends JpaRepository<Mensagem, Long> {
     List<Mensagem> findByRemetente_IdUtilizadorAndDestinatario_Pessoa_NomeContainingIgnoreCaseOrderByDataEnvioDesc(
             Long idUtilizadorRemetente, String nomeDestinatario
     );
+
+    long deleteByGuardadaFalse();
 }

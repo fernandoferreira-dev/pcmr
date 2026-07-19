@@ -8,7 +8,7 @@ import java.time.OffsetDateTime;
 public class Utilizador {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY) // IDENTITY é o correto para BIGSERIAL no PostgreSQL
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id_utilizador")
     private Long idUtilizador;
 
@@ -24,17 +24,14 @@ public class Utilizador {
     @Column(name = "data_ultima_atualizacao", nullable = false)
     private OffsetDateTime dataUltimaAtualizacao = OffsetDateTime.now();
 
-    // Ligação com a tabela tipo_utilizador
-    @ManyToOne(cascade = CascadeType.PERSIST)
+    @ManyToOne
     @JoinColumn(name = "id_tipo_utilizador", nullable = false)
     private TipoUtilizador tipoUtilizador;
 
-    // Ligação com a tabela pessoa
     @ManyToOne(cascade = CascadeType.PERSIST)
     @JoinColumn(name = "id_pessoa", nullable = false)
     private Pessoa pessoa;
 
-    // Getters e Setters
     public Long getIdUtilizador() { return idUtilizador; }
     public void setIdUtilizador(Long idUtilizador) { this.idUtilizador = idUtilizador; }
 

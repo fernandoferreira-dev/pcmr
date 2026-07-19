@@ -13,11 +13,21 @@ public class ConfiguracaoSistema {
     @Column(name = "id_configuracao")
     private Long idConfiguracao;
 
+    @ManyToOne
+    @JoinColumn(name = "id_sensor", nullable = false)
+    private Sensor sensor;
+
     @Column(name = "temperatura_max_alerta", nullable = false)
     private BigDecimal temperaturaMaxAlerta;
 
+    @Column(name = "temperatura_min_alerta", nullable = false)
+    private BigDecimal temperaturaMinAlerta;
+
     @Column(name = "bpm_max_alerta", nullable = false)
     private Integer bpmMaxAlerta;
+
+    @Column(name = "bpm_min_alerta", nullable = false)
+    private Integer bpmMinAlerta;
 
     @Column(name = "atualizado_em", nullable = false)
     private OffsetDateTime atualizadoEm = OffsetDateTime.now();
@@ -28,11 +38,20 @@ public class ConfiguracaoSistema {
     public Long getIdConfiguracao() { return idConfiguracao; }
     public void setIdConfiguracao(Long idConfiguracao) { this.idConfiguracao = idConfiguracao; }
 
+    public Sensor getSensor() { return sensor; }
+    public void setSensor(Sensor sensor) { this.sensor = sensor; }
+
     public BigDecimal getTemperaturaMaxAlerta() { return temperaturaMaxAlerta; }
     public void setTemperaturaMaxAlerta(BigDecimal temperaturaMaxAlerta) { this.temperaturaMaxAlerta = temperaturaMaxAlerta; }
 
+    public BigDecimal getTemperaturaMinAlerta() { return temperaturaMinAlerta; }
+    public void setTemperaturaMinAlerta(BigDecimal temperaturaMinAlerta) { this.temperaturaMinAlerta = temperaturaMinAlerta; }
+
     public Integer getBpmMaxAlerta() { return bpmMaxAlerta; }
     public void setBpmMaxAlerta(Integer bpmMaxAlerta) { this.bpmMaxAlerta = bpmMaxAlerta; }
+
+    public Integer getBpmMinAlerta() { return bpmMinAlerta; }
+    public void setBpmMinAlerta(Integer bpmMinAlerta) { this.bpmMinAlerta = bpmMinAlerta; }
 
     public OffsetDateTime getAtualizadoEm() { return atualizadoEm; }
     public void setAtualizadoEm(OffsetDateTime atualizadoEm) { this.atualizadoEm = atualizadoEm; }

@@ -2,6 +2,7 @@ package com.pcmr.api.controller;
 
 import com.pcmr.api.dto.EstadoSensorDTO;
 import com.pcmr.api.dto.NovoSensorRequestDTO;
+import com.pcmr.api.dto.RenomearSensorRequestDTO;
 import com.pcmr.api.dto.SensorDTO;
 import com.pcmr.api.model.Sensor;
 import com.pcmr.api.repository.SensorRepository;
@@ -16,6 +17,7 @@ import java.time.Duration;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @RestController
@@ -32,6 +34,92 @@ public class SensorController {
     private SensorRepository sensorRepository;
 
     private static final long LIMITE_ONLINE_SEGUNDOS = 10;
+    private static final Set<String> TIPOS_VALIDOS = Set.of("WEARABLE", "PRESENCA", "BIOMETRICO", "GENERICO");
+
+    @GetMapping
+    public ResponseEntity<List<SensorDTO>> listar() {
+        List<SensorDTO> dtos = sensorRepository.findAll().stream()
+                .map(s -> new SensorDTO(
+                        s.getIdSensor(), s.getNome(), s.getNomeExibicao(),
+                        s.getLocalizacao(), s.getEstado(), s.getTipoMetrica()
+                ))
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(dtos);
+    }
+
+    @PostMapping
+    public ResponseEntity<?> criar(@RequestBody NovoSensorRequestDTO req) {
+        if (req.getNome() == null || req.getNome().isBlank()) {
+            return ResponseEntity.badRequest().body(Map.of("erro", "Nome do sensor é obrigatório"));
+        }
+
+        if (sensorRepository.findByNome(req.getNome()).isPresent()) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of(
+                    "erro", "Já existe um sensor com este nome/identificador"
+            ));
+        }
+
+        String tipo = req.getTipoMetrica();
+        if (tipo == null || tipo.isBlank()) {
+            tipo = "GENERICO";
+        } else if (!TIPOS_VALIDOS.contains(tipo)) {
+            return ResponseEntity.badRequest().body(Map.of(
+                    "erro", "tipoMetrica inválido. Valores aceites: " + TIPOS_VALIDOS
+            ));
+        }
+
+        Sensor novo = new Sensor();
+        novo.setNome(req.getNome());
+        novo.setNomeExibicao(req.getNomeExibicao());
+        novo.setLocalizacao(req.getLocalizacao());
+        novo.setEstado("ATIVO");
+        novo.setTipoMetrica(tipo);
+
+        Sensor guardado = sensorRepository.save(novo);
+        return ResponseEntity.ok(new SensorDTO(
+                guardado.getIdSensor(), guardado.getNome(), guardado.getNomeExibicao(),
+                guardado.getLocalizacao(), guardado.getEstado(), guardado.getTipoMetrica()
+        ));
+    }
+
+    @PatchMapping("/{id}/nome-exibicao")
+    public ResponseEntity<?> renomear(@PathVariable Long id, @RequestBody RenomearSensorRequestDTO req) {
+        Sensor sensor = sensorRepository.findById(id).orElse(null);
+        if (sensor == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("erro", "Sensor não encontrado"));
+        }
+
+        String novoNome = req.getNomeExibicao();
+        sensor.setNomeExibicao((novoNome == null || novoNome.isBlank()) ? null : novoNome.trim());
+        Sensor guardado = sensorRepository.save(sensor);
+
+        return ResponseEntity.ok(new SensorDTO(
+                guardado.getIdSensor(), guardado.getNome(), guardado.getNomeExibicao(),
+                guardado.getLocalizacao(), guardado.getEstado(), guardado.getTipoMetrica()
+        ));
+    }
+
+    @GetMapping("/procurar")
+    public ResponseEntity<List<SensorDTO>> procurarSensores(
+        @RequestParam String nome,
+        @RequestParam(required = false) Long excluirId
+    ) {
+        List<Sensor> resultados = sensorRepository.findByNomeContainingIgnoreCase(nome);
+
+       List<SensorDTO> dtos = resultados.stream()
+        .filter(s -> excluirId == null || !s.getIdSensor().equals(excluirId))
+        .map(s -> new SensorDTO(
+                s.getIdSensor(),
+                s.getNome(),
+                null,               // nomeExibicao não é usado para procurar 
+                s.getLocalizacao(),
+                s.getEstado(),
+                null                // tipoMetrica mesma coisa
+        ))
+        .collect(Collectors.toList());
+        
+        return ResponseEntity.ok(dtos);
+    }
 
     @GetMapping
     public ResponseEntity<List<SensorDTO>> listar() {

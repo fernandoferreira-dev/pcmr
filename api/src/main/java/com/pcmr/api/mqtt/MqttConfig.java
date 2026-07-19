@@ -49,11 +49,11 @@ public class MqttConfig {
                 new MqttPahoMessageDrivenChannelAdapter(
                         "spring-client-" + UUID.randomUUID(),
                         mqttClientFactory(),
-                        topicSensors,
+                        topicSensors,      // Escuta "sensors/#" (Sinais, Status/LWT, Presença)
                         topicBiometria,
                         "sensor/login",   
                         "sensor/enroll",
-                        "sensors/node1/presenca" // Novo tópico adicionado aqui
+                        "sensors/node1/presenca" 
                 );
         adapter.setCompletionTimeout(5000);
         adapter.setConverter(new DefaultPahoMessageConverter());

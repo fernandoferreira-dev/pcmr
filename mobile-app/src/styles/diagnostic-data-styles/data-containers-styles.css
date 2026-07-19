@@ -10,9 +10,9 @@
     border: 3px solid #B2C8B2;
     border-radius: 1rem;
     background-color: #E8E8E8;
-    width: fit-content;
+    width: 100%;
     height: fit-content;
-    padding: 1.5rem;
+    padding: 0.50rem;
     box-sizing: border-box;
 }
 
@@ -25,8 +25,9 @@
     border-radius: 1rem;
     color: #000000;
     padding: 1.5rem;
+    flex: 1 1 250px;
+    box-sizing: border-box;
 }
-
 .data-container p {
     align-self: flex-start;    
     color: #000000;
@@ -61,5 +62,4 @@
     border: 1px solid #B2C8B2;
     background-color: #FFFFFF;
     border-radius: 1rem;
-    cursor: pointer;
 }

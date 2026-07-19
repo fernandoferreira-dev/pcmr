@@ -7,7 +7,9 @@ import com.pcmr.api.model.Utilizador;
 import com.pcmr.api.repository.MensagemRepository;
 import com.pcmr.api.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -38,29 +40,36 @@ public class MensagemService {
     }
 
     public MensagemDTO enviar(NovaMensagemRequestDTO req) {
-        if (req.getIdRemetente() == null || req.getIdDestinatario() == null) {
-            throw new IllegalArgumentException("Remetente e destinatário são obrigatórios");
-        }
-        if (req.getIdRemetente().equals(req.getIdDestinatario())) {
-            throw new IllegalArgumentException("Não pode enviar uma mensagem a si próprio");
-        }
-        if (req.getAssunto() == null || req.getAssunto().isBlank()) {
-            throw new IllegalArgumentException("O assunto é obrigatório");
-        }
-
-        Utilizador remetente = userRepository.findById(req.getIdRemetente())
-                .orElseThrow(() -> new IllegalArgumentException("Remetente não encontrado"));
-        Utilizador destinatario = userRepository.findById(req.getIdDestinatario())
-                .orElseThrow(() -> new IllegalArgumentException("Destinatário não encontrado"));
-
-        Mensagem mensagem = new Mensagem();
-        mensagem.setRemetente(remetente);
-        mensagem.setDestinatario(destinatario);
-        mensagem.setAssunto(req.getAssunto());
-        mensagem.setCorpo(req.getCorpo());
-
-        return paraDTO(mensagemRepository.save(mensagem));
+    if (req.getIdRemetente() == null || req.getIdDestinatario() == null) {
+        throw new IllegalArgumentException("Remetente e destinatário são obrigatórios");
     }
+    
+    Utilizador remetente = userRepository.findById(req.getIdRemetente())
+            .orElseThrow(() -> new IllegalArgumentException("Remetente não encontrado"));
+    
+    if (!"sistema".equalsIgnoreCase(remetente.getUsername()) && 
+         req.getIdRemetente().equals(req.getIdDestinatario())) {
+        throw new IllegalArgumentException("Não pode enviar uma mensagem a si próprio");
+    }
+
+    if (req.getAssunto() == null || req.getAssunto().isBlank()) {
+        throw new IllegalArgumentException("O assunto é obrigatório");
+    }
+
+    Utilizador destinatario = userRepository.findById(req.getIdDestinatario())
+            .orElseThrow(() -> new IllegalArgumentException("Destinatário não encontrado"));
+
+    Mensagem mensagem = new Mensagem();
+    mensagem.setRemetente(remetente);
+    mensagem.setDestinatario(destinatario);
+    mensagem.setAssunto(req.getAssunto());
+    mensagem.setCorpo(req.getCorpo());
+    
+    mensagem.setLida(false);
+    mensagem.setGuardada(false);
+
+    return paraDTO(mensagemRepository.save(mensagem));
+}
 
     public void marcarComoLida(Long idMensagem, Long idUtilizadorAtual) {
         Mensagem mensagem = mensagemRepository.findById(idMensagem)
@@ -74,6 +83,22 @@ public class MensagemService {
         mensagemRepository.save(mensagem);
     }
 
+    public MensagemDTO alternarGuardada(Long idMensagem, Long idUtilizadorAtual) {
+        Mensagem mensagem = mensagemRepository.findById(idMensagem)
+                .orElseThrow(() -> new IllegalArgumentException("Mensagem não encontrada"));
+
+        boolean pertenceAoUtilizador =
+                mensagem.getRemetente().getIdUtilizador().equals(idUtilizadorAtual) ||
+                mensagem.getDestinatario().getIdUtilizador().equals(idUtilizadorAtual);
+
+        if (!pertenceAoUtilizador) {
+            throw new IllegalStateException("Não tem permissão para alterar esta mensagem");
+        }
+
+        mensagem.setGuardada(!mensagem.isGuardada());
+        return paraDTO(mensagemRepository.save(mensagem));
+    }
+
     public void apagar(Long idMensagem, Long idUtilizadorAtual) {
         Mensagem mensagem = mensagemRepository.findById(idMensagem)
                 .orElseThrow(() -> new IllegalArgumentException("Mensagem não encontrada"));
@@ -83,6 +108,13 @@ public class MensagemService {
         }
 
         mensagemRepository.delete(mensagem);
+    }
+
+    @Scheduled(cron = "0 0 3 1 1/3 *")
+    @Transactional
+    public void limparMensagensNaoGuardadas() {
+        long apagadas = mensagemRepository.deleteByGuardadaFalse();
+        System.out.println("✓ Limpeza trimestral de mensagens: " + apagadas + " mensagens não guardadas foram removidas.");
     }
 
     private MensagemDTO paraDTO(Mensagem m) {
@@ -101,6 +133,7 @@ public class MensagemService {
         dto.setCorpo(m.getCorpo());
         dto.setDataEnvio(m.getDataEnvio().toString());
         dto.setLida(m.isLida());
+        dto.setGuardada(m.isGuardada());
         return dto;
     }
 }

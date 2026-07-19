@@ -1,19 +1,25 @@
 {
+  "homepage": "https://fernandoferreira-dev.github.io/pcmr",
   "name": "mobile-app",
   "private": true,
   "version": "0.0.0",
   "type": "module",
   "scripts": {
+    "predeploy": "npm run build",
+    "deploy": "gh-pages -d dist",
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview"
   },
   "dependencies": {
+    "jspdf": "^4.2.1",
     "react": "^19.2.6",
     "react-dom": "^19.2.6",
     "react-icons": "^5.7.0",
+    "react-router-dom": "^7.18.1",
     "recharts": "^3.8.1",
+    "tailwind": "^4.0.0",
     "zustand": "^5.0.14"
   },
   "devDependencies": {
@@ -26,6 +32,7 @@
     "eslint": "^10.3.0",
     "eslint-plugin-react-hooks": "^7.1.1",
     "eslint-plugin-react-refresh": "^0.5.2",
+    "gh-pages": "^6.3.0",
     "globals": "^17.6.0",
     "tailwindcss": "^4.3.2",
     "typescript": "~6.0.2",
