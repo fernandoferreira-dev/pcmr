@@ -26,10 +26,10 @@ export default function MainPage({ username, phonenumber, email, birthDate, sele
   >("home");
 
   useEffect(() => {
-    fetchHistory();
+    fetchHistory(userId);
     connect();
     return () => disconnect();
-  }, [fetchHistory, connect, disconnect]);
+  }, [fetchHistory, connect, disconnect, userId]);
 
   const pageTitles = {
     home: "Dashboard",

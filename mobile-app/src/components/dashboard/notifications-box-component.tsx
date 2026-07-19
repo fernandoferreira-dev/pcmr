@@ -17,21 +17,8 @@ const formatarData = (iso: string) => {
   }
 };
 
-const severidadeClasse = (severidade: string) => {
-  switch (severidade) {
-    case 'CRITICAL':
-      return 'notification-box-text--critical';
-    case 'WARNING':
-      return 'notification-box-text--warning';
-    default:
-      return 'notification-box-text--info';
-  }
-};
-
 const NotificationBoxComponent: FC<NotificationBoxComponentProps> = () => {
   const notifications = useNotificationStore((state) => state.notifications);
-  const markAsRead = useNotificationStore((state) => state.markAsRead);
-
   const ultimas = notifications.slice(0, 10);
 
   return (
@@ -45,13 +32,7 @@ const NotificationBoxComponent: FC<NotificationBoxComponentProps> = () => {
       )}
 
       {ultimas.map((n) => (
-        <div
-          key={n.id}
-          className={`notification-box-text ${severidadeClasse(n.severidade)} ${n.lida ? 'notification-box-text--lida' : ''}`}
-          onClick={() => !n.lida && markAsRead(n.id)}
-          role="button"
-          tabIndex={0}
-        >
+        <div key={n.id} className="notification-box-text">
           <h2>{n.titulo}</h2>
           <h3>{n.corpo}</h3>
           <span className="notification-box-text-meta">{formatarData(n.createdAt)}</span>

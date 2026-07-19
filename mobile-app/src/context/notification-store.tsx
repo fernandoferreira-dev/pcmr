@@ -1,133 +1,162 @@
 import { create } from 'zustand';
 
 const API_URL = 'http://localhost:8080';
-const WS_URL = `${API_URL.replace(/^http/, 'ws')}/ws/notifications`;
-
-export type Severidade = 'INFO' | 'WARNING' | 'CRITICAL';
+const POLL_INTERVAL_MS = 4000;
 
 export interface NotificationItem {
-  id: number;
+  id: string;
   titulo: string;
   corpo: string;
-  origem: string | null;
-  severidade: Severidade;
   createdAt: string;
-  lida: boolean;
+}
+
+interface AlertaResumo {
+  idAlerta: number;
+  tipoAlerta: string;
+  valorRegistado: number;
+  mensagem: string;
+  dataHora: string;
+}
+
+interface MensagemResumo {
+  idMensagem: number;
+  nomeRemetente: string;
+  assunto: string;
+  corpo: string;
+  dataEnvio: string;
+}
+
+function tituloAlerta(tipoAlerta: string): string {
+  switch (tipoAlerta) {
+    case 'TEMPERATURA_ALTA':
+      return 'Temperatura elevada';
+    case 'TEMPERATURA_BAIXA':
+      return 'Temperatura baixa';
+    case 'BPM_ALTO':
+      return 'Frequência cardíaca elevada';
+    case 'BPM_BAIXO':
+      return 'Frequência cardíaca baixa';
+    case 'QUEDA':
+      return 'Possível queda detetada';
+    default:
+      return tipoAlerta;
+  }
+}
+
+function paraNotificationItem(a: AlertaResumo): NotificationItem {
+  return {
+    id: `alerta-${a.idAlerta}`,
+    titulo: tituloAlerta(a.tipoAlerta),
+    corpo: a.mensagem,
+    createdAt: a.dataHora,
+  };
+}
+
+function mensagemParaNotificationItem(m: MensagemResumo): NotificationItem {
+  return {
+    id: `mensagem-${m.idMensagem}`,
+    titulo: m.nomeRemetente,
+    corpo: m.assunto || m.corpo,
+    createdAt: m.dataEnvio,
+  };
 }
 
 interface NotificationState {
   notifications: NotificationItem[];
   activeToast: NotificationItem | null;
-  connected: boolean;
-
-  fetchHistory: () => Promise<void>;
+  fetchHistory: (userId?: number | null) => Promise<void>;
   connect: () => void;
   disconnect: () => void;
-  markAsRead: (id: number) => Promise<void>;
   dismissToast: () => void;
-  playAlertSound: (severidade: Severidade) => void;
+  playAlertSound: () => void;
 }
 
-let socket: WebSocket | null = null;
-let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
+let pollTimer: ReturnType<typeof setInterval> | null = null;
+let ultimoIdConhecido: number | null = null;
+let primeiraVerificacao = true;
 
 export const useNotificationStore = create<NotificationState>((set, get) => ({
   notifications: [],
   activeToast: null,
-  connected: false,
 
-
-  fetchHistory: async () => {
+  fetchHistory: async (userId) => {
     try {
-      const res = await fetch(`${API_URL}/api/notificacoes`);
-      if (!res.ok) return;
-      const data: NotificationItem[] = await res.json();
-      set({ notifications: data });
+      const pedidos: Promise<Response>[] = [fetch(`${API_URL}/api/alertas/recentes?limite=10`)];
+      if (userId) {
+        pedidos.push(fetch(`${API_URL}/api/mensagens/recebidas?userId=${userId}`));
+      }
+
+      const respostas = await Promise.all(pedidos);
+      const alertas: AlertaResumo[] = respostas[0].ok ? await respostas[0].json() : [];
+      const mensagens: MensagemResumo[] = respostas[1] && respostas[1].ok ? await respostas[1].json() : [];
+
+      const itens = [
+        ...alertas.map(paraNotificationItem),
+        ...mensagens.map(mensagemParaNotificationItem),
+      ].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+
+      set({ notifications: itens });
+      if (alertas.length > 0) {
+        ultimoIdConhecido = alertas[0].idAlerta;
+      }
     } catch {
+      // sem histórico disponível, a app continua a funcionar com o que chegar a seguir
     }
   },
 
-  
   connect: () => {
-    if (socket && (socket.readyState === WebSocket.OPEN || socket.readyState === WebSocket.CONNECTING)) {
-      return;
-    }
+    if (pollTimer) return;
 
-    try {
-      socket = new WebSocket(WS_URL);
-    } catch {
-      return;
-    }
-
-    socket.onopen = () => {
-      set({ connected: true });
-      if (reconnectTimer) {
-        clearTimeout(reconnectTimer);
-        reconnectTimer = null;
-      }
-    };
-
-    socket.onmessage = (event) => {
+    const verificar = async () => {
       try {
-        const nova: NotificationItem = JSON.parse(event.data);
-        set((state) => ({
-          notifications: [nova, ...state.notifications],
-          activeToast: nova,
-        }));
-        get().playAlertSound(nova.severidade);
+        const res = await fetch(`${API_URL}/api/alertas/recentes?limite=1`);
+        if (!res.ok) return;
+        const data: AlertaResumo[] = await res.json();
+        if (data.length === 0) return;
+
+        const maisRecente = data[0];
+
+        if (primeiraVerificacao) {
+          primeiraVerificacao = false;
+          ultimoIdConhecido = maisRecente.idAlerta;
+          return;
+        }
+
+        if (maisRecente.idAlerta !== ultimoIdConhecido) {
+          ultimoIdConhecido = maisRecente.idAlerta;
+          const item = paraNotificationItem(maisRecente);
+          set((state) => ({
+            notifications: [item, ...state.notifications],
+            activeToast: item,
+          }));
+          get().playAlertSound();
+        }
       } catch {
-      
+        // falha silenciosa; não interrompe o polling seguinte
       }
     };
 
-    socket.onclose = () => {
-      set({ connected: false });
-      if (!reconnectTimer) {
-        reconnectTimer = setTimeout(() => {
-          reconnectTimer = null;
-          get().connect();
-        }, 3000);
-      }
-    };
-
-    socket.onerror = () => {
-      socket?.close();
-    };
+    verificar();
+    pollTimer = setInterval(verificar, POLL_INTERVAL_MS);
   },
 
   disconnect: () => {
-    if (reconnectTimer) {
-      clearTimeout(reconnectTimer);
-      reconnectTimer = null;
-    }
-    socket?.close();
-    socket = null;
-    set({ connected: false });
-  },
-
-  markAsRead: async (id: number) => {
-    set((state) => ({
-      notifications: state.notifications.map((n) => (n.id === id ? { ...n, lida: true } : n)),
-    }));
-
-    try {
-      await fetch(`${API_URL}/api/notificacoes/${id}/lida`, { method: 'PATCH' });
-    } catch {
+    if (pollTimer) {
+      clearInterval(pollTimer);
+      pollTimer = null;
     }
   },
 
   dismissToast: () => set({ activeToast: null }),
 
-  playAlertSound: (severidade: Severidade) => {
-    if (severidade === 'INFO') return;
-
+  playAlertSound: () => {
     try {
       const AudioContextClass =
         window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
       const ctx = new AudioContextClass();
 
-      const beeps = severidade === 'CRITICAL' ? 3 : 2;
-      const frequency = severidade === 'CRITICAL' ? 1046.5 : 784;
+      const beeps = 2;
+      const frequency = 880;
       const beepDuration = 0.15;
       const gap = 0.12;
 
@@ -152,6 +181,7 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
 
       setTimeout(() => ctx.close(), (beeps * (beepDuration + gap) + 0.2) * 1000);
     } catch {
+      // se o browser bloquear o AudioContext, ignora silenciosamente
     }
   },
 }));

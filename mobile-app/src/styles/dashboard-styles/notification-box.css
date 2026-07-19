@@ -9,7 +9,7 @@
 .notification-box h1 {
   align-self: flex-start;
   font-size: 1.35rem;
-  color: #000000;
+  color: var(--text-strong);
   margin: 0 0 0.5rem 0;
   white-space: normal;
 }
@@ -17,27 +17,46 @@
 .notification-box-text {
   display: flex;
   flex-direction: column;
-  align-items: center;
+  align-items: flex-start;
+  text-align: left;
   gap: 5px;
   margin: 0 0 0.5rem 0;
-  border: 3px solid #B2C8B2;
+  border: 3px solid var(--border-soft);
+  border-left-width: 6px;
+  border-left-color: #d98a1f;
   border-radius: 1rem;
-  background-color: #FFFFFF;
+  background-color: var(--surface);
   padding: 0.75rem 1rem;
   width: 100%;
   box-sizing: border-box;
+  cursor: default;
+  transition: opacity 0.15s ease;
 }
 
 .notification-box h2 {
   align-self: flex-start;
-  color: #000000;
+  text-align: left;
+  color: var(--text-strong);
   margin: 0.25rem 0 0;
   font-size: 1rem;
 }
 
 .notification-box h3 {
   align-self: flex-start;
-  color: #000000;
+  text-align: left;
+  color: var(--text-strong);
   margin: 0.25rem 0 0;
   font-size: 0.9rem;
+}
+
+.notification-box-text--empty {
+  cursor: default;
+  align-items: flex-start;
+}
+
+.notification-box-text-meta {
+  align-self: flex-start;
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  margin-top: 0.15rem;
 }
