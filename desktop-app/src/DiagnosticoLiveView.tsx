@@ -26,22 +26,20 @@ interface PontoGrafico {
   magnitudeG: number;
 }
 
-interface AlertaSessao {
-  tipoAlerta: string;
-  mensagem: string;
-  dataHora: string; 
-}
-
 type MetricaKey = "temperatura" | "bpm" | "magnitudeG";
 
 const POLL_INTERVAL_MS = 2000;
 const DEVICE_ID = "wearable01";
 const MAX_PONTOS_GRAFICO = 60; // últimos 2 minutos de histórico (60 * 2s)
 const DURACAO_PULSO_MS = 700;
+const TEMPO_CALIBRACAO_MS = 10000; // 10 segundos para calibração inicial
 
+// LIMITES ALINHADOS COM O SEU BACKEND
 const LIMITES_ALERTA = {
+  tempMinima: 35.0,
   tempMaxima: 38.0,
-  bpmMinimo: 50,
+  bpmMinimo: 60,
+  bpmMaximo: 100,
 };
 
 const FALL_STATE_LABELS: Record<number, string> = {
@@ -109,8 +107,8 @@ export default function DiagnosticoLiveView({
     return () => clearTimeout(timer);
   }, []);
 
-  // FUNÇÕES DE REGISTO
-  const registarAlertaBD = async (tipo: string, valor: number, mensagem: string) => {
+  // Enviar alerta de forma assíncrona para a base de dados
+  const registarAlertaNoServidor = async (tipo: string, valor: number, mensagem: string) => {
     try {
       await fetch('/api/alertas', {
         method: 'POST',
@@ -124,10 +122,9 @@ export default function DiagnosticoLiveView({
         })
       });
     } catch (e) {
-      console.error("Erro ao submeter o alerta para a Base de Dados:", e);
+      console.error("Erro ao guardar o alerta na BD:", e);
     }
   };
-
 
   useEffect(() => {
     const buscarLeitura = async () => {
@@ -233,7 +230,6 @@ export default function DiagnosticoLiveView({
               : atualizado;
           });
 
-          // Efeito visual de dados novos recebidos
           setPulsando(true);
           if (pulsoTimeoutRef.current) clearTimeout(pulsoTimeoutRef.current);
           pulsoTimeoutRef.current = setTimeout(
@@ -253,34 +249,7 @@ export default function DiagnosticoLiveView({
       if (pollingRef.current) clearInterval(pollingRef.current);
       if (pulsoTimeoutRef.current) clearTimeout(pulsoTimeoutRef.current);
     };
-  }, [idMedico]);
-
-  useEffect(() => {
-    const buscarAlertas = async () => {
-      try {
-        const res = await fetch(`/api/alertas?deviceId=${DEVICE_ID}&desde=${inicioSessaoRef.current}`);
-        if (!res.ok) return;
-        const data = await res.json();
-        
-        // Garante que os dados recebidos são uma estrutura de array antes de aplicar no estado
-        if (Array.isArray(data)) {
-          setAlertas(data);
-        }
-      } catch {
-        // falha silenciosa
-      }
-    };
-
-    buscarAlertas();
-    const interval = setInterval(buscarAlertas, 4000);
-    return () => clearInterval(interval);
-  }, []);
-
-
-  // --- ESTADOS DERIVADOS PARA JSX ---
-  const emQueda = leitura?.alertaQuedaAtivo ?? false;
-  const alertaTemperatura = leitura && leitura.temperatura > LIMITES_ALERTA.tempMaxima;
-  const alertaBpm = leitura && leitura.bpm > 0 && leitura.bpm < LIMITES_ALERTA.bpmMinimo;
+  }, [idMedico, calibrado]);
 
   const metrica = METRICAS.find((m) => m.key === metricaAtiva)!;
 
@@ -293,12 +262,12 @@ export default function DiagnosticoLiveView({
           100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); border-color: transparent; }
         }
         @keyframes pulso-vermelho {
-          0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.6); border-color: rgba(239, 68, 68, 0.9); }
-          70% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); border-color: rgba(239, 68, 68, 0.4); }
+          0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.5); border-color: rgba(239, 68, 68, 0.8); }
+          70% { box-shadow: 0 0 0 12px rgba(239, 68, 68, 0); border-color: rgba(239, 68, 68, 0.3); }
           100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); border-color: transparent; }
         }
         .pulso-verde-ativo { animation: pulso-verde ${DURACAO_PULSO_MS}ms ease-out; border: 2px solid transparent; }
-        .pulso-vermelho-ativo { animation: pulso-vermelho 1500ms infinite ease-out; border: 2px solid #ef4444; background-color: #fef2f2; }
+        .pulso-vermelho-ativo { animation: pulso-vermelho 1800ms infinite ease-in-out; border: 2px solid #ef4444; }
       `}</style>
 
       <header className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
@@ -315,48 +284,6 @@ export default function DiagnosticoLiveView({
       </header>
 
       <main className="flex-1 overflow-y-auto p-6">
-        
-        {/* Painel Superior de Alertas Ativos */}
-        <div className="flex flex-col gap-2 mb-6">
-          {emQueda && (
-            <div className="bg-red-50 border border-red-300 text-red-700 rounded-2xl px-4 py-3 font-bold flex items-center gap-2 shadow-sm animate-pulse">
-               ALERTA: Movimento de queda severa detetado no paciente!
-            </div>
-          )}
-          {alertaTemperatura && (
-            <div className="bg-orange-50 border border-orange-300 text-orange-700 rounded-2xl px-4 py-3 font-bold flex items-center gap-2 shadow-sm">
-               ALERTA: Hipertermia detetada ({leitura?.temperatura.toFixed(1)} °C). Limite de 38.0°C ultrapassado.
-            </div>
-          )}
-          {alertaBpm && (
-            <div className="bg-rose-50 border border-rose-300 text-rose-700 rounded-2xl px-4 py-3 font-bold flex items-center gap-2 shadow-sm">
-               ALERTA: Bradicardia grave detetada ({leitura?.bpm} bpm). Valor abaixo de 50 bpm.
-            </div>
-          )}
-
-          {/* Banner de alertas originados na BD */}
-          {alertas.length > 0 && (
-            <div className="flex flex-col gap-2">
-              {alertas.map((a, idx) => (
-                <div
-                  key={idx}
-                  className="bg-red-50 border border-red-300 text-red-700 rounded-2xl px-4 py-3 text-sm shadow-sm animate-fadeIn"
-                >
-                  <span className="font-semibold">
-                    {a.tipoAlerta ? a.tipoAlerta.replace(/_/g, " ") : "ALERTA"}:
-                  </span>{" "}
-                  {a.mensagem}
-                  {a.dataHora && (
-                    <span className="text-xs text-red-400 ml-2">
-                      ({new Date(a.dataHora).toLocaleTimeString('pt-PT')})
-                    </span>
-                  )}
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-
         {erro && (
           <div className="mb-6 bg-yellow-50 border border-yellow-300 text-yellow-700 rounded-2xl px-4 py-3">
             {erro}
@@ -383,20 +310,23 @@ export default function DiagnosticoLiveView({
           <CartaoSensor
             titulo="Temperatura"
             valor={leitura ? `${leitura.temperatura.toFixed(1)} °C` : "—"}
-            pulsando={pulsando && !alertaTemperatura}
-            emAlerta={alertaTemperatura ?? false}
+            pulsando={pulsando && !mensagemAlertaTemp}
+            mensagemAlerta={mensagemAlertaTemp}
+            estaCalibrando={!calibrado}
           />
           <CartaoSensor
             titulo="Frequência Cardíaca"
             valor={leitura ? `${leitura.bpm} bpm` : "—"}
-            pulsando={pulsando && !alertaBpm}
-            emAlerta={alertaBpm ?? false}
+            pulsando={pulsando && !mensagemAlertaBpm}
+            mensagemAlerta={mensagemAlertaBpm}
+            estaCalibrando={!calibrado}
           />
           <CartaoSensor
             titulo="Magnitude (aceleração)"
             valor={leitura ? `${leitura.magnitudeG.toFixed(2)} G` : "—"}
             pulsando={pulsando}
-            emAlerta={false}
+            mensagemAlerta={null}
+            estaCalibrando={!calibrado}
           />
         </div>
 
@@ -499,24 +429,32 @@ export default function DiagnosticoLiveView({
   );
 }
 
+interface CartaoProps {
+  titulo: string;
+  valor: string;
+  pulsando: boolean;
+  mensagemAlerta: string | null;
+  estaCalibrando: boolean;
+}
+
 function CartaoSensor({
   titulo,
   valor,
   pulsando,
-  emAlerta,
-}: {
-  titulo: string;
-  valor: string;
-  pulsando: boolean;
-  emAlerta: boolean;
-}) {
+  mensagemAlerta,
+  estaCalibrando,
+}: CartaoProps) {
+  const emAlerta = !!mensagemAlerta;
+
   return (
     <div
-      className={`rounded-2xl p-4 flex flex-col gap-1 transition-all duration-300 ${
-        emAlerta 
-        ? "pulso-vermelho-ativo" 
-        : pulsando 
-          ? "bg-gray-50 pulso-verde-ativo" 
+      className={`rounded-2xl p-4 flex flex-col gap-2 transition-all duration-300 min-h-[120px] justify-between ${
+        estaCalibrando
+          ? "bg-gray-100/70 border-2 border-dashed border-gray-300"
+          : emAlerta
+          ? "bg-red-50 pulso-vermelho-ativo border-2"
+          : pulsando
+          ? "bg-gray-50 pulso-verde-ativo border-2"
           : "bg-gray-50 border-2 border-transparent"
       }`}
     >

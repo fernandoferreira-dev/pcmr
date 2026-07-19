@@ -96,10 +96,8 @@ export default function FinalizarConsultaModal({
 
       if (res.ok && data.sucesso) {
         if (data.tokenAcesso) {
-          // Se recebemos um token de acesso, mostramos o ecrã de sucesso
           setTokenGerado(data.tokenAcesso);
         } else {
-          // Se for paciente existente (sem token devolvido), fecha direto
           onFinalizado();
         }
       } else {
@@ -112,7 +110,6 @@ export default function FinalizarConsultaModal({
     }
   };
 
-  // Ecrã de Sucesso que aparece caso o token seja gerado
   if (tokenGerado) {
     return (
       <div className="fixed inset-0 z-[60] bg-black/40 flex items-center justify-center p-6">
@@ -147,7 +144,6 @@ export default function FinalizarConsultaModal({
     );
   }
 
-  // Ecrã normal de associação
   return (
     <div className="fixed inset-0 z-[60] bg-black/40 flex items-center justify-center p-6">
       <div className="bg-white rounded-3xl shadow-xl w-full max-w-lg p-6 relative">

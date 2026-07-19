@@ -1,100 +1,85 @@
 package com.pcmr.api.controller;
 
+import com.pcmr.api.model.Utilizador;
+import com.pcmr.api.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
-import com.pcmr.api.model.Pessoa;
-import com.pcmr.api.model.TipoUtilizador;
-import com.pcmr.api.model.Utilizador;
-import com.pcmr.api.repository.TipoUtilizadorRepository;
-import com.pcmr.api.repository.UserRepository;
+import java.time.LocalDate;
+import java.util.Optional;
 
 @RestController
-@RequestMapping("/api/users")
+@RequestMapping("/api/utilizadores")
 public class UserController {
 
     @Autowired
     private UserRepository userRepository;
 
-    @Autowired
-    private TipoUtilizadorRepository tipoUtilizadorRepository;
+    // ==================== GET PERFIL ====================
+    @GetMapping("/{id}/perfil")
+    public ResponseEntity<?> getPerfil(@PathVariable Long id) {
+        Optional<Utilizador> userOpt = userRepository.findById(id);
+        
+        if (userOpt.isPresent()) {
+            return ResponseEntity.ok(new UserProfileResponse(userOpt.get()));
+        } else {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body("Utilizador não encontrado");
+        }
+    }
 
-    // Instancia o encoder aqui também
-    private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
+    // ==================== UPDATE PERFIL ====================
+    @PutMapping("/{id}/perfil")
+    public ResponseEntity<?> updatePerfil(@PathVariable Long id, @RequestBody UserProfileRequest request) {
+        Optional<Utilizador> userOpt = userRepository.findById(id);
+        
+        if (userOpt.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Utilizador não encontrado");
+        }
 
+        Utilizador user = userOpt.get();
+
+        if (user.getPessoa() != null) {
+            if (request.nome != null) user.getPessoa().setNome(request.nome);
+            if (request.email != null) user.getPessoa().setEmail(request.email);
+            if (request.telemovel != null) user.getPessoa().setTelemovel(request.telemovel);
+            if (request.dataNascimento != null && !request.dataNascimento.isEmpty()) {
+                user.getPessoa().setDataNascimento(LocalDate.parse(request.dataNascimento));
+            }
+        }
+
+        userRepository.save(user);
+        return ResponseEntity.ok(new UserProfileResponse(user));
+    }
+
+    // ==================== DTOs ====================
     public static class UserProfileResponse {
+        public Long id;
         public String username;
-        public String phoneNumber;
+        public String nome;
         public String email;
-        public String birthDate;
-        public String selectedOption;
+        public String telemovel;
+        public String dataNascimento;
+        public String tipoUtilizador;
 
-        public UserProfileResponse(String username, String email) {
-            this.username = username;
-            this.phoneNumber = "";
-            this.email = email;
-            this.birthDate = "";
-            this.selectedOption = "opcao-pt";
+        public UserProfileResponse(Utilizador user) {
+            this.id = user.getIdUtilizador();
+            this.username = user.getUsername();
+            this.nome = user.getPessoa() != null ? user.getPessoa().getNome() : "";
+            this.email = user.getPessoa() != null ? user.getPessoa().getEmail() : "";
+            this.telemovel = user.getPessoa() != null ? user.getPessoa().getTelemovel() : null;
+            this.dataNascimento = user.getPessoa() != null && user.getPessoa().getDataNascimento() != null 
+                    ? user.getPessoa().getDataNascimento().toString() : null;
+            this.tipoUtilizador = user.getTipoUtilizador() != null ? user.getTipoUtilizador().getNome() : "";
         }
     }
 
-    @GetMapping("/{id}")
-    public ResponseEntity<?> getUserProfile(@PathVariable Long id) {
-    return userRepository.findById(id)
-            .<ResponseEntity<?>>map(user -> {
-                String email = user.getPessoa() != null ? user.getPessoa().getEmail() : "";
-                return ResponseEntity.ok(new UserProfileResponse(user.getUsername(), email));
-            })
-            .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND).body("User not found"));
-    }
-
-    @PostMapping("/register")
-    public ResponseEntity<String> registerUser(@RequestParam String name,
-            @RequestParam String email,
-            @RequestParam String password) {
-        if (name == null || name.isBlank() || email == null || email.isBlank() || password == null || password.isBlank()) {
-             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Nome, email e password são obrigatórios");
-        }
-
-        if (userRepository.findByUsername(name).isPresent()) {
-            return ResponseEntity.status(HttpStatus.CONFLICT).body("nome de utlizador já existe");
-        } else if (userRepository.findByPessoaEmail(email).isPresent()) {
-            return ResponseEntity.status(HttpStatus.CONFLICT).body("Este email já está vinculado a uma conta");
-        }
-        try {
-            Utilizador n = new Utilizador();
-            n.setUsername(name);
-            n.setPassword(passwordEncoder.encode(password));
-
-            
-            Pessoa pessoa = new Pessoa();
-            pessoa.setNome(name);
-            pessoa.setEmail(email);
-            n.setPessoa(pessoa);
-
-            TipoUtilizador tipoUtilizador = tipoUtilizadorRepository.findByNome("utilizador")
-                    .orElseGet(() -> {
-                        TipoUtilizador novoTipo = new TipoUtilizador();
-                        novoTipo.setNome("utilizador");
-                        novoTipo.setDescricao("Conta criada via registo");
-                        return tipoUtilizadorRepository.save(novoTipo);
-                    });
-            n.setTipoUtilizador(tipoUtilizador);
-
-            userRepository.save(n);
-            return ResponseEntity.status(HttpStatus.CREATED).body("User Saved successfully!");
-        } catch (Exception ex) {
-            ex.printStackTrace();
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body("Registration failed: " + ex.getMessage());
-        }
+    public static class UserProfileRequest {
+        public String nome;
+        public String email;
+        public String telemovel;
+        public String dataNascimento;
     }
 }
