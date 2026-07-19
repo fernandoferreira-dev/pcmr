@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from "react";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
 import LoginPage from "./pages/login-page";
 import MainPage from "./pages/main-page";
+import DiagnosticExportPage from "./components/client-info-page-components/diagnostic-export-download-component";
 import { AuthProvider, useAuth } from "./context/auth-context";
 
 type UserProfile = {
@@ -96,8 +98,24 @@ function AppContent() {
 
 export default function App() {
   return (
-    <AuthProvider>
-      <AppContent />
-    </AuthProvider>
+    <BrowserRouter>
+      <Routes>
+        {/* Public route: opened directly in an external browser (not the
+            App Inventor WebViewer) via ActivityStarter. No login required,
+            since the export endpoints are open. */}
+        <Route path="/export/:id" element={<DiagnosticExportPage />} />
+
+        {/* Everything else keeps the existing login/main-page flow, now
+            wrapped in AuthProvider only for this branch. */}
+        <Route
+          path="*"
+          element={
+            <AuthProvider>
+              <AppContent />
+            </AuthProvider>
+          }
+        />
+      </Routes>
+    </BrowserRouter>
   );
 }
