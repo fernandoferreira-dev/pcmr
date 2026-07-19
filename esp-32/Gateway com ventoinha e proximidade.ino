@@ -4,7 +4,7 @@
 #include <esp_wifi.h>
 #include <ArduinoJson.h>
 
-// CONFIGURAÇÕES
+// ================= CONFIGURAÇÕES =================
 const char* SSID = "Vodafone-07FD83";
 const char* PASSWORD = "AZEITAO2026";
 const char* MQTT_BROKER = "192.168.1.72";
@@ -21,19 +21,22 @@ char topicLimiteTemperatura[64];
 
 uint8_t MAC_NODE2[] = {0x30, 0x83, 0x98, 0xef, 0x42, 0x24}; // Wearable (Nó 2)
 
-// PINOS HC-SR04
+// ================= PINOS =================
 #define TRIG_PIN 5
 #define ECHO_PIN 18
 
-// VARIÁVEIS HC-SR04
+// ================= VARIÁVEIS INTERRUPÇÃO HC-SR04 =================
 volatile unsigned long pulseStart = 0;
 volatile unsigned long pulseDuration = 0;
 volatile bool pulseReady = false;
 
-// VENTOINHA
+// ================= VENTOINHA (agora configurável via MQTT) =================
 const int PINO_RELE = 26;
 const int RELE_LIGADO = LOW;
 
+// Valores por omissão até chegar a configuração real do backend.
+// A margem de histerese (0.5°C) mantém-se fixa para evitar oscilação
+// liga/desliga junto ao limite.
 float temperaturaLigarC = 37.0f;
 float temperaturaDesligarC = 36.5f;
 const float MARGEM_HISTERESE_C = 0.5f;
@@ -41,7 +44,7 @@ const float MARGEM_HISTERESE_C = 0.5f;
 bool ventoinhaLigada = false;
 float ultimaTemperaturaConhecida = -100.0f;
 
-// CONFIGURAÇÃO PRESENÇA
+// ================= CONFIGURAÇÃO DINÂMICA PRESENÇA =================
 float distanciaLimiteCm = 50.0f;
 unsigned long tempoConfirmacaoMs = 5000;
 
@@ -185,7 +188,7 @@ void mqttCallback(char* topic, byte* payload, unsigned int length) {
       if (novoLimite > 0) {
         temperaturaLigarC = novoLimite;
         temperaturaDesligarC = novoLimite - MARGEM_HISTERESE_C;
-        Serial.printf("Limite de temperatura da ventoinha atualizado: liga=%.1f°C, desliga=%.1f°C\n",
+        Serial.printf("✓ Limite de temperatura da ventoinha atualizado: liga=%.1f°C, desliga=%.1f°C\n",
                       temperaturaLigarC, temperaturaDesligarC);
       }
     }
@@ -289,7 +292,7 @@ void setup() {
   client.setServer(MQTT_BROKER, MQTT_PORT);
   client.setCallback(mqttCallback);
 
-  Serial.println("GATEWAY PRONTO");
+  Serial.println("GATEWAY PRONTO E MONITORIZADO");
 }
 
 void loop() {

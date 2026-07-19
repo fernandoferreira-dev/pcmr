@@ -3,6 +3,7 @@ package com.pcmr.api.mqtt;
 import org.eclipse.paho.client.mqttv3.MqttClient;
 import org.eclipse.paho.client.mqttv3.MqttConnectOptions;
 import org.eclipse.paho.client.mqttv3.MqttMessage;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -16,6 +17,9 @@ public class MqttPublisherService {
     private String brokerUrl;
 
     private MqttClient client;
+
+    @Autowired
+    private MqttSecurityService mqttSecurityService;
 
     @PostConstruct
     public void init() {
@@ -37,12 +41,32 @@ public class MqttPublisherService {
             return;
         }
         try {
-            MqttMessage message = new MqttMessage(payload.getBytes());
+            String payloadCifrado = mqttSecurityService.cifrarEEmpacotar(payload);
+            MqttMessage message = new MqttMessage(payloadCifrado.getBytes());
             message.setQos(1);
             client.publish(topic, message);
-            System.out.println("Publicado MQTT [" + topic + "]: " + payload);
+            System.out.println("Publicado MQTT (cifrado) [" + topic + "]: " + payload);
         } catch (Exception e) {
             System.err.println("Erro ao publicar MQTT: " + e.getMessage());
+        }
+    }
+
+    public void publishRetido(String topic, String payload) {
+        if (client == null || !client.isConnected()) {
+            System.err.println("MqttPublisherService não está ligado ao broker");
+            return;
+        }
+        try {
+            // Cifra o payload exatamente como no publish normal
+            String payloadCifrado = mqttSecurityService.cifrarEEmpacotar(payload);
+            MqttMessage message = new MqttMessage(payloadCifrado.getBytes());
+            message.setQos(1);
+            message.setRetained(true); // <-- Marca a mensagem como retida (retained)
+            
+            client.publish(topic, message);
+            System.out.println("Publicado MQTT retido (cifrado) [" + topic + "]: " + payload);
+        } catch (Exception e) {
+            System.err.println("Erro ao publicar MQTT retido: " + e.getMessage());
         }
     }
 
@@ -55,20 +79,4 @@ public class MqttPublisherService {
             }
         } catch (Exception ignored) {}
     }
-
-    public void publishRetido(String topic, String payload) {
-    if (client == null || !client.isConnected()) {
-        System.err.println("MqttPublisherService não está ligado ao broker");
-        return;
-    }
-    try {
-        MqttMessage message = new MqttMessage(payload.getBytes());
-        message.setQos(1);
-        message.setRetained(true); // o Nó 1 recebe isto imediatamente ao (re)ligar-se e subscrever
-        client.publish(topic, message);
-        System.out.println("✓ Publicado MQTT (retido) [" + topic + "]: " + payload);
-    } catch (Exception e) {
-        System.err.println("✗ Erro ao publicar MQTT (retido): " + e.getMessage());
-    }
-}
 }

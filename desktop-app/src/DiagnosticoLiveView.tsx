@@ -80,14 +80,34 @@ export default function DiagnosticoLiveView({
   const [mostrarFinalizar, setMostrarFinalizar] = useState(false);
   const [metricaAtiva, setMetricaAtiva] = useState<MetricaKey>("temperatura");
   const [pulsando, setPulsando] = useState(false);
-  const [alertas, setAlertas] = useState<AlertaSessao[]>([]);
   
+  // Estado para controlar se o período de calibração terminou
+  const [calibrado, setCalibrado] = useState(false);
+
+  // Estados dos alertas ativos em tempo real
+  const [mensagemAlertaTemp, setMensagemAlertaTemp] = useState<string | null>(null);
+  const [mensagemAlertaBpm, setMensagemAlertaBpm] = useState<string | null>(null);
+  const [alertaQueda, setAlertaQueda] = useState(false); // MOVIDO PARA CÁ
+
   const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const pulsoTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const ultimaHoraRef = useRef<string | null>(null);
-  const alertaTempRegistadoRef = useRef(false);
-  const alertaBpmRegistadoRef = useRef(false);
-  const inicioSessaoRef = useRef(new Date().toISOString());
+
+  // Refs para monitorizar se o alerta já foi enviado uma vez para a base de dados
+  const alertaTempAltaEnviado = useRef(false);
+  const alertaTempBaixaEnviado = useRef(false);
+  const alertaBpmAltoEnviado = useRef(false);
+  const alertaBpmBaixoEnviado = useRef(false);
+  const alertaQuedaEnviado = useRef(false); // MOVIDO PARA CÁ
+
+  // Temporizador para calibração inicial de 10 segundos
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setCalibrado(true);
+    }, TEMPO_CALIBRACAO_MS);
+
+    return () => clearTimeout(timer);
+  }, []);
 
   // FUNÇÕES DE REGISTO
   const registarAlertaBD = async (tipo: string, valor: number, mensagem: string) => {
@@ -121,31 +141,78 @@ export default function DiagnosticoLiveView({
         setLeitura(data);
         setErro(null);
 
-        // Verificação de alertas
-        if (data.temperatura > LIMITES_ALERTA.tempMaxima) {
-          if (!alertaTempRegistadoRef.current) {
-            registarAlertaBD(
-              'TEMPERATURA_ALTA', 
-              data.temperatura, 
-              `Temperatura crítica atingida durante monitorização: ${data.temperatura.toFixed(1)}°C`
+        // QUEDA
+        if (data.alertaQuedaAtivo) {
+          setAlertaQueda(true);
+          if (!alertaQuedaEnviado.current) {
+            registarAlertaNoServidor(
+            'QUEDA_DETETADA',
+            data.magnitudeG,
+            `Queda detetada — magnitude de impacto: ${data.magnitudeG.toFixed(2)}G`
             );
-            alertaTempRegistadoRef.current = true;
+            alertaQuedaEnviado.current = true;
           }
         } else {
-          alertaTempRegistadoRef.current = false;
+          setAlertaQueda(false);
+          alertaQuedaEnviado.current = false;
         }
 
-        if (data.bpm > 0 && data.bpm < LIMITES_ALERTA.bpmMinimo) {
-          if (!alertaBpmRegistadoRef.current) {
-            registarAlertaBD(
-              'BPM_BAIXO', 
-              data.bpm, 
-              `Frequência cardíaca abaixo do limiar seguro: ${data.bpm} bpm`
-            );
-            alertaBpmRegistadoRef.current = true;
+        // Apenas processa os alertas lógicos após os 10s de calibração inicial
+        if (calibrado) {
+          
+          // --- PROCESSAMENTO DA TEMPERATURA ---
+          if (data.temperatura > LIMITES_ALERTA.tempMaxima) {
+            const msg = `Temperatura de ${data.temperatura.toFixed(1)}°C excede o limite de ${LIMITES_ALERTA.tempMaxima.toFixed(1)}°C`;
+            setMensagemAlertaTemp(msg);
+            
+            if (!alertaTempAltaEnviado.current) {
+              registarAlertaNoServidor('TEMPERATURA_ALTA', data.temperatura, msg);
+              alertaTempAltaEnviado.current = true;
+            }
+            alertaTempBaixaEnviado.current = false;
+
+          } else if (data.temperatura < LIMITES_ALERTA.tempMinima) {
+            const msg = `Temperatura de ${data.temperatura.toFixed(1)}°C está abaixo do mínimo de ${LIMITES_ALERTA.tempMinima.toFixed(1)}°C`;
+            setMensagemAlertaTemp(msg);
+
+            if (!alertaTempBaixaEnviado.current) {
+              registarAlertaNoServidor('TEMPERATURA_BAIXA', data.temperatura, msg);
+              alertaTempBaixaEnviado.current = true;
+            }
+            alertaTempAltaEnviado.current = false;
+
+          } else {
+            setMensagemAlertaTemp(null);
+            alertaTempAltaEnviado.current = false;
+            alertaTempBaixaEnviado.current = false;
           }
-        } else {
-          alertaBpmRegistadoRef.current = false;
+
+          // BATIMENTOS CARDÍACOS
+          if (data.bpm > LIMITES_ALERTA.bpmMaximo) {
+            const msg = `Frequência de ${data.bpm} bpm excede o limite máximo de ${LIMITES_ALERTA.bpmMaximo} bpm`;
+            setMensagemAlertaBpm(msg);
+
+            if (!alertaBpmAltoEnviado.current) {
+              registarAlertaNoServidor('BPM_ALTO', data.bpm, msg);
+              alertaBpmAltoEnviado.current = true;
+            }
+            alertaBpmBaixoEnviado.current = false;
+
+          } else if (data.bpm > 0 && data.bpm < LIMITES_ALERTA.bpmMinimo) {
+            const msg = `Frequência de ${data.bpm} bpm está abaixo do mínimo de ${LIMITES_ALERTA.bpmMinimo} bpm`;
+            setMensagemAlertaBpm(msg);
+
+            if (!alertaBpmBaixoEnviado.current) {
+              registarAlertaNoServidor('BPM_BAIXO', data.bpm, msg);
+              alertaBpmBaixoEnviado.current = true;
+            }
+            alertaBpmAltoEnviado.current = false;
+
+          } else {
+            setMensagemAlertaBpm(null);
+            alertaBpmAltoEnviado.current = false;
+            alertaBpmBaixoEnviado.current = false;
+          }
         }
 
         // Atualização do gráfico
@@ -296,7 +363,22 @@ export default function DiagnosticoLiveView({
           </div>
         )}
 
-        {/* Cartões dos Sensores Biométricos */}
+        {alertaQueda && (
+        <div className="mb-6 bg-red-600 text-white rounded-2xl px-5 py-4 flex items-center gap-3 shadow-lg animate-pulse">
+          <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="shrink-0">
+            <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z" />
+            <line x1="12" x2="12" y1="9" y2="13" />
+            <line x1="12" x2="12.01" y1="17" y2="17" />
+            </svg>
+            <div>
+              <p className="font-bold text-base">QUEDA DETETADA</p>
+              <p className="text-sm text-red-100">
+                {leitura ? `Magnitude registada: ${leitura.magnitudeG.toFixed(2)}G` : "A verificar dados do sensor..."}
+              </p>
+          </div>
+        </div>
+      )}
+
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
           <CartaoSensor
             titulo="Temperatura"
@@ -318,7 +400,6 @@ export default function DiagnosticoLiveView({
           />
         </div>
 
-        {/* Gráfico de Evolução Temporal */}
         <div className="bg-gray-50 rounded-2xl p-4 mb-6">
           <div className="flex items-center justify-between mb-3">
             <div className="text-sm font-semibold text-gray-600">
@@ -439,12 +520,28 @@ function CartaoSensor({
           : "bg-gray-50 border-2 border-transparent"
       }`}
     >
-      <span className={`text-xs uppercase tracking-wide transition-colors ${emAlerta ? "text-red-700 font-bold" : "text-gray-500"}`}>
-        {titulo}
-      </span>
-      <span className={`text-2xl font-bold transition-colors ${emAlerta ? "text-red-700" : "text-gray-800"}`}>
-        {valor}
-      </span>
+      <div className="flex flex-col gap-1">
+        <div className="flex items-center justify-between">
+          <span className={`text-xs uppercase tracking-wide font-semibold ${emAlerta ? "text-red-700" : "text-gray-500"}`}>
+            {titulo}
+          </span>
+          {estaCalibrando && (
+            <span className="text-[10px] text-gray-400 font-medium animate-pulse bg-gray-200 px-2 py-0.5 rounded-full">
+              A calibrar...
+            </span>
+          )}
+        </div>
+        <span className={`text-3xl font-bold ${estaCalibrando ? "text-gray-400" : emAlerta ? "text-red-600" : "text-gray-800"}`}>
+          {estaCalibrando ? "—" : valor}
+        </span>
+      </div>
+
+      {emAlerta && !estaCalibrando && (
+        <div className="text-xs text-red-700 bg-red-100/60 border border-red-200 rounded-lg p-2 font-medium leading-relaxed mt-1 animate-fade-in">
+          <span className="font-bold mr-1">Alerta:</span>
+          {mensagemAlerta}
+        </div>
+      )}
     </div>
   );
 }

@@ -1,4 +1,5 @@
 #include <WiFi.h>
+
 #include <esp_wifi.h>
 #include <PubSubClient.h>
 #include <HardwareSerial.h>
@@ -6,7 +7,7 @@
 #include <mbedtls/base64.h>
 #include <ArduinoJson.h>
 
-// CONFIGURAÇÕES
+// ================= CONFIGURAÇÕES =================
 const char* SSID = "Vodafone-07FD83";
 const char* PASSWORD = "AZEITAO2026";
 const char* MQTT_BROKER = "192.168.1.72";
@@ -76,7 +77,7 @@ bool collectEnrollmentSamples(uint8_t samplesNeeded) {
   unsigned long inicio = millis();
 
   while (captured < samplesNeeded) {
-    client.loop(); // Garante processamento MQTT imediato
+    client.loop(); // Garante processamento MQTT imediato durante a captura
 
     if (millis() - inicio > ENROLL_TIMEOUT_TOTAL_MS) {
       return false;
@@ -184,7 +185,7 @@ void setupWiFi() {
   }
   Serial.println("\n✓ WiFi conectado!");
   
-  // Sleep para poupança inteligente de energia
+  // Ativa Modem Sleep automático para poupança inteligente de energia
   esp_wifi_set_ps(WIFI_PS_MIN_MODEM);
 }
 
@@ -221,7 +222,7 @@ void setup() {
     Serial.println("Erro: Sensor não encontrado.");
     delay(2000);
   }
-  Serial.println("Sensor biométrico inicializado!");
+  Serial.println("✓ Sensor biométrico inicializado!");
 }
 
 void loop() {
@@ -237,10 +238,16 @@ void loop() {
     return;
   }
 
+  // OTIMIZAÇÃO CRÍTICA (NÃO BLOQUEANTE):
+  // Em vez de chamar o scan do sensor com timeout (que congela a rede e o MQTT),
+  // primeiro verificamos instantaneamente se o dedo está fisicamente encostado.
   if (fingerprint.detectFinger()) {
+    // Só aciona o processador do sensor se houver um dedo presente!
+    // Usamos um timeout extremamente curto de 1 segundo
     if (fingerprint.collectionFingerprint(/*timeout=*/1) != ERR_ID809) {
       processLoginFingerprint();
 
+      // Aguarda libertação de forma não bloqueante para o processamento de pacotes MQTT
       while (fingerprint.detectFinger()) {
         delay(30);
         client.loop();
