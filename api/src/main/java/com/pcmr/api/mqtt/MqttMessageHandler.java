@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.pcmr.api.dto.SensorReadingDTO;
 import com.pcmr.api.service.AlertaMonitorService;
+import com.pcmr.api.service.AlertaQuedaBuzzerService;
 import com.pcmr.api.service.AtividadeSensorService;
 import com.pcmr.api.service.BiometriaService;
 import com.pcmr.api.service.LeituraSensorService;
@@ -16,28 +17,35 @@ import org.springframework.stereotype.Component;
 @Component
 public class MqttMessageHandler {
 
-    @Autowired
-    private LeituraSensorService leituraSensorService;
-
-    @Autowired
-    private BiometriaService biometriaService;
-
-    @Autowired
-    private PresencaService presencaService;
-
-    @Autowired
-    private AtividadeSensorService atividadeSensorService;
-
-    @Autowired
-    private AlertaMonitorService alertaMonitorService;
-
-    @Autowired
-    private MqttSecurityService mqttSecurityService;
+    private final LeituraSensorService leituraSensorService;
+    private final BiometriaService biometriaService;
+    private final PresencaService presencaService;
+    private final AtividadeSensorService atividadeSensorService;
+    private final AlertaMonitorService alertaMonitorService;
+    private final MqttSecurityService mqttSecurityService;
+    private final AlertaQuedaBuzzerService alertaQuedaBuzzerService;
 
     private static final String DEVICE_ID_NODE1 = "node1-presenca";
     private static final String DEVICE_ID_NODE3 = "esp32-pico-fingerprint";
 
     private final ObjectMapper objectMapper = new ObjectMapper();
+
+    @Autowired
+    public MqttMessageHandler(LeituraSensorService leituraSensorService,
+                              BiometriaService biometriaService,
+                              PresencaService presencaService,
+                              AtividadeSensorService atividadeSensorService,
+                              AlertaMonitorService alertaMonitorService,
+                              MqttSecurityService mqttSecurityService,
+                              AlertaQuedaBuzzerService alertaQuedaBuzzerService) {
+        this.leituraSensorService = leituraSensorService;
+        this.biometriaService = biometriaService;
+        this.presencaService = presencaService;
+        this.atividadeSensorService = atividadeSensorService;
+        this.alertaMonitorService = alertaMonitorService;
+        this.mqttSecurityService = mqttSecurityService;
+        this.alertaQuedaBuzzerService = alertaQuedaBuzzerService;
+    }
 
     @ServiceActivator(inputChannel = "mqttInputChannel")
     public void handleMessage(Message<?> message) {
@@ -45,6 +53,11 @@ public class MqttMessageHandler {
         String topic = message.getHeaders().get("mqtt_receivedTopic", String.class);
 
         if (topic == null) {
+            return;
+        }
+
+        if (topic.contains("/status")) {
+            System.out.println("ℹ Mensagem de status ignorada (não processada): " + topic);
             return;
         }
 
@@ -141,6 +154,10 @@ public class MqttMessageHandler {
                         wrapper.temperatura,
                         wrapper.bpm
                 );
+
+                // NOVO: aciona/desliga o buzzer do Nó 3 consoante o estado de queda
+                // reportado pelo wearable, independentemente da app estar aberta.
+                alertaQuedaBuzzerService.notificarQueda(deviceId, wrapper.alertaQuedaAtivo);
             }
 
         } catch (Exception e) {
