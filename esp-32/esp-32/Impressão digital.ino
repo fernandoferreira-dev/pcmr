@@ -377,6 +377,14 @@ void setup() {
     Serial.println("Erro: Sensor não encontrado.");
     delay(2000);
   }
+
+  const mbedtls_cipher_info_t* teste = mbedtls_cipher_info_from_type(MBEDTLS_CIPHER_DES_EDE3_CBC);
+      if (teste == NULL) {
+        Serial.println("✗ MBEDTLS_DES_C não está compilado neste build do core — 3DES indisponível!");
+      } else {
+        Serial.println("✓ 3DES disponível no mbedtls deste core.");
+      }
+
   Serial.println("Sensor biométrico inicializado!");
 }
 
