@@ -1,4 +1,3 @@
-import { useEffect, useState } from "react";
 import "../assets/styles/index.css";
 
 type Diagnostico = {
@@ -10,54 +9,83 @@ type Diagnostico = {
     magnitudeG: number;
 };
 
-function DiagnosticosPage({ idPessoa }: { idPessoa: number }) {
-    const [diagnosticos, setDiagnosticos] = useState<Diagnostico[]>([]);
-    const [carregando, setCarregando] = useState(true);
-    const [erro, setErro] = useState<string | null>(null);
+type Props = {
+    diagnostico: Diagnostico;
+    onClose: () => void;
+};
 
-    useEffect(() => {
-        const carregar = async () => {
-            try {
-                const res = await fetch(`/api/diagnosticos?idPaciente=${idPessoa}`);
-                if (!res.ok)    throw new Error();
-                const data = await res.json();
-                setDiagnosticos(data);
-            } catch {
-                setErro("Não foi possível carregar os diagnósticos.");
-            } finally {
-                setCarregando(false);
-            }
-        };
-        carregar();
-    }, [idPessoa]);
-
-    const formatarData = (iso: string) => new Date(iso).toLocaleString("pt-PT");
+function DiagnosticoDetalheModal({ diagnostico, onClose }: Props) {
+    const formatarData = (iso: string) =>
+        new Date(iso).toLocaleString("pt-PT", {
+            day: "2-digit",
+            month: "long",
+            year: "numeric",
+            hour: "2-digit",
+            minute: "2-digit",
+        });
 
     return (
-        <div className="min-h-screen bg-background font-sans p-4 pb-20">
-            <h1 className="text-text text-xl font-semibold mb-4">Os meus diagnósticos</h1>
+        <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4">
+            <div className="bg-background rounded-3xl shadow-xl w-full max-w-lg max-h-[85vh] overflow-y-auto p-6 relative font-sans border-t-8 border-primary">
+                <button
+                    onClick={onClose}
+                    className="absolute top-4 right-4 text-muted hover:text-text text-xl cursor-pointer"
+                    title="Fechar"
+                >
+                    ✕
+                </button>
 
-            {carregando && <p className="text-muted text-sm">A carregar...</p>}
-            {erro && <p className="text-red-600 text-sm">{erro}</p>}
-            {!carregando && !erro && diagnosticos.length === 0 && (
-                <p className="text-muted text-sm">Ainda não existem diagnósticos registados.</p>
-            )}
+                <span className="text-xs font-semibold uppercase tracking-wide text-primary">
+          Diagnóstico #{diagnostico.id}
+        </span>
+                <h2 className="text-xl font-bold text-text mt-1 mb-1">
+                    {formatarData(diagnostico.date)}
+                </h2>
 
-            <div className="flex flex-col gap-3">
-                {diagnosticos.map((d) => (
-                    <div key={d.id} className="border border-primary-outline rounded-2xl p-4 bg-background">
-                        <span className="text-text font-semibold">{formatarData(d.date)}</span>
-                        <p className="text-sm text-muted mt-1">{d.status}</p>
-                        <div className="flex gap-4 mt-2 text-sm text-text">
-                            <span>🌡 {d.temperatura} °C</span>
-                            <span>❤ {d.bpm} bpm</span>
-                            <span>📈 {d.magnitudeG} G</span>
-                        </div>
+                <div className="grid grid-cols-3 gap-3 my-5">
+                    <div className="flex flex-col items-center bg-primary/5 rounded-2xl py-4">
+                        <span className="text-2xl">🌡️</span>
+                        <span className="text-lg font-bold text-text mt-1">
+              {diagnostico.temperatura?.toFixed?.(1) ?? diagnostico.temperatura} °C
+            </span>
+                        <span className="text-[0.65rem] text-muted uppercase tracking-wide mt-0.5">
+              Temperatura
+            </span>
                     </div>
-                ))}
+                    <div className="flex flex-col items-center bg-primary/5 rounded-2xl py-4">
+                        <span className="text-2xl">❤️</span>
+                        <span className="text-lg font-bold text-text mt-1">{diagnostico.bpm} bpm</span>
+                        <span className="text-[0.65rem] text-muted uppercase tracking-wide mt-0.5">
+              Cardíaco
+            </span>
+                    </div>
+                    <div className="flex flex-col items-center bg-primary/5 rounded-2xl py-4">
+                        <span className="text-2xl">📈</span>
+                        <span className="text-lg font-bold text-text mt-1">
+              {diagnostico.magnitudeG?.toFixed?.(2) ?? diagnostico.magnitudeG} G
+            </span>
+                        <span className="text-[0.65rem] text-muted uppercase tracking-wide mt-0.5">
+              Magnitude
+            </span>
+                    </div>
+                </div>
+
+                <div className="border-t border-primary-outline pt-4">
+                    <h3 className="text-sm font-semibold text-text mb-2">Observações do médico</h3>
+                    <p className="text-sm text-muted leading-relaxed whitespace-pre-wrap">
+                        {diagnostico.status?.trim() ? diagnostico.status : "Sem observações registadas."}
+                    </p>
+                </div>
+
+                <button
+                    onClick={onClose}
+                    className="w-full mt-6 py-3 bg-primary text-background font-semibold rounded-xl hover:opacity-90 active:scale-95 transition-all cursor-pointer"
+                >
+                    Fechar
+                </button>
             </div>
         </div>
     );
 }
 
-export default DiagnosticosPage;
+export default DiagnosticoDetalheModal;

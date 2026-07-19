@@ -1,9 +1,10 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import logo from "../assets/images/logo.png";
 import "../assets/styles/index.css";
 
 const SESSION_KEY = "paciente-auth-session";
 const SESSION_DURATION_MS = 60 * 60 * 1000;
+const CODIGO_LENGTH = 6;
 
 export type PacienteSession = {
     userId: number;
@@ -20,10 +21,18 @@ function LoginPage({ onLogin }: Props) {
     const [codigo, setCodigo] = useState("");
     const [erro, setErro] = useState<string | null>(null);
     const [aEntrar, setAEntrar] = useState(false);
+    const submetidoRef = useRef(false);
+
+    const handleCodigoChange = (valor: string) => {
+        const apenasDigitos = valor.replace(/\D/g, "").slice(0, CODIGO_LENGTH);
+        setCodigo(apenasDigitos);
+        if (erro) setErro(null);
+        submetidoRef.current = false;
+    };
 
     const handleEntrar = async () => {
-        if (!codigo.trim()) {
-            setErro("Introduza o código de acesso");
+        if (codigo.length !== CODIGO_LENGTH) {
+            setErro(`O código tem de ter ${CODIGO_LENGTH} dígitos`);
             return;
         }
 
@@ -37,7 +46,7 @@ function LoginPage({ onLogin }: Props) {
                     "Content-Type": "application/json",
                 },
                 body: JSON.stringify({
-                    codigo: codigo.trim(),
+                    codigo,
                 }),
             });
 
@@ -64,6 +73,15 @@ function LoginPage({ onLogin }: Props) {
         }
     };
 
+    // Submete automaticamente assim que o código atinge os 6 dígitos
+    useEffect(() => {
+        if (codigo.length === CODIGO_LENGTH && !aEntrar && !submetidoRef.current) {
+            submetidoRef.current = true;
+            handleEntrar();
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [codigo]);
+
     return (
         <section className="flex min-h-screen bg-background font-sans">
             <main className="flex-1 flex items-center justify-center p-6 w-full max-w-md mx-auto">
@@ -88,14 +106,16 @@ function LoginPage({ onLogin }: Props) {
 
                             <input
                                 value={codigo}
-                                onChange={(e) => {
-                                    setCodigo(e.target.value);
-                                    if (erro) setErro(null);
-                                }}
+                                onChange={(e) => handleCodigoChange(e.target.value)}
                                 onKeyDown={(e) =>
                                     e.key === "Enter" && handleEntrar()
                                 }
-                                placeholder="Código de acesso"
+                                inputMode="numeric"
+                                pattern="[0-9]*"
+                                autoComplete="one-time-code"
+                                maxLength={CODIGO_LENGTH}
+                                placeholder="000000"
+                                autoFocus
                                 className="
                                     w-full
                                     px-4 py-3
@@ -103,14 +123,27 @@ function LoginPage({ onLogin }: Props) {
                                     border-2 border-primary-outline
                                     bg-background
                                     text-text
+                                    font-mono
                                     focus:border-primary
                                     focus:outline-none
                                     transition-colors
                                     text-center
-                                    text-2xl
-                                    tracking-widest
+                                    text-3xl
+                                    tracking-[0.5em]
+                                    caret-primary
                                 "
                             />
+
+                            <div className="flex justify-center gap-1.5 mt-3">
+                                {Array.from({ length: CODIGO_LENGTH }).map((_, i) => (
+                                    <span
+                                        key={i}
+                                        className={`h-1.5 w-6 rounded-full transition-colors ${
+                                            i < codigo.length ? "bg-primary" : "bg-primary-outline"
+                                        }`}
+                                    />
+                                ))}
+                            </div>
                         </div>
 
                         {erro && (
@@ -121,7 +154,7 @@ function LoginPage({ onLogin }: Props) {
 
                         <button
                             onClick={handleEntrar}
-                            disabled={aEntrar}
+                            disabled={aEntrar || codigo.length !== CODIGO_LENGTH}
                             className="
                                 w-full
                                 py-4
@@ -138,6 +171,9 @@ function LoginPage({ onLogin }: Props) {
                                 duration-300
                                 shadow-md
                                 disabled:opacity-50
+                                disabled:hover:bg-text
+                                disabled:active:scale-100
+                                disabled:cursor-not-allowed
                             "
                         >
                             {aEntrar ? "A validar..." : "Entrar"}
