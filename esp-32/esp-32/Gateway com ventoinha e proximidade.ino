@@ -7,7 +7,7 @@
 #include <mbedtls/cipher.h>
 #include <esp_system.h>
 
-// CONFIGURAÇÕES
+// ================= CONFIGURAÇÕES =================
 const char* SSID = "Vodafone-07FD83";
 const char* PASSWORD = "AZEITAO2026";
 const char* MQTT_BROKER = "192.168.1.72";
@@ -24,19 +24,22 @@ char topicLimiteTemperatura[64];
 
 uint8_t MAC_NODE2[] = {0x30, 0x83, 0x98, 0xef, 0x42, 0x24}; // Wearable (Nó 2)
 
-// PINOS HC-SR04
+// ================= PINOS =================
 #define TRIG_PIN 5
 #define ECHO_PIN 18
 
-// VARIÁVEIS HC-SR04
+// ================= VARIÁVEIS INTERRUPÇÃO HC-SR04 =================
 volatile unsigned long pulseStart = 0;
 volatile unsigned long pulseDuration = 0;
 volatile bool pulseReady = false;
 
-// VENTOINHA
+// ================= VENTOINHA (agora configurável via MQTT) =================
 const int PINO_RELE = 26;
 const int RELE_LIGADO = LOW;
 
+// Valores por omissão até chegar a configuração real do backend.
+// A margem de histerese (0.5°C) mantém-se fixa para evitar oscilação
+// liga/desliga junto ao limite.
 float temperaturaLigarC = 37.0f;
 float temperaturaDesligarC = 36.5f;
 const float MARGEM_HISTERESE_C = 0.5f;
@@ -44,7 +47,7 @@ const float MARGEM_HISTERESE_C = 0.5f;
 bool ventoinhaLigada = false;
 float ultimaTemperaturaConhecida = -100.0f;
 
-// CONFIGURAÇÃO PRESENÇA
+// ================= CONFIGURAÇÃO DINÂMICA PRESENÇA =================
 float distanciaLimiteCm = 50.0f;
 unsigned long tempoConfirmacaoMs = 5000;
 
@@ -70,21 +73,16 @@ typedef struct struct_leitura_wearable {
 
 esp_now_peer_info_t peerNode2;
 
-// =====================================================================
-// SEGURANÇA: cifra 3DES-CBC + integridade CRC32
-// =====================================================================
+// ================= SEGURANÇA: cifra 3DES-CBC + integridade CRC32 =================
 
 // Chave 3DES de 24 bytes — TEM de corresponder exatamente à chave
 // (Base64) configurada em MQTT_CIPHER_KEY no application.properties do servidor,
 // e à mesma usada no ESP32 do sensor de impressão digital.
 static const unsigned char CHAVE_3DES[24] = {
-    0x85, 0xCC, 0x6F, 0x26,
-    0xDB, 0x42, 0xE9, 0x7B,
-    0x78, 0xB6, 0xB8, 0x0F,
-    0xDC, 0x70, 0xED, 0xC4,
-    0x66, 0xF1, 0xCA, 0x10,
-    0x63, 0x25, 0xAE, 0xAF
-};
+  0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
+  0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F,
+  0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17
+}; // <-- SUBSTITUIR pelos bytes reais da chave partilhada
 
 static uint32_t crc32_tabela[256];
 static bool crc32_tabela_pronta = false;
@@ -114,15 +112,24 @@ static int des3_cifrar(const uint8_t* entrada, size_t tamEntrada, const uint8_t 
   mbedtls_cipher_init(&ctx);
 
   const mbedtls_cipher_info_t* info = mbedtls_cipher_info_from_type(MBEDTLS_CIPHER_DES_EDE3_CBC);
+  if (info == NULL) {
+    Serial.println("✗ MBEDTLS_CIPHER_DES_EDE3_CBC indisponível neste build!");
+    mbedtls_cipher_free(&ctx);
+    return 0;
+  }
+
   mbedtls_cipher_setup(&ctx, info);
-  mbedtls_cipher_setkey(&ctx, CHAVE_3DES, 192, MBEDTLS_ENCRYPT); // 192 bits = 24 bytes
+  mbedtls_cipher_setkey(&ctx, CHAVE_3DES, 192, MBEDTLS_ENCRYPT);
   mbedtls_cipher_set_padding_mode(&ctx, MBEDTLS_PADDING_PKCS7);
 
   size_t tamSaida = 0;
-  mbedtls_cipher_crypt(&ctx, iv, 8, entrada, tamEntrada, saida, &tamSaida);
+  int ret = mbedtls_cipher_crypt(&ctx, iv, 8, entrada, tamEntrada, saida, &tamSaida);
+  if (ret != 0) {
+    Serial.printf("✗ Erro mbedtls_cipher_crypt (cifrar): -0x%04x\n", -ret);
+  }
 
   mbedtls_cipher_free(&ctx);
-  return tamSaida;
+  return (int)tamSaida;
 }
 
 static int des3_decifrar(const uint8_t* entrada, size_t tamEntrada, const uint8_t iv[8], uint8_t* saida) {
@@ -130,12 +137,21 @@ static int des3_decifrar(const uint8_t* entrada, size_t tamEntrada, const uint8_
   mbedtls_cipher_init(&ctx);
 
   const mbedtls_cipher_info_t* info = mbedtls_cipher_info_from_type(MBEDTLS_CIPHER_DES_EDE3_CBC);
+  if (info == NULL) {
+    Serial.println("✗ MBEDTLS_CIPHER_DES_EDE3_CBC indisponível neste build!");
+    mbedtls_cipher_free(&ctx);
+    return 0;
+  }
+
   mbedtls_cipher_setup(&ctx, info);
   mbedtls_cipher_setkey(&ctx, CHAVE_3DES, 192, MBEDTLS_DECRYPT);
   mbedtls_cipher_set_padding_mode(&ctx, MBEDTLS_PADDING_PKCS7);
 
   size_t tamSaida = 0;
-  mbedtls_cipher_crypt(&ctx, iv, 8, entrada, tamEntrada, saida, &tamSaida);
+  int ret = mbedtls_cipher_crypt(&ctx, iv, 8, entrada, tamEntrada, saida, &tamSaida);
+  if (ret != 0) {
+    Serial.printf("✗ Erro mbedtls_cipher_crypt (decifrar): -0x%04x\n", -ret);
+  }
 
   mbedtls_cipher_free(&ctx);
   return (int)tamSaida;
@@ -204,7 +220,7 @@ static bool desempacotarEDecifrar(const String& envelopeJson, char* saidaJsonPla
   return true;
 }
 
-// =====================================================================
+// ===================================================================================
 
 void IRAM_ATTR echoISR() {
   unsigned long now = micros();
@@ -335,7 +351,7 @@ void mqttCallback(char* topic, byte* payload, unsigned int length) {
       if (novoLimite > 0) {
         temperaturaLigarC = novoLimite;
         temperaturaDesligarC = novoLimite - MARGEM_HISTERESE_C;
-        Serial.printf("Limite de temperatura da ventoinha atualizado: liga=%.1f°C, desliga=%.1f°C\n",
+        Serial.printf("✓ Limite de temperatura da ventoinha atualizado: liga=%.1f°C, desliga=%.1f°C\n",
                       temperaturaLigarC, temperaturaDesligarC);
       }
     }
@@ -390,24 +406,15 @@ void setupWiFi() {
 void reconnectMQTT() {
   while (!client.connected()) {
     Serial.println("A tentar conectar ao broker MQTT...");
-
-    // Encriptar as mensagens de status
-    String offlineMsg = cifrarEEmpacotar("OFFLINE");
-    String onlineMsg = cifrarEEmpacotar("ONLINE");
-
-    // Usar LWT com payload encriptado
-    if (client.connect(MQTT_CLIENT_ID, topicStatus, 1, true, offlineMsg.c_str())) {
+    if (client.connect(MQTT_CLIENT_ID, topicStatus, 1, true, "OFFLINE")) {
       Serial.println("MQTT conectado!");
-
-      // Publicar ONLINE com encriptação
-      client.publish(topicStatus, onlineMsg.c_str(), true);
+      client.publish(topicStatus, "ONLINE", true);
       client.subscribe(topicConfig);
       client.subscribe(topicLimiteTemperatura); // NOVO
       registrarPeerNode2Dinamico();
     } else {
       Serial.print("Falhou, rc=");
       Serial.println(client.state());
-      Serial.println("Nova tentativa em 5s...");
       delay(5000);
     }
   }
@@ -447,16 +454,16 @@ void setup() {
 
   client.setServer(MQTT_BROKER, MQTT_PORT);
   client.setCallback(mqttCallback);
-  client.setBufferSize(1024); // envelope cifrado é maior que o payload original (default é 256)
+  client.setBufferSize(1024); // envelope cifrado é maior que o payload original
 
-  const mbedtls_cipher_info_t* teste = mbedtls_cipher_info_from_type(MBEDTLS_CIPHER_DES_EDE3_CBC);
-      if (teste == NULL) {
-        Serial.println("✗ MBEDTLS_DES_C não está compilado neste build do core — 3DES indisponível!");
-      } else {
-        Serial.println("✓ 3DES disponível no mbedtls deste core.");
-      }
+  Serial.println("GATEWAY PRONTO E MONITORIZADO");
 
-  Serial.println("GATEWAY PRONTO");
+  // Verificação de disponibilidade do 3DES neste build do core
+  if (mbedtls_cipher_info_from_type(MBEDTLS_CIPHER_DES_EDE3_CBC) == NULL) {
+    Serial.println("✗✗✗ AVISO: 3DES indisponível neste build do mbedtls! ✗✗✗");
+  } else {
+    Serial.println("✓ 3DES disponível — cifra ativa.");
+  }
 }
 
 void loop() {
