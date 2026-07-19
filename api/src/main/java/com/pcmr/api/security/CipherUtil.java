@@ -1,8 +1,6 @@
 package com.pcmr.api.security;
 
 import javax.crypto.Cipher;
-import javax.crypto.SecretKeyFactory;
-import javax.crypto.spec.DESedeKeySpec;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 import java.security.SecureRandom;
@@ -16,11 +14,13 @@ public class CipherUtil {
 
     private final SecretKeySpec chave;
 
-    public CipherUtil(String chaveBase64) throws Exception {
+    public CipherUtil(String chaveBase64) {
         byte[] chaveBytes = Base64.getDecoder().decode(chaveBase64);
-        DESedeKeySpec keySpec = new DESedeKeySpec(chaveBytes);
-        SecretKeyFactory factory = SecretKeyFactory.getInstance(ALGORITMO);
-        this.chave = new SecretKeySpec(factory.generateSecret(keySpec).getEncoded(), ALGORITMO);
+        
+        // CORREÇÃO: Usamos os bytes brutos diretamente no SecretKeySpec.
+        // Isto impede o Java de alterar os bits de paridade, garantindo 
+        // compatibilidade total com o mbedtls do ESP32.
+        this.chave = new SecretKeySpec(chaveBytes, ALGORITMO);
     }
 
     public byte[] gerarIv() {
