@@ -57,21 +57,21 @@ services:
       - pcmr-network
     restart: unless-stopped
 
-  paciente-app:
-    build:
-      context: ./paciente-app
-      dockerfile: Dockerfile
-    container_name: paciente-app-container
-    ports:
-      - "3002:80"
-    expose:
-      - "80"
-    depends_on:
-      - spring-app
-      - mqtt5
-    networks:
-      - pcmr-network
-    restart: unless-stopped
+  #*paciente-app:
+    #build:
+      #context: ./paciente-app
+     # dockerfile: Dockerfile
+    #container_name: paciente-app-container
+    #ports:
+     # - "3002:80"
+    #expose:
+     # - "80"
+    #depends_on:
+      #- spring-app
+     # - mqtt5
+    #networks:
+     # - pcmr-network
+    #restart: unless-stopped
 
   mqtt5:
     image: eclipse-mosquitto:2

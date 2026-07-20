@@ -99,37 +99,6 @@ public class SensorController {
         ));
     }
 
-    @GetMapping
-    public ResponseEntity<List<SensorDTO>> listar() {
-        List<SensorDTO> dtos = sensorRepository.findAll().stream()
-                .map(s -> new SensorDTO(s.getIdSensor(), s.getNome(), s.getLocalizacao(), s.getEstado()))
-                .collect(Collectors.toList());
-        return ResponseEntity.ok(dtos);
-    }
-
-    @PostMapping
-    public ResponseEntity<?> criar(@RequestBody NovoSensorRequestDTO req) {
-        if (req.getNome() == null || req.getNome().isBlank()) {
-            return ResponseEntity.badRequest().body(Map.of("erro", "Nome do sensor é obrigatório"));
-        }
-
-        if (sensorRepository.findByNome(req.getNome()).isPresent()) {
-            return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of(
-                    "erro", "Já existe um sensor com este nome/identificador"
-            ));
-        }
-
-        Sensor novo = new Sensor();
-        novo.setNome(req.getNome());
-        novo.setLocalizacao(req.getLocalizacao());
-        novo.setEstado("ATIVO");
-
-        Sensor guardado = sensorRepository.save(novo);
-        return ResponseEntity.ok(new SensorDTO(
-                guardado.getIdSensor(), guardado.getNome(), guardado.getLocalizacao(), guardado.getEstado()
-        ));
-    }
-
     @GetMapping("/{deviceId}/ultima-leitura")
     public ResponseEntity<?> ultimaLeitura(@PathVariable String deviceId) {
         LeituraSensorService.LeituraAtual leitura = leituraSensorService.getUltimaLeitura(deviceId);
@@ -145,8 +114,6 @@ public class SensorController {
 
     @GetMapping("/{deviceId}/ping")
     public ResponseEntity<EstadoSensorDTO> ping(@PathVariable String deviceId) {
-        // Tenta primeiro via leituras estruturadas (caso do wearable),
-        // e cai para o registo genérico de atividade nos restantes nós.
         LeituraSensorService.LeituraAtual leitura = leituraSensorService.getUltimaLeitura(deviceId);
         OffsetDateTime ultimaOcorrencia = (leitura != null)
                 ? leitura.getAtualizadoEm()
