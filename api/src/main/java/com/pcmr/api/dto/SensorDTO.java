@@ -6,6 +6,7 @@ public class SensorDTO {
     private String nomeExibicao;
     private String localizacao;
     private String estado;
+    private String tipoMetrica;
 
     public SensorDTO() {}
 

@@ -26,11 +26,23 @@ public class MqttMessageHandler {
     private final AlertaMonitorService alertaMonitorService;
     private final MqttSecurityService mqttSecurityService;
     private final AlertaQuedaBuzzerService alertaQuedaBuzzerService;
+    private final NotificationService notificationService;
 
     private static final String DEVICE_ID_NODE1 = "node1-presenca";
     private static final String DEVICE_ID_NODE3 = "esp32-pico-fingerprint";
 
     private final ObjectMapper objectMapper = new ObjectMapper();
+
+    // Limites usados pela avaliação local de notificações (novo, vindo do documento 2)
+    private static final int BPM_WARNING_MIN = 50;
+    private static final int BPM_WARNING_MAX = 110;
+    private static final int BPM_CRITICAL_MIN = 40;
+    private static final int BPM_CRITICAL_MAX = 130;
+
+    private static final double TEMP_WARNING_MIN = 35.5;
+    private static final double TEMP_WARNING_MAX = 38.0;
+    private static final double TEMP_CRITICAL_MIN = 34.5;
+    private static final double TEMP_CRITICAL_MAX = 39.5;
 
     @Autowired
     public MqttMessageHandler(LeituraSensorService leituraSensorService,
@@ -39,7 +51,8 @@ public class MqttMessageHandler {
                               AtividadeSensorService atividadeSensorService,
                               AlertaMonitorService alertaMonitorService,
                               MqttSecurityService mqttSecurityService,
-                              AlertaQuedaBuzzerService alertaQuedaBuzzerService) {
+                              AlertaQuedaBuzzerService alertaQuedaBuzzerService,
+                              NotificationService notificationService) {
         this.leituraSensorService = leituraSensorService;
         this.biometriaService = biometriaService;
         this.presencaService = presencaService;
@@ -47,6 +60,7 @@ public class MqttMessageHandler {
         this.alertaMonitorService = alertaMonitorService;
         this.mqttSecurityService = mqttSecurityService;
         this.alertaQuedaBuzzerService = alertaQuedaBuzzerService;
+        this.notificationService = notificationService;
     }
 
     @ServiceActivator(inputChannel = "mqttInputChannel")
@@ -58,8 +72,19 @@ public class MqttMessageHandler {
             return;
         }
 
-        if (topic.contains("/status")) {
-            System.out.println("ℹ Mensagem de status ignorada (não processada): " + topic);
+        // ================= STATUS MONITORING (novo, vindo do documento 2) =================
+        if (topic.endsWith("/status")) {
+            String deviceId = extrairDeviceId(topic);
+            if (deviceId != null) {
+                System.out.println("⚠️ [MQTT STATUS] O dispositivo '" + deviceId + "' reportou estado: " + payloadBruto);
+
+                // Regista atividade também pelos avisos de status MQTT
+                atividadeSensorService.registarAtividade(deviceId);
+
+                if ("OFFLINE".equalsIgnoreCase(payloadBruto)) {
+                    leituraSensorService.pararDiagnostico(deviceId);
+                }
+            }
             return;
         }
 
@@ -135,6 +160,19 @@ public class MqttMessageHandler {
             String deviceId = extrairDeviceId(topic);
 
             if (deviceId != null) {
+
+                // Regista atividade do wearable imediatamente
+                atividadeSensorService.registarAtividade(deviceId);
+
+                // Gate de diagnóstico (novo, vindo do documento 2)
+                if (!leituraSensorService.isDiagnosticoAtivo(deviceId)) {
+                    System.out.println(
+                            "ℹ️ [DIAGNÓSTICO INATIVO] Dados de '" + deviceId
+                                    + "' ignorados. Ative o diagnóstico clicando em 'Sim' no ecrã."
+                    );
+                    return;
+                }
+
                 SensorReadingDTO leitura =
                         objectMapper.readValue(payload, SensorReadingDTO.class);
 
@@ -157,9 +195,12 @@ public class MqttMessageHandler {
                         wrapper.bpm
                 );
 
-                // NOVO: aciona/desliga o buzzer do Nó 3 consoante o estado de queda
+                // Aciona/desliga o buzzer do Nó 3 consoante o estado de queda
                 // reportado pelo wearable, independentemente da app estar aberta.
                 alertaQuedaBuzzerService.notificarQueda(deviceId, wrapper.alertaQuedaAtivo);
+
+                // Notificações in-app (novo, vindo do documento 2)
+                avaliarLeitura(deviceId, leitura);
             }
 
         } catch (Exception e) {
@@ -175,6 +216,7 @@ public class MqttMessageHandler {
         return partes.length >= 2 ? partes[1] : null;
     }
 
+    // Novo, vindo do documento 2: gera notificações in-app com base em limites de bpm/temperatura
     private void avaliarLeitura(String deviceId, SensorReadingDTO leitura) {
         int bpm = leitura.getBpm();
         double temperatura = leitura.getTemperatura();
