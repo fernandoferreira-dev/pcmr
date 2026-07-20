@@ -138,22 +138,6 @@ export default function DiagnosticoLiveView({
         setLeitura(data);
         setErro(null);
 
-        // QUEDA
-        if (data.alertaQuedaAtivo) {
-          setAlertaQueda(true);
-          if (!alertaQuedaEnviado.current) {
-            registarAlertaNoServidor(
-            'QUEDA_DETETADA',
-            data.magnitudeG,
-            `Queda detetada — magnitude de impacto: ${data.magnitudeG.toFixed(2)}G`
-            );
-            alertaQuedaEnviado.current = true;
-          }
-        } else {
-          setAlertaQueda(false);
-          alertaQuedaEnviado.current = false;
-        }
-
         // Apenas processa os alertas lógicos após os 10s de calibração inicial
         if (calibrado) {
           
@@ -290,22 +274,7 @@ export default function DiagnosticoLiveView({
           </div>
         )}
 
-        {alertaQueda && (
-        <div className="mb-6 bg-red-600 text-white rounded-2xl px-5 py-4 flex items-center gap-3 shadow-lg animate-pulse">
-          <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="shrink-0">
-            <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z" />
-            <line x1="12" x2="12" y1="9" y2="13" />
-            <line x1="12" x2="12.01" y1="17" y2="17" />
-            </svg>
-            <div>
-              <p className="font-bold text-base">QUEDA DETETADA</p>
-              <p className="text-sm text-red-100">
-                {leitura ? `Magnitude registada: ${leitura.magnitudeG.toFixed(2)}G` : "A verificar dados do sensor..."}
-              </p>
-          </div>
-        </div>
-      )}
-
+        {/* CARTÕES DOS BIOMÉTRICOS INTEGRADOS COM SISTEMA DE ALERTAS */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
           <CartaoSensor
             titulo="Temperatura"

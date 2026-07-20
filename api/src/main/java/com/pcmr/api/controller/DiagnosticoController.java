@@ -47,7 +47,12 @@ public class DiagnosticoController {
     }
 
     @GetMapping
-    public List<DiagnosticoResponseDTO> listarTodos() {
+    public List<DiagnosticoResponseDTO> listarTodos(@RequestParam(required = false) Long idPaciente) {
+        if (idPaciente != null) {
+            return mapearParaDTO(
+                    diagnosticoRepository.findByConsulta_Paciente_IdPessoaOrderByGdhDiagnosticoDesc(idPaciente)
+            );
+        }
         return mapearParaDTO(diagnosticoRepository.findAll());
     }
 
@@ -56,9 +61,9 @@ public class DiagnosticoController {
         List<DiagnosticoResponseDTO> diagnosticos = mapearParaDTO(diagnosticoRepository.findAll());
 
         return Map.of(
-            "totalDiagnosticos", diagnosticoRepository.count(),
-            "totalPacientes", pessoaRepository.countPacientes(),
-            "diagnosticos", diagnosticos
+                "totalDiagnosticos", diagnosticoRepository.count(),
+                "totalPacientes", pessoaRepository.countPacientes(),
+                "diagnosticos", diagnosticos
         );
     }
 
@@ -66,16 +71,16 @@ public class DiagnosticoController {
     public ResponseEntity<?> historico(@PathVariable Long id) {
         if (diagnosticoRepository.findById(id).isEmpty()) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of(
-                "erro", "Diagnóstico não encontrado"
+                    "erro", "Diagnóstico não encontrado"
             ));
         }
 
         List<HistoricoSensor> pontos = historicoSensorRepository
-            .findByDiagnosticoIdDiagnosticoOrderByGdhLeituraAsc(id);
+                .findByDiagnosticoIdDiagnosticoOrderByGdhLeituraAsc(id);
 
         List<HistoricoSensorDTO> dto = pontos.stream()
-            .map(p -> new HistoricoSensorDTO(p.getGdhLeitura(), p.getTemperatura(), p.getBpm(), p.getMagnitudeG()))
-            .collect(Collectors.toList());
+                .map(p -> new HistoricoSensorDTO(p.getGdhLeitura(), p.getTemperatura(), p.getBpm(), p.getMagnitudeG()))
+                .collect(Collectors.toList());
 
         return ResponseEntity.ok(dto);
     }

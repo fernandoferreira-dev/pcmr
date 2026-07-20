@@ -26,23 +26,11 @@ public class MqttMessageHandler {
     private final AlertaMonitorService alertaMonitorService;
     private final MqttSecurityService mqttSecurityService;
     private final AlertaQuedaBuzzerService alertaQuedaBuzzerService;
-    private final NotificationService notificationService;
 
     private static final String DEVICE_ID_NODE1 = "node1-presenca";
     private static final String DEVICE_ID_NODE3 = "esp32-pico-fingerprint";
 
     private final ObjectMapper objectMapper = new ObjectMapper();
-
-    // Limites de segurança para avaliação de leituras
-    private static final int BPM_WARNING_MIN = 50;
-    private static final int BPM_WARNING_MAX = 110;
-    private static final int BPM_CRITICAL_MIN = 40;
-    private static final int BPM_CRITICAL_MAX = 130;
-
-    private static final double TEMP_WARNING_MIN = 35.5;
-    private static final double TEMP_WARNING_MAX = 38.0;
-    private static final double TEMP_CRITICAL_MIN = 34.5;
-    private static final double TEMP_CRITICAL_MAX = 39.5;
 
     @Autowired
     public MqttMessageHandler(LeituraSensorService leituraSensorService,
@@ -51,8 +39,7 @@ public class MqttMessageHandler {
                               AtividadeSensorService atividadeSensorService,
                               AlertaMonitorService alertaMonitorService,
                               MqttSecurityService mqttSecurityService,
-                              AlertaQuedaBuzzerService alertaQuedaBuzzerService,
-                              NotificationService notificationService) {
+                              AlertaQuedaBuzzerService alertaQuedaBuzzerService) {
         this.leituraSensorService = leituraSensorService;
         this.biometriaService = biometriaService;
         this.presencaService = presencaService;
@@ -60,7 +47,6 @@ public class MqttMessageHandler {
         this.alertaMonitorService = alertaMonitorService;
         this.mqttSecurityService = mqttSecurityService;
         this.alertaQuedaBuzzerService = alertaQuedaBuzzerService;
-        this.notificationService = notificationService;
     }
 
     @ServiceActivator(inputChannel = "mqttInputChannel")
@@ -72,19 +58,8 @@ public class MqttMessageHandler {
             return;
         }
 
-        // ================= STATUS MONITORING =================
-        if (topic.endsWith("/status")) {
-            String deviceId = extrairDeviceId(topic);
-            if (deviceId != null) {
-                System.out.println("⚠️ [MQTT STATUS] O dispositivo '" + deviceId + "' reportou estado: " + payloadBruto);
-                
-                // Regista atividade também pelos avisos de status MQTT
-                atividadeSensorService.registarAtividade(deviceId);
-
-                if ("OFFLINE".equalsIgnoreCase(payloadBruto)) {
-                    leituraSensorService.pararDiagnostico(deviceId);
-                }
-            }
+        if (topic.contains("/status")) {
+            System.out.println("ℹ Mensagem de status ignorada (não processada): " + topic);
             return;
         }
 
@@ -102,7 +77,7 @@ public class MqttMessageHandler {
         }
 
         try {
-            // ================= NODE 1: PRESENÇA =================
+            // Nó de presença
             if (topic.equals("sensors/node1/presenca")) {
                 atividadeSensorService.registarAtividade(DEVICE_ID_NODE1);
 
@@ -118,7 +93,7 @@ public class MqttMessageHandler {
                 return;
             }
 
-            // ================= BIOMETRIA (LOGIN) =================
+            // Login biométrico
             if (topic.equals("sensor/login")) {
                 atividadeSensorService.registarAtividade(DEVICE_ID_NODE3);
 
@@ -132,7 +107,7 @@ public class MqttMessageHandler {
                 return;
             }
 
-            // ================= BIOMETRIA (ENROLL) =================
+            // Registo biométrico
             if (topic.equals("sensor/enroll")) {
                 atividadeSensorService.registarAtividade(DEVICE_ID_NODE3);
 
@@ -156,19 +131,10 @@ public class MqttMessageHandler {
                 return;
             }
 
-            // ================= WEARABLE DATA (DIAGNÓSTICO OBRIGATÓRIO) =================
+            // Leituras dos sensores
             String deviceId = extrairDeviceId(topic);
 
             if (deviceId != null) {
-                // 1. Regista a atividade do wearable imediatamente (Garante que o Ping funciona)
-                atividadeSensorService.registarAtividade(deviceId);
-
-                // 2. Valida se o diagnóstico está ativo no LeituraSensorService para este ID
-                if (!leituraSensorService.isDiagnosticoAtivo(deviceId)) {
-                    System.out.println("ℹ️ [DIAGNÓSTICO INATIVO] Dados de '" + deviceId + "' ignorados. Ative o diagnóstico clicando em 'Sim' no ecrã.");
-                    return;
-                }
-
                 SensorReadingDTO leitura =
                         objectMapper.readValue(payload, SensorReadingDTO.class);
 
@@ -181,24 +147,19 @@ public class MqttMessageHandler {
                 wrapper.fallState = leitura.getFallState();
                 wrapper.alertaQuedaAtivo = leitura.isAlertaQuedaAtivo();
 
-                // Grava o ponto de leitura na memória
                 leituraSensorService.registarLeitura(deviceId, wrapper);
 
-                // Regista a atividade do nó central que retransmitiu os dados
                 atividadeSensorService.registarAtividade(DEVICE_ID_NODE1);
 
-                // Avalia limites legados/monitorização interna
                 alertaMonitorService.avaliarLimites(
                         deviceId,
                         wrapper.temperatura,
                         wrapper.bpm
                 );
 
-                // Aciona/desliga o buzzer do Nó 3 consoante o estado de queda reportado
+                // NOVO: aciona/desliga o buzzer do Nó 3 consoante o estado de queda
+                // reportado pelo wearable, independentemente da app estar aberta.
                 alertaQuedaBuzzerService.notificarQueda(deviceId, wrapper.alertaQuedaAtivo);
-
-                // Dispara notificações detalhadas baseadas nos limiares críticos/avisos
-                avaliarLeitura(deviceId, leitura);
             }
 
         } catch (Exception e) {

@@ -78,35 +78,36 @@ public class DiagnosticoExportController {
             document.add(new Paragraph("\n"));
             
             if (!historico.isEmpty()) {
-                var inicio = historico.get(0).getGdhLeitura().toLocalDateTime();
-                var fim = historico.get(historico.size() - 1).getGdhLeitura().toLocalDateTime();
+                var inicio = historico.get(0).getGdhLeitura().toLocalDateTime().minusSeconds(1);
+                var fim = historico.get(historico.size() - 1).getGdhLeitura().toLocalDateTime().plusSeconds(1);
 
                 List<AlertaClinico> alertas = alertaClinicoRepository
                         .findBySensor_IdSensorAndDataHoraBetweenOrderByDataHoraAsc(
                                 diag.getSensor().getIdSensor(), inicio, fim
                         );
 
-                if (!alertas.isEmpty()) {
+                if (alertas != null && !alertas.isEmpty()) {
                     document.add(new Paragraph("⚠ Alertas Registados Durante a Consulta:", subFont));
                     DateTimeFormatter horaFormatter = DateTimeFormatter.ofPattern("HH:mm:ss");
 
                     for (AlertaClinico a : alertas) {
                         String linha = String.format(
-                                "[%s] %s — %s",
+                                "[%s] %s: %s",
                                 a.getDataHora().format(horaFormatter),
-                                a.getTipoAlerta(),
+                                a.getTipoAlerta() != null ? a.getTipoAlerta().replace("_", " ") : "ALERTA",
                                 a.getMensagem()
                         );
                         document.add(new Paragraph(linha, alertaFont));
                     }
                     document.add(new Paragraph("\n"));
+                } else {
+                    document.add(new Paragraph("Nenhum alerta crítico detetado nesta sessão.", normalFont));
+                    document.add(new Paragraph("\n"));
                 }
             }
 
             if (!historico.isEmpty()) {
-                document.add(new Paragraph("Evolução Cinética dos Sensores (Gráfico):", subFont));
-                document.add(new Paragraph("\n"));
-
+                document.add(new Paragraph("Evolução Cinética dos Sensores:", subFont));
                 DefaultCategoryDataset dataset = new DefaultCategoryDataset();
                 DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("HH:mm:ss");
 
@@ -126,10 +127,7 @@ public class DiagnosticoExportController {
                 ByteArrayOutputStream baos = new ByteArrayOutputStream();
                 javax.imageio.ImageIO.write(bufferedImage, "png", baos);
                 Image chartImage = Image.getInstance(baos.toByteArray());
-
                 document.add(chartImage);
-            } else {
-                document.add(new Paragraph("Não foram localizados pontos para construir o gráfico", normalFont));
             }
 
             document.close();
