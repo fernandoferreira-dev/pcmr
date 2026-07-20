@@ -15,15 +15,15 @@ import DadosEquipamentos from './dados_equipamentos'
 import { useBiometriaRegisto } from './hooks/useBiometria'
 import DiagnosticoRapidoModal from './DiagnosticoRapidoModal.tsx'
 import PresencaToast from './PresencaToast.tsx'
-
-const OverviewIcon = new URL("./assets/imagens/infographics.png", import.meta.url).href
-const DadosDiag = new URL("./assets/imagens/Patient-Profile-59.png", import.meta.url).href
-const comunicaicon = new URL("./assets/imagens/phone.png", import.meta.url).href
-const dadosequi = new URL("./assets/imagens/server.png", import.meta.url).href
-const cruzverde = new URL("./assets/imagens/Untitled design (1).png", import.meta.url).href
-const datapessoal = new URL("./assets/imagens/personal-information.png", import.meta.url).href
-const sair = new URL ("./assets/imagens/exit.png", import.meta.url).href
-const logo = new URL ("./assets/imagens/logosemback(1).png", import.meta.url).href
+import MensagemToast from './MensagemToast.tsx'
+import OverviewIcon from './assets/imagens/infographics.png'
+import DadosDiag from './assets/imagens/Patient-Profile-59.png'
+import comunicaicon from './assets/imagens/phone.png'
+import dadosequi from './assets/imagens/server.png'
+import cruzverde from './assets/imagens/Untitled design (1).png'
+import datapessoal from './assets/imagens/personal-information.png'
+import sair from './assets/imagens/exit (1).png'
+import logo from './assets/imagens/logosemback (1).png'
 
 type View = 'home' | 'dados_diagnostico' | 'comunicacao' | 'dados_equipamentos' | 'dados_pessoais'
 
@@ -347,6 +347,7 @@ export default function App({ userName, userId, tipo, onLogout }: PaginaInicialP
   return (
     <div className="h-screen w-screen bg-(--background) flex flex-col font-sans overflow-hidden relative">
       <PresencaToast />
+      <MensagemToast userId={userId} onAbrirMensagem={abrirComunicacaoComMensagem} />
       <div className="flex-1 flex p-4 gap-6 overflow-hidden">
 
         {/* Barra Lateral */}

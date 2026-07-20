@@ -8,18 +8,14 @@ import java.util.Base64;
 
 public class CipherUtil {
 
-    private static final String ALGORITMO = "DESede";
-    private static final String TRANSFORMACAO = "DESede/CBC/PKCS5Padding";
-    private static final int IV_TAMANHO_BYTES = 8; // tamanho de bloco DES/3DES
+    private static final String ALGORITMO = "AES";
+    private static final String TRANSFORMACAO = "AES/CBC/PKCS5Padding";
+    private static final int IV_TAMANHO_BYTES = 16; // tamanho de bloco AES
 
     private final SecretKeySpec chave;
 
-    public CipherUtil(String chaveBase64) {
+    public CipherUtil(String chaveBase64) throws Exception {
         byte[] chaveBytes = Base64.getDecoder().decode(chaveBase64);
-        
-        // CORREÇÃO: Usamos os bytes brutos diretamente no SecretKeySpec.
-        // Isto impede o Java de alterar os bits de paridade, garantindo 
-        // compatibilidade total com o mbedtls do ESP32.
         this.chave = new SecretKeySpec(chaveBytes, ALGORITMO);
     }
 
