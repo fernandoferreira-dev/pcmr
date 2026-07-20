@@ -68,68 +68,60 @@ public class DiagnosticoExportController {
             document.add(new Paragraph((obs == null || obs.isBlank()) ? "Nenhuma observação registada." : obs, normalFont));
             document.add(new Paragraph("\n"));
 
-            document.add(new Paragraph("Resumo das Métricas Obtidas (Médias Gerais):", subFont));
-            document.add(new Paragraph("• Temperatura Média: " + diag.getTemperatura() + " °C", normalFont));
+            document.add(new Paragraph("Resumo das Métricas Obtidas:", subFont));
+            document.add(new Paragraph("• Temperatura Média: " + String.format("%.1f", diag.getTemperatura()) + " °C", normalFont));
             document.add(new Paragraph("• Frequência Cardíaca Média: " + diag.getBpm() + " bpm", normalFont));
-            document.add(new Paragraph("• Magnitude de Aceleração Média: " + diag.getMagnitudeG() + " G", normalFont));
-            if (diag.getRelacaoCausaEfeito() != null) {
-                document.add(new Paragraph("• Eventos Notificados: " + diag.getRelacaoCausaEfeito(), normalFont));
-            }
             document.add(new Paragraph("\n"));
             
             if (!historico.isEmpty()) {
-                var inicio = historico.get(0).getGdhLeitura().toLocalDateTime();
-                var fim = historico.get(historico.size() - 1).getGdhLeitura().toLocalDateTime();
+                var inicio = historico.get(0).getGdhLeitura().toLocalDateTime().minusSeconds(1);
+                var fim = historico.get(historico.size() - 1).getGdhLeitura().toLocalDateTime().plusSeconds(1);
 
                 List<AlertaClinico> alertas = alertaClinicoRepository
                         .findBySensor_IdSensorAndDataHoraBetweenOrderByDataHoraAsc(
                                 diag.getSensor().getIdSensor(), inicio, fim
                         );
 
-                if (!alertas.isEmpty()) {
+                if (alertas != null && !alertas.isEmpty()) {
                     document.add(new Paragraph("⚠ Alertas Registados Durante a Consulta:", subFont));
                     DateTimeFormatter horaFormatter = DateTimeFormatter.ofPattern("HH:mm:ss");
 
                     for (AlertaClinico a : alertas) {
                         String linha = String.format(
-                                "[%s] %s — %s",
+                                "[%s] %s: %s",
                                 a.getDataHora().format(horaFormatter),
-                                a.getTipoAlerta(),
+                                a.getTipoAlerta() != null ? a.getTipoAlerta().replace("_", " ") : "ALERTA",
                                 a.getMensagem()
                         );
                         document.add(new Paragraph(linha, alertaFont));
                     }
                     document.add(new Paragraph("\n"));
+                } else {
+                    document.add(new Paragraph("Nenhum alerta crítico detetado nesta sessão.", normalFont));
+                    document.add(new Paragraph("\n"));
                 }
             }
 
             if (!historico.isEmpty()) {
-                document.add(new Paragraph("Evolução Cinética dos Sensores (Gráfico):", subFont));
-                document.add(new Paragraph("\n"));
-
+                document.add(new Paragraph("Evolução Cinética dos Sensores:", subFont));
                 DefaultCategoryDataset dataset = new DefaultCategoryDataset();
                 DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("HH:mm:ss");
 
                 for (HistoricoSensor h : historico) {
                     String horaStr = h.getGdhLeitura().format(timeFormatter);
                     dataset.addValue(h.getBpm(), "BPM", horaStr);
-                    dataset.addValue(h.getTemperatura(), "Temperatura (°C)", horaStr);
+                    dataset.addValue(h.getTemperatura(), "Temp (°C)", horaStr);
                 }
 
                 JFreeChart lineChart = ChartFactory.createLineChart(
-                        "Histórico Clínico Detalhado",
-                        "Tempo (HH:mm:ss)", "Escala Métrica",
-                        dataset, PlotOrientation.VERTICAL,
-                        true, true, false);
+                        "Histórico Clínico", "Tempo", "Valor",
+                        dataset, PlotOrientation.VERTICAL, true, true, false);
 
-                BufferedImage bufferedImage = lineChart.createBufferedImage(520, 320);
+                BufferedImage bufferedImage = lineChart.createBufferedImage(500, 300);
                 ByteArrayOutputStream baos = new ByteArrayOutputStream();
                 javax.imageio.ImageIO.write(bufferedImage, "png", baos);
                 Image chartImage = Image.getInstance(baos.toByteArray());
-
                 document.add(chartImage);
-            } else {
-                document.add(new Paragraph("Não foram localizados pontos para construir o gráfico", normalFont));
             }
 
             document.close();

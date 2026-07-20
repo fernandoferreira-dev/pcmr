@@ -31,9 +31,6 @@ public class MqttMessageHandler {
     @Autowired
     private AlertaMonitorService alertaMonitorService;
 
-    @Autowired
-    private MqttSecurityService mqttSecurityService;
-
     private static final String DEVICE_ID_NODE1 = "node1-presenca";
     private static final String DEVICE_ID_NODE3 = "esp32-pico-fingerprint";
 
@@ -68,23 +65,34 @@ public class MqttMessageHandler {
         }
 
         try {
-            // Nó de presença
+            // ================= STATUS MONITORING =================
+            if (topic.endsWith("/status")) {
+                String deviceId = extrairDeviceId(topic);
+                if (deviceId != null) {
+                    System.out.println("⚠️ [MQTT STATUS] O dispositivo '" + deviceId + "' reportou estado: " + payload);
+                    
+                    // Regista atividade também pelos avisos de status MQTT
+                    atividadeSensorService.registarAtividade(deviceId);
+
+                    if ("OFFLINE".equalsIgnoreCase(payload)) {
+                        leituraSensorService.pararDiagnostico(deviceId);
+                    }
+                }
+                return;
+            }
+
+            // ================= NODE 1: PRESENÇA =================
             if (topic.equals("sensors/node1/presenca")) {
                 atividadeSensorService.registarAtividade(DEVICE_ID_NODE1);
 
                 JsonNode json = objectMapper.readTree(payload);
                 boolean presente = json.get("presente").asBoolean();
-
                 presencaService.atualizarPresenca(presente);
-
-                System.out.println(
-                        (presente ? "✓ Paciente presente" : "✗ Paciente ausente")
-                                + " (Nó 1)"
-                );
+                System.out.println((presente ? "✓Paciente presente" : "✗ Paciente ausente") + " (Nó 1)");
                 return;
             }
 
-            // Login biométrico
+            // ================= BIOMETRIA (LOGIN) =================
             if (topic.equals("sensor/login")) {
                 atividadeSensorService.registarAtividade(DEVICE_ID_NODE3);
 
@@ -98,7 +106,7 @@ public class MqttMessageHandler {
                 return;
             }
 
-            // Registo biométrico
+            // ================= BIOMETRIA (ENROLL) =================
             if (topic.equals("sensor/enroll")) {
                 atividadeSensorService.registarAtividade(DEVICE_ID_NODE3);
 
@@ -122,8 +130,21 @@ public class MqttMessageHandler {
                 return;
             }
 
-            // Leituras dos sensores
+            // ================= WEARABLE DATA (DIAGNÓSTICO OBRIGATÓRIO) =================
             String deviceId = extrairDeviceId(topic);
+            if (deviceId != null) {
+                
+                // 1. REGISTA A ATIVIDADE DO WEARABLE IMEDIATAMENTE (Garante que o Ping funciona!)
+                atividadeSensorService.registarAtividade(deviceId);
+                
+                // 2. Valida se o diagnóstico está ativo no LeituraSensorService para este ID (ex: "wearable01")
+                if (!leituraSensorService.isDiagnosticoAtivo(deviceId)) {
+                    System.out.println("ℹ️ [DIAGNÓSTICO INATIVO] Dados de '" + deviceId + "' ignorados. Ative o diagnóstico clicando em 'Sim' no ecrã.");
+                    return; 
+                }
+
+                // Se o diagnóstico estiver ativo, desserializa e regista
+                SensorReadingDTO leitura = objectMapper.readValue(payload, SensorReadingDTO.class);
 
             if (deviceId != null) {
                 SensorReadingDTO leitura =
@@ -138,15 +159,14 @@ public class MqttMessageHandler {
                 wrapper.fallState = leitura.getFallState();
                 wrapper.alertaQuedaAtivo = leitura.isAlertaQuedaAtivo();
 
+                // Grava o ponto de leitura na memória
                 leituraSensorService.registarLeitura(deviceId, wrapper);
 
+                // Regista a atividade do nó central que retransmitiu os dados
                 atividadeSensorService.registarAtividade(DEVICE_ID_NODE1);
 
-                alertaMonitorService.avaliarLimites(
-                        deviceId,
-                        wrapper.temperatura,
-                        wrapper.bpm
-                );
+                // Dispara as avaliações de limites de segurança
+                alertaMonitorService.avaliarLimites(deviceId, wrapper.temperatura, wrapper.bpm);
             }
 
         } catch (Exception e) {

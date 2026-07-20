@@ -12,6 +12,7 @@ export default function DiagnosticoRapidoModal({
 }) {
   const [passo, setPasso] = useState<Passo>('confirmar')
   const [presente, setPresente] = useState<boolean | null>(null)
+  const [loading, setLoading] = useState<boolean>(false)
 
   useEffect(() => {
     const verificarPresenca = async () => {
@@ -30,6 +31,33 @@ export default function DiagnosticoRapidoModal({
     return () => clearInterval(interval)
   }, [])
 
+  // Função disparada ao clicar em "Sim"
+  const handleConfirmarInicio = async () => {
+    setLoading(true)
+    try {
+      // Abre a trava no backend para o nó de sinais vitais (ex: "node1")
+      const res = await fetch('/api/diagnosticos/wearable01/iniciar', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+  },
+})
+
+      if (res.ok) {
+        setPasso('ao_vivo')
+      } else {
+        console.error("Erro ao ativar o diagnóstico no backend")
+        // Como fallback, podes escolher avançar ou travar a UI
+        setPasso('ao_vivo') 
+      }
+    } catch (err) {
+      console.error("Erro de rede ao iniciar o diagnóstico:", err)
+      setPasso('ao_vivo')
+    } finally {
+      setLoading(false)
+    }
+  }
+
   if (passo === 'ao_vivo') {
     return <DiagnosticoLiveView onClose={onClose} idMedico={idMedico} />
   }
@@ -41,6 +69,7 @@ export default function DiagnosticoRapidoModal({
           onClick={onClose}
           className="absolute top-4 right-4 text-gray-400 hover:text-gray-700 text-xl cursor-pointer"
           title="Fechar"
+          disabled={loading}
         >
           ✕
         </button>
@@ -60,23 +89,24 @@ export default function DiagnosticoRapidoModal({
 
           {presente === true && (
             <p className="text-sm text-gray-600">
-              Tem a certeza que pretende iniciar uma consulta rápida?
+              {loading ? "A preparar o diagnóstico..." : "Tem a certeza que pretende iniciar uma consulta rápida?"}
             </p>
           )}
 
           <div className="flex gap-3">
             <button
               onClick={onClose}
-              className="flex-1 py-2 bg-gray-100 hover:bg-gray-200 rounded-full text-gray-700 font-medium transition-colors cursor-pointer"
+              disabled={loading}
+              className="flex-1 py-2 bg-gray-100 hover:bg-gray-200 rounded-full text-gray-700 font-medium transition-colors cursor-pointer disabled:opacity-50"
             >
               Não
             </button>
             <button
-              onClick={() => setPasso('ao_vivo')}
-              disabled={presente !== true}
+              onClick={handleConfirmarInicio}
+              disabled={presente !== true || loading}
               className="flex-1 py-2 bg-[#AAB99F] hover:bg-[#9CB39E] disabled:opacity-40 cursor-pointer disabled:cursor-not-allowed rounded-full text-white font-medium transition-colors shadow-sm"
             >
-              Sim
+              {loading ? "A carregar..." : "Sim"}
             </button>
           </div>
         </div>

@@ -14,6 +14,7 @@ import Comunicacao from './comunicacao'
 import DadosEquipamentos from './dados_equipamentos'
 import { useBiometriaRegisto } from './hooks/useBiometria'
 import DiagnosticoRapidoModal from './DiagnosticoRapidoModal'
+import PresencaToast from './PresencaToast'
 
 const OverviewIcon = new URL("./assets/imagens/infographics.png", import.meta.url).href
 const DadosDiag = new URL("./assets/imagens/Patient-Profile-59.png", import.meta.url).href
@@ -21,6 +22,8 @@ const comunicaicon = new URL("./assets/imagens/phone.png", import.meta.url).href
 const dadosequi = new URL("./assets/imagens/server.png", import.meta.url).href
 const cruzverde = new URL("./assets/imagens/Untitled design (1).png", import.meta.url).href
 const datapessoal = new URL("./assets/imagens/personal-information.png", import.meta.url).href
+const sair = new URL ("./assets/imagens/exit.png", import.meta.url).href
+const logo = new URL ("./assets/imagens/logosemback.png", import.meta.url).href
 
 type View = 'home' | 'dados_diagnostico' | 'comunicacao' | 'dados_equipamentos' | 'dados_pessoais'
 
@@ -330,7 +333,7 @@ export default function App({ userName, userId, tipo, onLogout }: PaginaInicialP
   else if (view === 'comunicacao') content = (
     <Comunicacao userId={userId} idMensagemInicial={mensagemParaAbrir} />
   )
-  else if (view === 'dados_equipamentos' && !esMedico) content = <DadosEquipamentos userId={userId} />
+  else if (view === 'dados_equipamentos' && !esMedico) content = <DadosEquipamentos userId={userId}/>
   else if (view === 'dados_pessoais') content = <DadosPessoais userId={userId} />
   else content = (
     <OverviewDashboard
@@ -343,13 +346,22 @@ export default function App({ userName, userId, tipo, onLogout }: PaginaInicialP
 
   return (
     <div className="h-screen w-screen bg-(--background) flex flex-col font-sans overflow-hidden relative">
+      <PresencaToast />
       <div className="flex-1 flex p-4 gap-6 overflow-hidden">
 
         {/* Barra Lateral */}
         <aside className="w-72 h-full bg-[#AAB99F] rounded-4xl p-6 shadow-md flex flex-col">
-          <div className="flex items-center gap-3 mb-10 mt-2">
-            <div className="h-10 w-10 bg-red-600 rounded-sm shadow-sm" />
-            <div className="text-2xl font-semibold text-gray-800 tracking-wide">MedyCist</div>
+          
+          {/*LOGO*/}
+          <div className="flex flex-col items-center justify-center gap-3 mb-8 mt-4">
+            <img 
+              src={logo} 
+              alt="Logo MedyCist" 
+              className="h-20 w-auto object-contain drop-shadow-md" 
+            />
+            <div className="text-2xl font-bold text-gray-800 tracking-wide">
+              MedyCist
+            </div>
           </div>
 
           <nav className="flex flex-col gap-2 overflow-y-auto">
@@ -400,7 +412,11 @@ export default function App({ userName, userId, tipo, onLogout }: PaginaInicialP
               <button onClick={onLogout} className="flex items-center gap-3 hover:opacity-80 transition-opacity cursor-pointer" title="Clique para fazer Logout">
                 <span className="text-xl text-gray-800 font-medium">Bem-vindo, {userName}! ({tipo})</span>
                 <div className="w-10 h-10 bg-gray-500 rounded-full flex items-center justify-center text-white shadow-sm">
-                  <div className="w-5 h-5 bg-white rounded-sm" />
+                  <img 
+                    src={sair} 
+                    alt="Ícone de Sair" 
+                    className="w-5 h-5 object-contain inverted-color-if-needed" 
+                  />
                 </div>
               </button>
             </div>

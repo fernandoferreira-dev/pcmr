@@ -15,9 +15,11 @@ interface Mensagem {
   corpo: string | null
   dataEnvio: string
   lida: boolean
+  guardada: boolean
 }
 
 type Vista = 'recebidas' | 'enviadas'
+type FiltroEstado = 'todas' | 'lidas' | 'nao_lidas' | 'guardadas'
 
 function formatarDataHora(iso: string): string {
   const data = new Date(iso)
@@ -40,13 +42,13 @@ export default function Comunicacao({
   const [vista, setVista] = useState<Vista>('recebidas')
   const [mensagens, setMensagens] = useState<Mensagem[]>([])
   const [pesquisa, setPesquisa] = useState('')
+  const [filtroEstado, setFiltroEstado] = useState<FiltroEstado>('todas')
   const [erro, setErro] = useState<string | null>(null)
   const [mostrarNovaMensagem, setMostrarNovaMensagem] = useState(false)
   const [mensagemExpandida, setMensagemExpandida] = useState<number | null>(null)
+  const [aGuardarId, setAGuardarId] = useState<number | null>(null)
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
-  // Evita reabrir/re-marcar a mesma mensagem várias vezes se a lista
-  // recarregar por outro motivo (ex.: pesquisa) depois da abertura inicial.
   const idJaAbertoRef = useRef<number | null>(null)
 
   const carregarMensagens = useCallback(async (termo: string, vistaAtual: Vista) => {
@@ -124,6 +126,34 @@ export default function Comunicacao({
     }
   }
 
+  const alternarGuardada = async (idMensagem: number, e: React.MouseEvent) => {
+    e.stopPropagation()
+    setAGuardarId(idMensagem)
+
+    try {
+      const res = await fetch(`/api/mensagens/${idMensagem}/guardar?userId=${userId}`, {
+        method: 'PATCH',
+      })
+      if (res.ok) {
+        const atualizada: Mensagem = await res.json()
+        setMensagens((prev) =>
+          prev.map((m) => (m.idMensagem === idMensagem ? { ...m, guardada: atualizada.guardada } : m))
+        )
+      }
+    } catch {
+      // falha silenciosa
+    } finally {
+      setAGuardarId(null)
+    }
+  }
+
+  const mensagensFiltradas = mensagens.filter((m) => {
+    if (filtroEstado === 'lidas') return m.lida
+    if (filtroEstado === 'nao_lidas') return !m.lida
+    if (filtroEstado === 'guardadas') return m.guardada
+    return true
+  })
+
   return (
     <div className="relative flex flex-col w-full h-full p-6 bg-[#EBEBEB] rounded-4xl shadow-inner">
       {/* Alternador Recebidas / Enviadas */}
@@ -150,22 +180,35 @@ export default function Comunicacao({
         </button>
       </div>
 
-      {/* Pesquisa */}
-      <div className="relative mb-4 shrink-0">
-        <svg
-          xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"
-          fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
-          className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"
+      {/* Pesquisa e Filtro de Estado */}
+      <div className="flex flex-col sm:flex-row gap-4 mb-4 shrink-0">
+        <div className="relative flex-1">
+          <svg
+            xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"
+            fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+            className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"
+          >
+            <circle cx="11" cy="11" r="8" />
+            <path d="m21 21-4.3-4.3" />
+          </svg>
+          <input
+            value={pesquisa}
+            onChange={(e) => setPesquisa(e.target.value)}
+            placeholder={vista === 'recebidas' ? 'Pesquisar por remetente...' : 'Pesquisar por destinatário...'}
+            className="w-full pl-11 pr-4 py-3 bg-white rounded-full border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-[#AAB99F] cursor-text"
+          />
+        </div>
+
+        <select
+          value={filtroEstado}
+          onChange={(e) => setFiltroEstado(e.target.value as FiltroEstado)}
+          className="px-4 py-3 bg-white rounded-full border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-[#AAB99F] cursor-pointer text-gray-600 w-full sm:w-auto"
         >
-          <circle cx="11" cy="11" r="8" />
-          <path d="m21 21-4.3-4.3" />
-        </svg>
-        <input
-          value={pesquisa}
-          onChange={(e) => setPesquisa(e.target.value)}
-          placeholder={vista === 'recebidas' ? 'Pesquisar por remetente...' : 'Pesquisar por destinatário...'}
-          className="w-full pl-11 pr-4 py-3 bg-white rounded-full border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-[#AAB99F] cursor-text"
-        />
+          <option value="todas">Todas as Mensagens</option>
+          <option value="lidas">Apenas Lidas</option>
+          <option value="nao_lidas">Apenas Não Lidas</option>
+          <option value="guardadas">Guardadas</option>
+        </select>
       </div>
 
       {erro && (
@@ -176,13 +219,15 @@ export default function Comunicacao({
 
       {/* Lista de mensagens */}
       <div className="flex-1 overflow-y-auto flex flex-col gap-4 pr-2">
-        {mensagens.length === 0 && !erro && (
+        {mensagensFiltradas.length === 0 && !erro && (
           <div className="flex-1 flex items-center justify-center text-sm text-gray-400">
-            {vista === 'recebidas' ? 'Sem mensagens recebidas.' : 'Sem mensagens enviadas.'}
+            {mensagens.length === 0
+              ? (vista === 'recebidas' ? 'Sem mensagens recebidas.' : 'Sem mensagens enviadas.')
+              : 'Nenhuma mensagem corresponde aos filtros selecionados.'}
           </div>
         )}
 
-        {mensagens.map((m) => {
+        {mensagensFiltradas.map((m) => {
           const nomeContacto = vista === 'recebidas' ? m.nomeRemetente : m.nomeDestinatario
           const rotuloContacto = vista === 'recebidas' ? 'De' : 'Para'
 
@@ -202,6 +247,15 @@ export default function Comunicacao({
                   <span className="font-bold text-gray-800">
                     {rotuloContacto}: {nomeContacto}
                   </span>
+                  {m.guardada && (
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+                      fill="currentColor" className="text-white/80"
+                    >
+                      <title>Mensagem guardada</title>
+                      <path d="M6 2a2 2 0 0 0-2 2v18l8-4 8 4V4a2 2 0 0 0-2-2H6z" />
+                    </svg>
+                  )}
                 </div>
                 <span className="text-sm text-gray-700">{formatarDataHora(m.dataEnvio)}</span>
               </div>
@@ -236,10 +290,50 @@ export default function Comunicacao({
               </div>
 
               {mensagemExpandida === m.idMensagem && (
-                <div className="px-4 pb-4 pt-1 border-t border-gray-200 text-sm text-gray-700 whitespace-pre-wrap">
-                  {m.corpo || 'Sem conteúdo.'}
-                </div>
-              )}
+  <div className="px-4 pb-4 pt-1 border-t border-gray-200 flex flex-col gap-3">
+    {(() => {
+      const temLink = m.corpo?.includes("LINK_ACAO:");
+      const partes = m.corpo?.split("LINK_ACAO:");
+      const texto = partes ? partes[0] : (m.corpo || "Sem conteúdo.");
+      const link = temLink ? partes![1].trim() : null;
+
+      return (
+        <>
+          <p className="text-sm text-gray-700 whitespace-pre-wrap">{texto}</p>
+          
+          {link && (
+            <button
+              onClick={async (e) => {
+                e.stopPropagation();
+                const res = await fetch(link);
+                if (res.ok) {
+                  alert("Registo aprovado com sucesso!");
+                  carregarMensagens(pesquisa, vista); 
+                } else {
+                  alert("Erro ao aprovar médico.");
+                }
+              }}
+              className="px-6 py-2 bg-[#AAB99F] text-white rounded-full text-sm font-bold hover:opacity-90 transition-opacity cursor-pointer"
+            >
+              Aceitar Médico
+            </button>
+          )}
+        </>
+      );
+    })()}
+
+    {/* Botão de Guardar já existente */}
+    <button
+      onClick={(e) => alternarGuardada(m.idMensagem, e)}
+      disabled={aGuardarId === m.idMensagem}
+      className={`self-start flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium ${
+        m.guardada ? 'bg-amber-100 text-amber-700' : 'bg-gray-100 text-gray-600'
+      }`}
+    >
+      {m.guardada ? 'Mensagem guardada' : 'Guardar mensagem'}
+    </button>
+  </div>
+)}
             </div>
           )
         })}

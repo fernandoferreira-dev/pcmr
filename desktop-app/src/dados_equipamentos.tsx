@@ -1,12 +1,13 @@
 import { useState, useEffect, useMemo } from "react";
-import { Settings, Search, RefreshCw } from "lucide-react";
+import { Settings, Search, RefreshCw, Pencil, Check, X } from "lucide-react";
 import ConfiguracoesModal from "./ConfiguracoesModal";
 
 interface SensorNo {
   idSensor: number;
-  nome: string; 
+  nome: string;
+  nomeExibicao: string | null;
   localizacao: string | null;
-  tipo?: string; 
+  tipo?: string;
   estado: string;
 }
 
@@ -25,7 +26,10 @@ export default function DadosEquipamentos({ userId }: { userId: number }) {
   const [estados, setEstados] = useState<Record<string, EstadoPing>>({});
   const [detalhes, setDetalhes] = useState<Record<string, EstadoSensor>>({});
 
-  // Carrega os sensores dinamicamente da API
+  const [idAEditar, setIdAEditar] = useState<number | null>(null);
+  const [nomeEditando, setNomeEditando] = useState("");
+  const [aGuardarNome, setAGuardarNome] = useState(false);
+
   const carregarSensores = async () => {
     try {
       const res = await fetch("/api/sensores");
@@ -33,7 +37,6 @@ export default function DadosEquipamentos({ userId }: { userId: number }) {
       const data: SensorNo[] = await res.json();
       setSensores(data);
     } catch {
-      // Falha silenciosa; lista fica vazia
     }
   };
 
@@ -42,9 +45,10 @@ export default function DadosEquipamentos({ userId }: { userId: number }) {
   }, []);
 
   const filteredData = useMemo(() => {
-    return sensores.filter((item) =>
-      item.nome.toLowerCase().includes(searchTerm.toLowerCase()),
-    );
+    return sensores.filter((item) => {
+      const nomeMostrado = item.nomeExibicao || item.nome;
+      return nomeMostrado.toLowerCase().includes(searchTerm.toLowerCase());
+    });
   }, [searchTerm, sensores]);
 
   const testarConexao = async (deviceId: string) => {
@@ -67,6 +71,44 @@ export default function DadosEquipamentos({ userId }: { userId: number }) {
 
   const testarTodos = () => {
     filteredData.forEach((item) => testarConexao(item.nome));
+  };
+
+  const iniciarEdicaoNome = (item: SensorNo, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setIdAEditar(item.idSensor);
+    setNomeEditando(item.nomeExibicao || "");
+  };
+
+  const cancelarEdicaoNome = (e?: React.MouseEvent) => {
+    e?.stopPropagation();
+    setIdAEditar(null);
+    setNomeEditando("");
+  };
+
+  const guardarNomeExibicao = async (idSensor: number, e?: React.MouseEvent) => {
+    e?.stopPropagation();
+    setAGuardarNome(true);
+
+    try {
+      const res = await fetch(`/api/sensores/${idSensor}/nome-exibicao`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ nomeExibicao: nomeEditando }),
+      });
+
+      if (res.ok) {
+        const atualizado: SensorNo = await res.json();
+        setSensores((prev) =>
+          prev.map((s) => (s.idSensor === idSensor ? { ...s, nomeExibicao: atualizado.nomeExibicao } : s))
+        );
+      }
+    } catch {
+      // falha silenciosa
+    } finally {
+      setAGuardarNome(false);
+      setIdAEditar(null);
+      setNomeEditando("");
+    }
   };
 
   const getStatusColor = (estado: EstadoPing) => {
@@ -145,7 +187,7 @@ export default function DadosEquipamentos({ userId }: { userId: number }) {
           <thead>
             <tr className="border-b border-gray-200 bg-gray-50">
               <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Estado</th>
-              <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Nome / Identificador</th>
+              <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Nome</th>
               <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Localização</th>
               <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Tipo</th>
               <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Última Leitura</th>
@@ -157,6 +199,9 @@ export default function DadosEquipamentos({ userId }: { userId: number }) {
             {filteredData.length > 0 ? (
               filteredData.map((item) => {
                 const estado = estados[item.nome] ?? "idle";
+                const aEditarEsteItem = idAEditar === item.idSensor;
+                const nomeMostrado = item.nomeExibicao || item.nome;
+
                 return (
                   <tr
                     key={item.idSensor}
@@ -172,7 +217,50 @@ export default function DadosEquipamentos({ userId }: { userId: number }) {
                         }
                       />
                     </td>
-                    <td className="px-4 py-3 text-sm text-gray-900">{item.nome}</td>
+                    <td className="px-4 py-3 text-sm text-gray-900">
+                      {aEditarEsteItem ? (
+                        <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+                          <input
+                            autoFocus
+                            value={nomeEditando}
+                            onChange={(e) => setNomeEditando(e.target.value)}
+                            placeholder={item.nome}
+                            className="border border-gray-300 rounded-lg px-2 py-1 text-sm w-40"
+                          />
+                          <button
+                            onClick={(e) => guardarNomeExibicao(item.idSensor, e)}
+                            disabled={aGuardarNome}
+                            className="text-green-600 hover:text-green-800 cursor-pointer disabled:opacity-50"
+                            title="Guardar"
+                          >
+                            <Check size={16} />
+                          </button>
+                          <button
+                            onClick={(e) => cancelarEdicaoNome(e)}
+                            className="text-gray-400 hover:text-red-500 cursor-pointer"
+                            title="Cancelar"
+                          >
+                            <X size={16} />
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-2 group">
+                          <div className="flex flex-col">
+                            <span className="font-medium">{nomeMostrado}</span>
+                            {item.nomeExibicao && (
+                              <span className="text-xs text-gray-400">{item.nome}</span>
+                            )}
+                          </div>
+                          <button
+                            onClick={(e) => iniciarEdicaoNome(item, e)}
+                            className="text-gray-300 hover:text-gray-600 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+                            title="Editar nome de exibição"
+                          >
+                            <Pencil size={13} />
+                          </button>
+                        </div>
+                      )}
+                    </td>
                     <td className="px-4 py-3 text-sm text-gray-600">{item.localizacao || "—"}</td>
                     <td className="px-4 py-3 text-sm text-gray-600">{item.tipo || "—"}</td>
                     <td className="px-4 py-3 text-sm text-gray-600">
@@ -210,7 +298,7 @@ export default function DadosEquipamentos({ userId }: { userId: number }) {
           idUtilizador={userId}
           onClose={() => {
             setMostrarConfig(false);
-            carregarSensores(); 
+            carregarSensores();
           }}
         />
       )}

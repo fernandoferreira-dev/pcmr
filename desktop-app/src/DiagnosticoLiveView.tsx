@@ -38,10 +38,14 @@ const POLL_INTERVAL_MS = 2000;
 const DEVICE_ID = "wearable01";
 const MAX_PONTOS_GRAFICO = 60; // últimos 2 minutos de histórico (60 * 2s)
 const DURACAO_PULSO_MS = 700;
+const TEMPO_CALIBRACAO_MS = 10000; // 10 segundos para calibração inicial
 
+// LIMITES ALINHADOS COM O SEU BACKEND
 const LIMITES_ALERTA = {
+  tempMinima: 35.0,
   tempMaxima: 38.0,
-  bpmMinimo: 50,
+  bpmMinimo: 60,
+  bpmMaximo: 100,
 };
 
 const FALL_STATE_LABELS: Record<number, string> = {
@@ -80,8 +84,14 @@ export default function DiagnosticoLiveView({
   const [mostrarFinalizar, setMostrarFinalizar] = useState(false);
   const [metricaAtiva, setMetricaAtiva] = useState<MetricaKey>("temperatura");
   const [pulsando, setPulsando] = useState(false);
-  const [alertas, setAlertas] = useState<AlertaSessao[]>([]);
   
+  // Estado para controlar se o período de calibração terminou
+  const [calibrado, setCalibrado] = useState(false);
+
+  // Estados dos alertas ativos em tempo real (Strings com as mensagens ativas por sensor)
+  const [mensagemAlertaTemp, setMensagemAlertaTemp] = useState<string | null>(null);
+  const [mensagemAlertaBpm, setMensagemAlertaBpm] = useState<string | null>(null);
+
   const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const pulsoTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const ultimaHoraRef = useRef<string | null>(null);
@@ -109,6 +119,40 @@ export default function DiagnosticoLiveView({
   };
 
 
+  // Refs para monitorizar se o alerta já foi enviado uma vez para a base de dados (evita SPAM)
+  const alertaTempAltaEnviado = useRef(false);
+  const alertaTempBaixaEnviado = useRef(false);
+  const alertaBpmAltoEnviado = useRef(false);
+  const alertaBpmBaixoEnviado = useRef(false);
+
+  // Temporizador para calibração inicial de 10 segundos
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setCalibrado(true);
+    }, TEMPO_CALIBRACAO_MS);
+
+    return () => clearTimeout(timer);
+  }, []);
+
+  // Enviar alerta de forma assíncrona para a base de dados
+  const registarAlertaNoServidor = async (tipo: string, valor: number, mensagem: string) => {
+    try {
+      await fetch('/api/alertas', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          idMedico,
+          deviceId: DEVICE_ID,
+          tipoAlerta: tipo,
+          valorRegistado: valor,
+          mensagem: mensagem
+        })
+      });
+    } catch (e) {
+      console.error("Erro ao guardar o alerta na BD:", e);
+    }
+  };
+
   useEffect(() => {
     const buscarLeitura = async () => {
       try {
@@ -121,31 +165,64 @@ export default function DiagnosticoLiveView({
         setLeitura(data);
         setErro(null);
 
-        // Verificação de alertas
-        if (data.temperatura > LIMITES_ALERTA.tempMaxima) {
-          if (!alertaTempRegistadoRef.current) {
-            registarAlertaBD(
-              'TEMPERATURA_ALTA', 
-              data.temperatura, 
-              `Temperatura crítica atingida durante monitorização: ${data.temperatura.toFixed(1)}°C`
-            );
-            alertaTempRegistadoRef.current = true;
-          }
-        } else {
-          alertaTempRegistadoRef.current = false;
-        }
+        // Apenas processa os alertas lógicos após os 10s de calibração inicial
+        if (calibrado) {
+          
+          // --- PROCESSAMENTO DA TEMPERATURA ---
+          if (data.temperatura > LIMITES_ALERTA.tempMaxima) {
+            const msg = `Temperatura de ${data.temperatura.toFixed(1)}°C excede o limite de ${LIMITES_ALERTA.tempMaxima.toFixed(1)}°C`;
+            setMensagemAlertaTemp(msg);
+            
+            if (!alertaTempAltaEnviado.current) {
+              registarAlertaNoServidor('TEMPERATURA_ALTA', data.temperatura, msg);
+              alertaTempAltaEnviado.current = true;
+            }
+            alertaTempBaixaEnviado.current = false; // Reset o limite oposto
 
-        if (data.bpm > 0 && data.bpm < LIMITES_ALERTA.bpmMinimo) {
-          if (!alertaBpmRegistadoRef.current) {
-            registarAlertaBD(
-              'BPM_BAIXO', 
-              data.bpm, 
-              `Frequência cardíaca abaixo do limiar seguro: ${data.bpm} bpm`
-            );
-            alertaBpmRegistadoRef.current = true;
+          } else if (data.temperatura < LIMITES_ALERTA.tempMinima) {
+            const msg = `Temperatura de ${data.temperatura.toFixed(1)}°C está abaixo do mínimo de ${LIMITES_ALERTA.tempMinima.toFixed(1)}°C`;
+            setMensagemAlertaTemp(msg);
+
+            if (!alertaTempBaixaEnviado.current) {
+              registarAlertaNoServidor('TEMPERATURA_BAIXA', data.temperatura, msg);
+              alertaTempBaixaEnviado.current = true;
+            }
+            alertaTempAltaEnviado.current = false; // Reset o limite oposto
+
+          } else {
+            // Se estiver nos valores corretos, o alerta desaparece sozinho automaticamente!
+            setMensagemAlertaTemp(null);
+            alertaTempAltaEnviado.current = false;
+            alertaTempBaixaEnviado.current = false;
           }
-        } else {
-          alertaBpmRegistadoRef.current = false;
+
+          // --- PROCESSAMENTO DOS BATIMENTOS CARDÍACOS (BPM) ---
+          if (data.bpm > LIMITES_ALERTA.bpmMaximo) {
+            const msg = `Frequência de ${data.bpm} bpm excede o limite máximo de ${LIMITES_ALERTA.bpmMaximo} bpm`;
+            setMensagemAlertaBpm(msg);
+
+            if (!alertaBpmAltoEnviado.current) {
+              registarAlertaNoServidor('BPM_ALTO', data.bpm, msg);
+              alertaBpmAltoEnviado.current = true;
+            }
+            alertaBpmBaixoEnviado.current = false;
+
+          } else if (data.bpm > 0 && data.bpm < LIMITES_ALERTA.bpmMinimo) {
+            const msg = `Frequência de ${data.bpm} bpm está abaixo do mínimo de ${LIMITES_ALERTA.bpmMinimo} bpm`;
+            setMensagemAlertaBpm(msg);
+
+            if (!alertaBpmBaixoEnviado.current) {
+              registarAlertaNoServidor('BPM_BAIXO', data.bpm, msg);
+              alertaBpmBaixoEnviado.current = true;
+            }
+            alertaBpmAltoEnviado.current = false;
+
+          } else {
+            // Se estiver nos valores corretos, o alerta desaparece sozinho automaticamente!
+            setMensagemAlertaBpm(null);
+            alertaBpmAltoEnviado.current = false;
+            alertaBpmBaixoEnviado.current = false;
+          }
         }
 
         // Atualização do gráfico
@@ -166,7 +243,6 @@ export default function DiagnosticoLiveView({
               : atualizado;
           });
 
-          // Efeito visual de dados novos recebidos
           setPulsando(true);
           if (pulsoTimeoutRef.current) clearTimeout(pulsoTimeoutRef.current);
           pulsoTimeoutRef.current = setTimeout(
@@ -186,34 +262,7 @@ export default function DiagnosticoLiveView({
       if (pollingRef.current) clearInterval(pollingRef.current);
       if (pulsoTimeoutRef.current) clearTimeout(pulsoTimeoutRef.current);
     };
-  }, [idMedico]);
-
-  useEffect(() => {
-    const buscarAlertas = async () => {
-      try {
-        const res = await fetch(`/api/alertas?deviceId=${DEVICE_ID}&desde=${inicioSessaoRef.current}`);
-        if (!res.ok) return;
-        const data = await res.json();
-        
-        // Garante que os dados recebidos são uma estrutura de array antes de aplicar no estado
-        if (Array.isArray(data)) {
-          setAlertas(data);
-        }
-      } catch {
-        // falha silenciosa
-      }
-    };
-
-    buscarAlertas();
-    const interval = setInterval(buscarAlertas, 4000);
-    return () => clearInterval(interval);
-  }, []);
-
-
-  // --- ESTADOS DERIVADOS PARA JSX ---
-  const emQueda = leitura?.alertaQuedaAtivo ?? false;
-  const alertaTemperatura = leitura && leitura.temperatura > LIMITES_ALERTA.tempMaxima;
-  const alertaBpm = leitura && leitura.bpm > 0 && leitura.bpm < LIMITES_ALERTA.bpmMinimo;
+  }, [idMedico, calibrado]);
 
   const metrica = METRICAS.find((m) => m.key === metricaAtiva)!;
 
@@ -226,12 +275,12 @@ export default function DiagnosticoLiveView({
           100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); border-color: transparent; }
         }
         @keyframes pulso-vermelho {
-          0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.6); border-color: rgba(239, 68, 68, 0.9); }
-          70% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); border-color: rgba(239, 68, 68, 0.4); }
+          0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.5); border-color: rgba(239, 68, 68, 0.8); }
+          70% { box-shadow: 0 0 0 12px rgba(239, 68, 68, 0); border-color: rgba(239, 68, 68, 0.3); }
           100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); border-color: transparent; }
         }
         .pulso-verde-ativo { animation: pulso-verde ${DURACAO_PULSO_MS}ms ease-out; border: 2px solid transparent; }
-        .pulso-vermelho-ativo { animation: pulso-vermelho 1500ms infinite ease-out; border: 2px solid #ef4444; background-color: #fef2f2; }
+        .pulso-vermelho-ativo { animation: pulso-vermelho 1800ms infinite ease-in-out; border: 2px solid #ef4444; }
       `}</style>
 
       <header className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
@@ -247,74 +296,36 @@ export default function DiagnosticoLiveView({
         </button>
       </header>
 
+      {/* Main agora é fixo, sem afetar ou esmagar o layout original */}
       <main className="flex-1 overflow-y-auto p-6">
-        
-        {/* Painel Superior de Alertas Ativos */}
-        <div className="flex flex-col gap-2 mb-6">
-          {emQueda && (
-            <div className="bg-red-50 border border-red-300 text-red-700 rounded-2xl px-4 py-3 font-bold flex items-center gap-2 shadow-sm animate-pulse">
-               ALERTA: Movimento de queda severa detetado no paciente!
-            </div>
-          )}
-          {alertaTemperatura && (
-            <div className="bg-orange-50 border border-orange-300 text-orange-700 rounded-2xl px-4 py-3 font-bold flex items-center gap-2 shadow-sm">
-               ALERTA: Hipertermia detetada ({leitura?.temperatura.toFixed(1)} °C). Limite de 38.0°C ultrapassado.
-            </div>
-          )}
-          {alertaBpm && (
-            <div className="bg-rose-50 border border-rose-300 text-rose-700 rounded-2xl px-4 py-3 font-bold flex items-center gap-2 shadow-sm">
-               ALERTA: Bradicardia grave detetada ({leitura?.bpm} bpm). Valor abaixo de 50 bpm.
-            </div>
-          )}
-
-          {/* Banner de alertas originados na BD */}
-          {alertas.length > 0 && (
-            <div className="flex flex-col gap-2">
-              {alertas.map((a, idx) => (
-                <div
-                  key={idx}
-                  className="bg-red-50 border border-red-300 text-red-700 rounded-2xl px-4 py-3 text-sm shadow-sm animate-fadeIn"
-                >
-                  <span className="font-semibold">
-                    {a.tipoAlerta ? a.tipoAlerta.replace(/_/g, " ") : "ALERTA"}:
-                  </span>{" "}
-                  {a.mensagem}
-                  {a.dataHora && (
-                    <span className="text-xs text-red-400 ml-2">
-                      ({new Date(a.dataHora).toLocaleTimeString('pt-PT')})
-                    </span>
-                  )}
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-
         {erro && (
           <div className="mb-6 bg-yellow-50 border border-yellow-300 text-yellow-700 rounded-2xl px-4 py-3">
             {erro}
           </div>
         )}
 
-        {/* Cartões dos Sensores Biométricos */}
+        {/* CARTÕES DOS BIOMÉTRICOS INTEGRADOS COM SISTEMA DE ALERTAS */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
           <CartaoSensor
             titulo="Temperatura"
             valor={leitura ? `${leitura.temperatura.toFixed(1)} °C` : "—"}
-            pulsando={pulsando && !alertaTemperatura}
-            emAlerta={alertaTemperatura ?? false}
+            pulsando={pulsando && !mensagemAlertaTemp}
+            mensagemAlerta={mensagemAlertaTemp}
+            estaCalibrando={!calibrado}
           />
           <CartaoSensor
             titulo="Frequência Cardíaca"
             valor={leitura ? `${leitura.bpm} bpm` : "—"}
-            pulsando={pulsando && !alertaBpm}
-            emAlerta={alertaBpm ?? false}
+            pulsando={pulsando && !mensagemAlertaBpm}
+            mensagemAlerta={mensagemAlertaBpm}
+            estaCalibrando={!calibrado}
           />
           <CartaoSensor
             titulo="Magnitude (aceleração)"
             valor={leitura ? `${leitura.magnitudeG.toFixed(2)} G` : "—"}
             pulsando={pulsando}
-            emAlerta={false}
+            mensagemAlerta={null}
+            estaCalibrando={!calibrado}
           />
         </div>
 
@@ -418,33 +429,58 @@ export default function DiagnosticoLiveView({
   );
 }
 
+interface CartaoProps {
+  titulo: string;
+  valor: string;
+  pulsando: boolean;
+  mensagemAlerta: string | null;
+  estaCalibrando: boolean;
+}
+
 function CartaoSensor({
   titulo,
   valor,
   pulsando,
-  emAlerta,
-}: {
-  titulo: string;
-  valor: string;
-  pulsando: boolean;
-  emAlerta: boolean;
-}) {
+  mensagemAlerta,
+  estaCalibrando,
+}: CartaoProps) {
+  const emAlerta = !!mensagemAlerta;
+
   return (
     <div
-      className={`rounded-2xl p-4 flex flex-col gap-1 transition-all duration-300 ${
-        emAlerta 
-        ? "pulso-vermelho-ativo" 
-        : pulsando 
-          ? "bg-gray-50 pulso-verde-ativo" 
+      className={`rounded-2xl p-4 flex flex-col gap-2 transition-all duration-300 min-h-[120px] justify-between ${
+        estaCalibrando
+          ? "bg-gray-100/70 border-2 border-dashed border-gray-300"
+          : emAlerta
+          ? "bg-red-50 pulso-vermelho-ativo border-2"
+          : pulsando
+          ? "bg-gray-50 pulso-verde-ativo border-2"
           : "bg-gray-50 border-2 border-transparent"
       }`}
     >
-      <span className={`text-xs uppercase tracking-wide transition-colors ${emAlerta ? "text-red-700 font-bold" : "text-gray-500"}`}>
-        {titulo}
-      </span>
-      <span className={`text-2xl font-bold transition-colors ${emAlerta ? "text-red-700" : "text-gray-800"}`}>
-        {valor}
-      </span>
+      <div className="flex flex-col gap-1">
+        <div className="flex items-center justify-between">
+          <span className={`text-xs uppercase tracking-wide font-semibold ${emAlerta ? "text-red-700" : "text-gray-500"}`}>
+            {titulo}
+          </span>
+          {estaCalibrando && (
+            <span className="text-[10px] text-gray-400 font-medium animate-pulse bg-gray-200 px-2 py-0.5 rounded-full">
+              A calibrar...
+            </span>
+          )}
+        </div>
+        <span className={`text-3xl font-bold ${estaCalibrando ? "text-gray-400" : emAlerta ? "text-red-600" : "text-gray-800"}`}>
+          {estaCalibrando ? "—" : valor}
+        </span>
+      </div>
+
+      {/* Caixa de Mensagem Interna do Cartão - Aparece de forma dinâmica se houver desvio */}
+      {emAlerta && !estaCalibrando && (
+        <div className="text-xs text-red-700 bg-red-100/60 border border-red-200 rounded-lg p-2 font-medium leading-relaxed mt-1 animate-fade-in">
+          <span className="font-bold mr-1">⚠️ Alerta:</span>
+          {mensagemAlerta}
+        </div>
+      )}
     </div>
   );
 }
