@@ -44,6 +44,24 @@ const float MARGEM_HISTERESE_C = 0.5f;
 bool ventoinhaLigada = false;
 float ultimaTemperaturaConhecida = -100.0f;
 
+// ================= SEGURANÇA: cifra 3DES-CBC + integridade CRC32 =================
+
+// Chave 3DES de 24 bytes — TEM de corresponder exatamente à chave
+// (Base64) configurada em MQTT_CIPHER_KEY no application.properties do servidor,
+// e à mesma usada no ESP32 do gateway (node1-presenca).
+// Gera com: openssl rand -base64 24
+// Converte para hex com: echo "<base64>" | base64 -d | xxd -p -c 24
+static const unsigned char key[32] = {
+0xCB, 0x54, 0x69, 0x18,
+0x9D, 0x25, 0x46, 0x4C,
+0x45, 0x10, 0x1D, 0xBD,
+0x0B, 0xBA, 0xA6, 0x27,
+0x42, 0x94, 0xDA, 0xEF,
+0x2C, 0x92, 0x2C, 0x2B,
+0x2B, 0x05, 0x96, 0xA6,
+0x3F, 0xA3, 0xC8, 0x6B
+};
+
 // ================= CONFIGURAÇÃO DINÂMICA PRESENÇA =================
 float distanciaLimiteCm = 50.0f;
 unsigned long tempoConfirmacaoMs = 5000;
