@@ -3,9 +3,6 @@
 #include <esp_now.h>
 #include <esp_wifi.h>
 #include <ArduinoJson.h>
-#include <mbedtls/base64.h>
-#include <mbedtls/cipher.h>
-#include <esp_system.h>
 
 // ================= CONFIGURAÇÕES =================
 const char* SSID = "Vodafone-07FD83";
@@ -72,155 +69,6 @@ typedef struct struct_leitura_wearable {
 } struct_leitura_wearable;
 
 esp_now_peer_info_t peerNode2;
-
-// ================= SEGURANÇA: cifra 3DES-CBC + integridade CRC32 =================
-
-// Chave 3DES de 24 bytes — TEM de corresponder exatamente à chave
-// (Base64) configurada em MQTT_CIPHER_KEY no application.properties do servidor,
-// e à mesma usada no ESP32 do sensor de impressão digital.
-static const unsigned char CHAVE_3DES[24] = {
-  0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
-  0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F,
-  0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17
-}; // <-- SUBSTITUIR pelos bytes reais da chave partilhada
-
-static uint32_t crc32_tabela[256];
-static bool crc32_tabela_pronta = false;
-
-static void crc32_inicializar() {
-  for (uint32_t i = 0; i < 256; i++) {
-    uint32_t c = i;
-    for (int j = 0; j < 8; j++) {
-      c = (c & 1) ? (0xEDB88320 ^ (c >> 1)) : (c >> 1);
-    }
-    crc32_tabela[i] = c;
-  }
-  crc32_tabela_pronta = true;
-}
-
-static uint32_t crc32_calcular(const uint8_t* dados, size_t tamanho) {
-  if (!crc32_tabela_pronta) crc32_inicializar();
-  uint32_t crc = 0xFFFFFFFF;
-  for (size_t i = 0; i < tamanho; i++) {
-    crc = crc32_tabela[(crc ^ dados[i]) & 0xFF] ^ (crc >> 8);
-  }
-  return crc ^ 0xFFFFFFFF;
-}
-
-static int des3_cifrar(const uint8_t* entrada, size_t tamEntrada, const uint8_t iv[8], uint8_t* saida) {
-  mbedtls_cipher_context_t ctx;
-  mbedtls_cipher_init(&ctx);
-
-  const mbedtls_cipher_info_t* info = mbedtls_cipher_info_from_type(MBEDTLS_CIPHER_DES_EDE3_CBC);
-  if (info == NULL) {
-    Serial.println("✗ MBEDTLS_CIPHER_DES_EDE3_CBC indisponível neste build!");
-    mbedtls_cipher_free(&ctx);
-    return 0;
-  }
-
-  mbedtls_cipher_setup(&ctx, info);
-  mbedtls_cipher_setkey(&ctx, CHAVE_3DES, 192, MBEDTLS_ENCRYPT);
-  mbedtls_cipher_set_padding_mode(&ctx, MBEDTLS_PADDING_PKCS7);
-
-  size_t tamSaida = 0;
-  int ret = mbedtls_cipher_crypt(&ctx, iv, 8, entrada, tamEntrada, saida, &tamSaida);
-  if (ret != 0) {
-    Serial.printf("✗ Erro mbedtls_cipher_crypt (cifrar): -0x%04x\n", -ret);
-  }
-
-  mbedtls_cipher_free(&ctx);
-  return (int)tamSaida;
-}
-
-static int des3_decifrar(const uint8_t* entrada, size_t tamEntrada, const uint8_t iv[8], uint8_t* saida) {
-  mbedtls_cipher_context_t ctx;
-  mbedtls_cipher_init(&ctx);
-
-  const mbedtls_cipher_info_t* info = mbedtls_cipher_info_from_type(MBEDTLS_CIPHER_DES_EDE3_CBC);
-  if (info == NULL) {
-    Serial.println("✗ MBEDTLS_CIPHER_DES_EDE3_CBC indisponível neste build!");
-    mbedtls_cipher_free(&ctx);
-    return 0;
-  }
-
-  mbedtls_cipher_setup(&ctx, info);
-  mbedtls_cipher_setkey(&ctx, CHAVE_3DES, 192, MBEDTLS_DECRYPT);
-  mbedtls_cipher_set_padding_mode(&ctx, MBEDTLS_PADDING_PKCS7);
-
-  size_t tamSaida = 0;
-  int ret = mbedtls_cipher_crypt(&ctx, iv, 8, entrada, tamEntrada, saida, &tamSaida);
-  if (ret != 0) {
-    Serial.printf("✗ Erro mbedtls_cipher_crypt (decifrar): -0x%04x\n", -ret);
-  }
-
-  mbedtls_cipher_free(&ctx);
-  return (int)tamSaida;
-}
-
-static String cifrarEEmpacotar(const char* jsonPlano) {
-  size_t tamPlano = strlen(jsonPlano);
-  uint8_t iv[8];
-  esp_fill_random(iv, 8);
-
-  uint8_t cifrado[512];
-  int tamCifrado = des3_cifrar((const uint8_t*)jsonPlano, tamPlano, iv, cifrado);
-
-  uint32_t crc = crc32_calcular((const uint8_t*)jsonPlano, tamPlano);
-
-  unsigned char ivB64[32];
-  size_t ivB64Len;
-  mbedtls_base64_encode(ivB64, sizeof(ivB64), &ivB64Len, iv, 8);
-  ivB64[ivB64Len] = '\0';
-
-  unsigned char dataB64[768];
-  size_t dataB64Len;
-  mbedtls_base64_encode(dataB64, sizeof(dataB64), &dataB64Len, cifrado, tamCifrado);
-  dataB64[dataB64Len] = '\0';
-
-  StaticJsonDocument<1024> envelope;
-  envelope["iv"] = (char*)ivB64;
-  envelope["data"] = (char*)dataB64;
-  envelope["crc"] = crc;
-
-  String resultado;
-  serializeJson(envelope, resultado);
-  return resultado;
-}
-
-static bool desempacotarEDecifrar(const String& envelopeJson, char* saidaJsonPlano, size_t tamSaida) {
-  StaticJsonDocument<1024> doc;
-  DeserializationError erro = deserializeJson(doc, envelopeJson);
-  if (erro) return false;
-
-  const char* ivB64 = doc["iv"];
-  const char* dataB64 = doc["data"];
-  if (!ivB64 || !dataB64) return false;
-  uint32_t crcEsperado = doc["crc"];
-
-  uint8_t iv[8];
-  size_t ivLen;
-  mbedtls_base64_decode(iv, sizeof(iv), &ivLen, (const unsigned char*)ivB64, strlen(ivB64));
-
-  uint8_t cifrado[512];
-  size_t cifradoLen;
-  mbedtls_base64_decode(cifrado, sizeof(cifrado), &cifradoLen, (const unsigned char*)dataB64, strlen(dataB64));
-
-  uint8_t plano[512];
-  int tamPlano = des3_decifrar(cifrado, cifradoLen, iv, plano);
-
-  uint32_t crcCalculado = crc32_calcular(plano, tamPlano);
-  if (crcCalculado != crcEsperado) {
-    Serial.println("✗ CRC32 inválido — mensagem rejeitada (integridade comprometida)");
-    return false;
-  }
-
-  if ((size_t)tamPlano >= tamSaida) return false;
-  memcpy(saidaJsonPlano, plano, tamPlano);
-  saidaJsonPlano[tamPlano] = '\0';
-  return true;
-}
-
-// ===================================================================================
 
 void IRAM_ATTR echoISR() {
   unsigned long now = micros();
@@ -293,9 +141,7 @@ void publicarPresenca(bool presente) {
   doc["presente"] = presente;
   char buffer[64];
   serializeJson(doc, buffer, sizeof(buffer));
-
-  String payloadCifrado = cifrarEEmpacotar(buffer);
-  client.publish(TOPIC_PRESENCA, payloadCifrado.c_str());
+  client.publish(TOPIC_PRESENCA, buffer);
 }
 
 void relayLeituraWearable(const struct_leitura_wearable& leitura) {
@@ -308,21 +154,12 @@ void relayLeituraWearable(const struct_leitura_wearable& leitura) {
 
   char buffer[256];
   serializeJson(doc, buffer, sizeof(buffer));
-
-  String payloadCifrado = cifrarEEmpacotar(buffer);
-  client.publish(TOPIC_RELAY_WEARABLE, payloadCifrado.c_str());
+  client.publish(TOPIC_RELAY_WEARABLE, buffer);
 }
 
 void mqttCallback(char* topic, byte* payload, unsigned int length) {
-  String envelope;
-  for (unsigned int i = 0; i < length; i++) envelope += (char)payload[i];
-
-  char mensagemPlano[256];
-  if (!desempacotarEDecifrar(envelope, mensagemPlano, sizeof(mensagemPlano))) {
-    Serial.println("✗ Falha ao decifrar/validar mensagem MQTT");
-    return;
-  }
-  String message(mensagemPlano);
+  String message;
+  for (unsigned int i = 0; i < length; i++) message += (char)payload[i];
 
   if (String(topic) == topicConfig) {
     StaticJsonDocument<128> doc;
@@ -433,6 +270,88 @@ void setupEspNow() {
   });
 }
 
+static int aes_cifrar(const uint8_t* entrada, size_t tamEntrada, const uint8_t iv[16], uint8_t* saida) {
+mbedtls_cipher_context_t ctx;
+mbedtls_cipher_init(&ctx);
+
+const mbedtls_cipher_info_t* info = mbedtls_cipher_info_from_type(MBEDTLS_CIPHER_AES_256_CBC);
+if (info == NULL) { mbedtls_cipher_free(&ctx); return 0; }
+
+mbedtls_cipher_setup(&ctx, info);
+mbedtls_cipher_setkey(&ctx, CHAVE_AES, 256, MBEDTLS_ENCRYPT); // 256 bits = 32 bytes
+mbedtls_cipher_set_padding_mode(&ctx, MBEDTLS_PADDING_PKCS7);
+mbedtls_cipher_set_iv(&ctx, iv, 16);
+mbedtls_cipher_reset(&ctx);
+
+size_t tU = 0, tF = 0;
+mbedtls_cipher_update(&ctx, entrada, tamEntrada, saida, &tU);
+mbedtls_cipher_finish(&ctx, saida + tU, &tF);
+mbedtls_cipher_free(&ctx);
+return tU + tF;
+}
+
+static int aes_decifrar(const uint8_t* entrada, size_t tamEntrada, const uint8_t iv[16], uint8_t* saida) {
+mbedtls_cipher_context_t ctx;
+mbedtls_cipher_init(&ctx);
+
+const mbedtls_cipher_info_t* info = mbedtls_cipher_info_from_type(MBEDTLS_CIPHER_AES_256_CBC);
+if (info == NULL) { mbedtls_cipher_free(&ctx); return 0; }
+
+mbedtls_cipher_setup(&ctx, info);
+mbedtls_cipher_setkey(&ctx, CHAVE_AES, 256, MBEDTLS_DECRYPT);
+mbedtls_cipher_set_padding_mode(&ctx, MBEDTLS_PADDING_PKCS7);
+mbedtls_cipher_set_iv(&ctx, iv, 16);
+mbedtls_cipher_reset(&ctx);
+
+size_t tU = 0, tF = 0;
+mbedtls_cipher_update(&ctx, entrada, tamEntrada, saida, &tU);
+mbedtls_cipher_finish(&ctx, saida + tU, &tF);
+mbedtls_cipher_free(&ctx);
+return tU + tF;
+}
+
+static String cifrarEEmpacotar(const char* jsonPlano) {
+size_t tamPlano = strlen(jsonPlano);
+uint8_t iv[16]; esp_fill_random(iv, 16);          // <-- 16 em vez de 8
+uint8_t cifrado[2048];
+int tamCifrado = aes_cifrar((const uint8_t*)jsonPlano, tamPlano, iv, cifrado); // <-- aes_cifrar
+
+uint32_t crc = crc32_calcular((const uint8_t*)jsonPlano, tamPlano);
+
+unsigned char ivB64[32], dataB64[3072]; size_t iL, dL;
+mbedtls_base64_encode(ivB64, sizeof(ivB64), &iL, iv, 16);  // <-- 16
+mbedtls_base64_encode(dataB64, sizeof(dataB64), &dL, cifrado, tamCifrado);
+
+StaticJsonDocument<4096> env;
+env["iv"] = String((char*)ivB64, iL);
+env["data"] = String((char*)dataB64, dL);
+env["crc"] = crc;
+
+String res; serializeJson(env, res); return res;
+}
+
+static bool desempacotarEDecifrar(const String& envelopeJson, char* saida, size_t tamSaida) {
+StaticJsonDocument<2048> doc;
+if (deserializeJson(doc, envelopeJson)) return false;
+const char* ivB64 = doc["iv"]; const char* dataB64 = doc["data"];
+uint32_t crcEsperado = doc["crc"];
+if (!ivB64 || !dataB64) return false;
+
+uint8_t iv[16], cifrado[1024]; size_t iL, cL;               // <-- iv[16]
+mbedtls_base64_decode(iv, 16, &iL, (const unsigned char*)ivB64, strlen(ivB64));
+mbedtls_base64_decode(cifrado, sizeof(cifrado), &cL, (const unsigned char*)dataB64, strlen(dataB64));
+
+uint8_t bufferTemp[1024];
+int tamPlano = aes_decifrar(cifrado, cL, iv, bufferTemp);   // <-- aes_decifrar
+
+if (tamPlano <= 0 || (size_t)tamPlano >= tamSaida) return false;
+if (crc32_calcular(bufferTemp, tamPlano) != crcEsperado) return false;
+
+memcpy(saida, bufferTemp, tamPlano);
+saida[tamPlano] = '\0';
+return true;
+}
+
 void setup() {
   Serial.begin(115200);
   delay(1000);
@@ -454,16 +373,8 @@ void setup() {
 
   client.setServer(MQTT_BROKER, MQTT_PORT);
   client.setCallback(mqttCallback);
-  client.setBufferSize(1024); // envelope cifrado é maior que o payload original
 
   Serial.println("GATEWAY PRONTO E MONITORIZADO");
-
-  // Verificação de disponibilidade do 3DES neste build do core
-  if (mbedtls_cipher_info_from_type(MBEDTLS_CIPHER_DES_EDE3_CBC) == NULL) {
-    Serial.println("✗✗✗ AVISO: 3DES indisponível neste build do mbedtls! ✗✗✗");
-  } else {
-    Serial.println("✓ 3DES disponível — cifra ativa.");
-  }
 }
 
 void loop() {

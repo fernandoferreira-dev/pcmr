@@ -1,8 +1,6 @@
 package com.pcmr.api.security;
 
 import javax.crypto.Cipher;
-import javax.crypto.SecretKeyFactory;
-import javax.crypto.spec.DESedeKeySpec;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 import java.security.SecureRandom;
@@ -10,18 +8,16 @@ import java.util.Base64;
 
 public class CipherUtil {
 
-    private static final String ALGORITMO = "DESede";
-    private static final String TRANSFORMACAO = "DESede/CBC/PKCS5Padding";
-    private static final int IV_TAMANHO_BYTES = 8; // tamanho de bloco DES/3DES
+    private static final String ALGORITMO = "AES";
+    private static final String TRANSFORMACAO = "AES/CBC/PKCS5Padding";
+    private static final int IV_TAMANHO_BYTES = 16; // tamanho de bloco AES
 
     private final SecretKeySpec chave;
 
-        public CipherUtil(String chaveBase64) throws Exception {
-            byte[] chaveBytes = Base64.getDecoder().decode(chaveBase64);
-            DESedeKeySpec keySpec = new DESedeKeySpec(chaveBytes);
-            SecretKeyFactory factory = SecretKeyFactory.getInstance(ALGORITMO);
-            this.chave = new SecretKeySpec(factory.generateSecret(keySpec).getEncoded(), ALGORITMO);
-        }
+    public CipherUtil(String chaveBase64) throws Exception {
+        byte[] chaveBytes = Base64.getDecoder().decode(chaveBase64);
+        this.chave = new SecretKeySpec(chaveBytes, ALGORITMO);
+    }
 
     public byte[] gerarIv() {
         byte[] iv = new byte[IV_TAMANHO_BYTES];
