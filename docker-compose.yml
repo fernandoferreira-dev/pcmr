@@ -32,8 +32,6 @@ services:
     container_name: desktop_app_container
     ports:
       - "3000:80"
-    expose:
-      - "80"
     volumes:
       - ./desktop-app/src:/app/src
       - ./desktop-app/index.html:/app/index.html
@@ -51,8 +49,6 @@ services:
     container_name: mobile_app_container
     ports:
       - "3001:80"
-    expose:
-      - "80"
     depends_on:
       - spring-app
       - mqtt5
@@ -67,8 +63,6 @@ services:
   #  container_name: paciente-app-container
   #  ports:
   #   - "3002:80"
-  #  expose:
-  #  - "80"
   # depends_on:
   #   - spring-app
   #   - mqtt5
@@ -101,8 +95,6 @@ services:
       - ./configuration/caddy/Caddyfile:/etc/caddy/Caddyfile:ro
       - caddy_data:/data
       - caddy_config:/config
-    depends_on:
-      - desktop-app
     networks:
       - pcmr-network
 
