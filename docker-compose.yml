@@ -96,7 +96,6 @@ services:
     restart: unless-stopped
     ports:
       - "80:80"
-      - "80:80"
       - "443:443"
     volumes:
       - ./configuration/caddy/Caddyfile:/etc/caddy/Caddyfile:ro

@@ -9,3 +9,6 @@ mobile.fernandoferreira.dev {
 paciente.fernandoferreira.dev {
     reverse_proxy paciente-app:80
 }
+ api.fernandoferreira.dev {
+     reverse_proxy api-app:8080
+ }
