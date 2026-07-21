@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import LoginPage, { type PacienteSession } from "./pages/login-page";
-import DiagnosticosPage from "./pages/diagnosticos-page";
+import DiagnosticosPage from "./pages/diagnosticos-page.tsx";
 import MensagensPage from "./pages/mensagens-page";
 import { NavBar, type PacienteView } from "./components";
 import "./assets/styles/index.css";
