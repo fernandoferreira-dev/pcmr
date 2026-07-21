@@ -33,7 +33,7 @@ public class MqttMessageHandler {
 
     private final ObjectMapper objectMapper = new ObjectMapper();
 
-    // Limites usados pela avaliação local de notificações (novo, vindo do documento 2)
+    // Limites usados pela avaliação local de notificações
     private static final int BPM_WARNING_MIN = 50;
     private static final int BPM_WARNING_MAX = 110;
     private static final int BPM_CRITICAL_MIN = 40;
@@ -72,7 +72,7 @@ public class MqttMessageHandler {
             return;
         }
 
-        // ================= STATUS MONITORING (novo, vindo do documento 2) =================
+        // ================= STATUS MONITORING =================
         if (topic.endsWith("/status")) {
             String deviceId = extrairDeviceId(topic);
             if (deviceId != null) {
@@ -101,38 +101,8 @@ public class MqttMessageHandler {
         }
 
         try {
-            // Nó de presença
-            if (topic.equals("sensors/node1/presenca")) {
-                atividadeSensorService.registarAtividade(DEVICE_ID_NODE1);
-
-                JsonNode json = objectMapper.readTree(payload);
-                boolean presente = json.get("presente").asBoolean();
-
-                presencaService.atualizarPresenca(presente);
-
-                System.out.println(
-                        (presente ? "✓ Paciente presente" : "✗ Paciente ausente")
-                                + " (Nó 1)"
-                );
-                return;
-            }
-
-            // Login biométrico
-            if (topic.equals("sensor/login")) {
-                atividadeSensorService.registarAtividade(DEVICE_ID_NODE3);
-
-                JsonNode json = objectMapper.readTree(payload);
-                int idSensor = json.get("id_sensor").asInt();
-                String status = json.get("status").asText();
-
-                if ("detectado".equals(status)) {
-                    biometriaService.completarDeteccao(idSensor);
-                }
-                return;
-            }
-
-            // Registo biométrico
-            if (topic.equals("sensor/enroll")) {
+            // Registo biométrico (Enroll)
+            if (topic.equals("casa/biometria/enroll")) {
                 atividadeSensorService.registarAtividade(DEVICE_ID_NODE3);
 
                 JsonNode json = objectMapper.readTree(payload);
@@ -155,6 +125,36 @@ public class MqttMessageHandler {
                 return;
             }
 
+            // Login biométrico (Acesso)
+            if (topic.equals("casa/biometria/acesso")) {
+                atividadeSensorService.registarAtividade(DEVICE_ID_NODE3);
+
+                JsonNode json = objectMapper.readTree(payload);
+                int idSensor = json.get("id_sensor").asInt();
+                String status = json.get("status").asText();
+
+                if ("detectado".equals(status)) {
+                    biometriaService.completarDeteccao(idSensor);
+                }
+                return;
+            }
+
+            // Nó de presença
+            if (topic.equals("sensors/node1/presenca")) {
+                atividadeSensorService.registarAtividade(DEVICE_ID_NODE1);
+
+                JsonNode json = objectMapper.readTree(payload);
+                boolean presente = json.get("presente").asBoolean();
+
+                presencaService.atualizarPresenca(presente);
+
+                System.out.println(
+                        (presente ? "✓ Paciente presente" : "✗ Paciente ausente")
+                                + " (Nó 1)"
+                );
+                return;
+            }
+
             // Leituras dos sensores
             String deviceId = extrairDeviceId(topic);
 
@@ -163,7 +163,7 @@ public class MqttMessageHandler {
 
                 System.out.println("📥 [MQTT RECEBIDO] Tópico: " + topic + " | DeviceID extraído: " + deviceId + " | Diagnóstico Ativo? " + leituraSensorService.isDiagnosticoAtivo(deviceId));
 
-                // 2. Valida se o diagnóstico está ativo no LeituraSensorService para este ID
+                // Valida se o diagnóstico está ativo no LeituraSensorService para este ID
                 if (!leituraSensorService.isDiagnosticoAtivo(deviceId)) {
                     System.out.println(
                             "ℹ️ [DIAGNÓSTICO INATIVO] Dados de '" + deviceId
@@ -175,6 +175,7 @@ public class MqttMessageHandler {
                 SensorReadingDTO leitura =
                         objectMapper.readValue(payload, SensorReadingDTO.class);
 
+                // Compatibilidade unificada com o Wrapper ou objeto direto mapeado (utilizando o DTO diretamente ou mapeado para o wrapper conforme a estrutura do projeto)
                 LeituraSensorService.SensorReadingDTOWrapper wrapper =
                         new LeituraSensorService.SensorReadingDTOWrapper();
 
@@ -186,8 +187,6 @@ public class MqttMessageHandler {
 
                 leituraSensorService.registarLeitura(deviceId, wrapper);
 
-                atividadeSensorService.registarAtividade(DEVICE_ID_NODE1);
-
                 alertaMonitorService.avaliarLimites(
                         deviceId,
                         wrapper.temperatura,
@@ -195,10 +194,9 @@ public class MqttMessageHandler {
                 );
 
                 // Aciona/desliga o buzzer do Nó 3 consoante o estado de queda
-                // reportado pelo wearable, independentemente da app estar aberta.
                 alertaQuedaBuzzerService.notificarQueda(deviceId, wrapper.alertaQuedaAtivo);
 
-                // Notificações in-app (novo, vindo do documento 2)
+                // Notificações in-app
                 avaliarLeitura(deviceId, leitura);
             }
 
@@ -215,7 +213,7 @@ public class MqttMessageHandler {
         return partes.length >= 2 ? partes[1] : null;
     }
 
-    // Novo, vindo do documento 2: gera notificações in-app com base em limites de bpm/temperatura
+    // Gera notificações in-app com base em limites de bpm/temperatura
     private void avaliarLeitura(String deviceId, SensorReadingDTO leitura) {
         int bpm = leitura.getBpm();
         double temperatura = leitura.getTemperatura();

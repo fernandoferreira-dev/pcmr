@@ -10,12 +10,18 @@ public class CipherUtil {
 
     private static final String ALGORITMO = "AES";
     private static final String TRANSFORMACAO = "AES/CBC/PKCS5Padding";
-    private static final int IV_TAMANHO_BYTES = 16; // tamanho de bloco AES
+    private static final int IV_TAMANHO_BYTES = 16; // tamanho do bloco AES
 
     private final SecretKeySpec chave;
 
     public CipherUtil(String chaveBase64) throws Exception {
-        byte[] chaveBytes = Base64.getDecoder().decode(chaveBase64);
+        if (chaveBase64 == null || chaveBase64.isBlank()) {
+            throw new IllegalArgumentException("A chave AES não pode ser nula ou vazia.");
+        }
+        
+        // Remove possíveis espaços/quebras de linha acidentais e descodifica para 16 bytes
+        byte[] chaveBytes = Base64.getDecoder().decode(chaveBase64.trim());
+        
         this.chave = new SecretKeySpec(chaveBytes, ALGORITMO);
     }
 

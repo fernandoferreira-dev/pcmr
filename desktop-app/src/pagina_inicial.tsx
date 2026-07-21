@@ -38,7 +38,7 @@ type NavButtonProps = {
 function NavButton({ id, label, icon, isActive, onClick }: NavButtonProps) {
   return (
     <button
-      className={`cursor-pointer w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-colors ${
+      className={`cursor-pointer w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-colors  ${
         isActive
           ? 'bg-[#8CA483] font-semibold text-black shadow-sm'
           : 'hover:bg-[#9CB39E] text-gray-800'
@@ -125,49 +125,41 @@ const OverviewDashboard = ({ userId, onAbrirConsulta, onAbrirComunicacao }: Over
   const [erroNotificacoes, setErroNotificacoes] = useState<string | null>(null)
 
   useEffect(() => {
-    let active = true
     const carregarEstatisticas = async () => {
       try {
         const res = await fetch('/api/estatisticas/overview')
         if (!res.ok) {
-          if (active) setErroStats('Não foi possível carregar as estatísticas.')
+          setErroStats('Não foi possível carregar as estatísticas.')
           return
         }
         const data: EstatisticasOverview = await res.json()
-        if (active) {
-          setStats(data)
-          setErroStats(null)
-        }
+        setStats(data)
+        setErroStats(null)
       } catch {
-        if (active) setErroStats('Erro de comunicação com o servidor.')
+        setErroStats('Erro de comunicação com o servidor.')
       }
     }
 
     carregarEstatisticas()
-    return () => { active = false }
   }, [])
 
   useEffect(() => {
-    let active = true
     const carregarNotificacoes = async () => {
       try {
         const res = await fetch(`/api/mensagens/recebidas?userId=${userId}`)
         if (!res.ok) {
-          if (active) setErroNotificacoes('Não foi possível carregar as notificações.')
+          setErroNotificacoes('Não foi possível carregar as notificações.')
           return
         }
         const data: NotificacaoResumo[] = await res.json()
-        if (active) {
-          setNotificacoes(data.slice(0, 2))
-          setErroNotificacoes(null)
-        }
+        setNotificacoes(data.slice(0, 2))
+        setErroNotificacoes(null)
       } catch {
-        if (active) setErroNotificacoes('Erro de comunicação com o servidor.')
+        setErroNotificacoes('Erro de comunicação com o servidor.')
       }
     }
 
     carregarNotificacoes()
-    return () => { active = false }
   }, [userId])
 
   const dadosGrafico =
@@ -353,16 +345,15 @@ export default function App({ userName, userId, tipo, onLogout }: PaginaInicialP
   )
 
   return (
-    <div className="h-screen w-screen bg-[var(--background)] flex flex-col font-sans overflow-hidden relative">
+    <div className="h-screen w-screen bg-(--background) flex flex-col font-sans overflow-hidden relative">
       <PresencaToast />
-      <MensagemToast userId={userId} onAbrirMensagem={abrirComunicacaoComMensagem}/>
-      
+      <MensagemToast userId={userId} onAbrirMensagem={abrirComunicacaoComMensagem} />
       <div className="flex-1 flex p-4 gap-6 overflow-hidden">
 
         {/* Barra Lateral */}
         <aside className="w-72 h-full bg-[#AAB99F] rounded-4xl p-6 shadow-md flex flex-col">
           
-          {/* LOGO */}
+          {/*LOGO*/}
           <div className="flex flex-col items-center justify-center gap-3 mb-8 mt-4">
             <img 
               src={logo} 
@@ -388,7 +379,7 @@ export default function App({ userName, userId, tipo, onLogout }: PaginaInicialP
         </aside>
 
         {/* Área Principal */}
-        <main className="flex-1 flex flex-col min-w-0 pr-4 pt-2 pb-4 overflow-hidden bg-[var(--background)]">
+        <main className="flex-1 flex flex-col min-w-0 pr-4 pt-2 pb-4 overflow-hidden bg-(--background)">
           <header className="flex justify-between items-center mb-6 px-2 shrink-0">
             <h1 className="text-3xl font-bold text-gray-700">{viewTitles[view]}</h1>
 
@@ -425,14 +416,14 @@ export default function App({ userName, userId, tipo, onLogout }: PaginaInicialP
                   <img 
                     src={sair} 
                     alt="Ícone de Sair" 
-                    className="w-5 h-5 object-contain" 
+                    className="w-5 h-5 object-contain inverted-color-if-needed" 
                   />
                 </div>
               </button>
             </div>
           </header>
 
-          <div className="flex-1 overflow-hidden bg-[var(--background)]">
+          <div className="flex-1 overflow-hidden bg-(--background)">
             {content}
           </div>
         </main>

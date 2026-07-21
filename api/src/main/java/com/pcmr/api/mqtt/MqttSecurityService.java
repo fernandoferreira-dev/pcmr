@@ -52,9 +52,21 @@ public class MqttSecurityService {
 
         byte[] iv = Base64.getDecoder().decode(envelope.getIv());
         byte[] cifrado = Base64.getDecoder().decode(envelope.getData());
+
+        //Decifrar AES-128-CBC
         byte[] plano = cipherUtil.decifrar(cifrado, iv);
 
+        //Calcular o CRC32 sobre os bytes descriptografados
         long crcCalculado = Crc32Util.calcular(plano);
+        String jsonString = new String(plano, StandardCharsets.UTF_8);
+
+        //LOG DE DEPURACÃO
+        System.out.println("----------------------------------------");
+        System.out.println("🔍 JSON Decifrado no Java (" + plano.length + " bytes): " + jsonString);
+        System.out.println("🔍 CRC Esperado: " + envelope.getCrc() + " | CRC Calculado: " + crcCalculado);
+        System.out.println("----------------------------------------");
+
+        Validação estrita do CRC32
         if (crcCalculado != envelope.getCrc()) {
             throw new SecurityException(
                     "CRC32 inválido — integridade dos dados comprometida (esperado=" +
@@ -62,6 +74,6 @@ public class MqttSecurityService {
             );
         }
 
-        return new String(plano, StandardCharsets.UTF_8);
+        return jsonString;
     }
 }
