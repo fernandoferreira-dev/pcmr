@@ -1,47 +1,35 @@
 .user-info-wrapper {
     display: flex;
     flex-direction: column;
-    flex-wrap: wrap;
     align-self: center;
-    justify-content: flex-start;
-    align-content: center;
-    gap: 1.5rem;
-    border: 3px solid #B2C8B2;
+    gap: 0.75rem;
+    border: 3px solid var(--border-soft);
     border-radius: 1rem;
-    background-color: #E8E8E8;
-    height: auto;
-    width: auto;
-    padding: 1.5rem;
+    background-color: var(--surface-alt);
+    width: 90%;
+    max-width: 500px;
+    padding: 1rem;
     box-sizing: border-box;
-    margin-top: 90px;
-    overflow: hidden;
+    margin-top: 1rem;
 }
 
 .user-info-main-box {
     display: flex;
     flex-direction: column;
     align-items: flex-start;
-    padding: 0.5rem 1rem;
-    border: 3px solid #b3b9b3;
+    padding: 0.75rem 1rem;
+    border: 3px solid var(--border-soft);
     border-radius: 1rem;
-    background-color: #FFFFFF;
-    gap: 10px;
+    background-color: var(--surface);
+    gap: 0.4rem;
+    width: 100%;
+    box-sizing: border-box;
 }
-
-.user-info-main-box {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    padding: 0.5rem 1rem;
-    border: 3px solid #b3b9b3;
-    border-radius: 1rem;
-    background-color: #FFFFFF;
-    gap: 10px;
-}
-
 
 .user-info-main-box h2 {
-    color: #000000;
+    color: var(--text-body);
+    font-size: 1rem;
+    margin: 0;
 }
 
 .user-data-icon {
@@ -55,15 +43,27 @@
 
 .user-data-box {
     display: flex;
-    flex-direction: column;
-    align-items: first baseline;
-    color: #000000;
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: baseline;
+    color: var(--text-strong);
+    width: 100%;
+    gap: 0.35rem;
 }
 
 .user-data-box h2 {
-    color: #000000;
+    color: var(--text-body);
+    font-size: 1rem;
+    margin: 0;
+    white-space: nowrap;
+}
+
+.user-data-box p {
+    color: var(--text-muted);
+    font-size: 0.95rem;
+    margin: 0;
 }
 
 .page-header {
-    color:#000000;
+    color: var(--text-strong);
 }

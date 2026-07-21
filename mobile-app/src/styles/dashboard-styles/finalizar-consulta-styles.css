@@ -2,7 +2,7 @@
   position: fixed;
   inset: 0;
   z-index: 60;
-  background-color: rgba(0, 0, 0, 0.4);
+  background-color: var(--overlay-bg);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -10,7 +10,7 @@
 }
 
 .fcm-sucesso-card {
-  background-color: #ffffff;
+  background-color: var(--surface);
   border-radius: 1.5rem;
   box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
   width: 100%;
@@ -25,20 +25,20 @@
   font-size: 1.5rem;
   line-height: 2rem;
   font-weight: 700;
-  color: #1f2937;
+  color: var(--text-strong);
   margin-bottom: 0.5rem;
 }
 
 .fcm-sucesso-subtitulo {
-  color: #4b5563;
+  color: var(--text-body);
   margin-bottom: 1.5rem;
   font-size: 0.875rem;
   line-height: 1.25rem;
 }
 
 .fcm-token-box {
-  background-color: #f9fafb; 
-  border: 1px solid #e5e7eb; 
+  background-color: var(--surface-input); 
+  border: 1px solid var(--border); 
   border-radius: 1rem;
   padding: 1.5rem;
   margin-bottom: 1.5rem;
@@ -47,7 +47,7 @@
 .fcm-token-label {
   font-size: 0.75rem;
   line-height: 1rem;
-  color: #6b7280;
+  color: var(--text-muted);
   text-transform: uppercase;
   letter-spacing: 0.05em;
   font-weight: 600;
@@ -59,7 +59,7 @@
   line-height: 2.5rem;
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
   font-weight: 700;
-  color: #aab99f;
+  color: var(--accent-green-badge);
   letter-spacing: 0.1em;
   word-break: break-word;
 }
@@ -67,7 +67,7 @@
 .fcm-token-nota {
   font-size: 0.75rem;
   line-height: 1rem;
-  color: #9ca3af;
+  color: var(--text-muted-2);
   margin-top: 0.75rem;
   padding: 0 0.5rem;
 }
@@ -75,7 +75,7 @@
 .fcm-btn-concluir {
   width: 100%;
   padding: 0.75rem 0;
-  background-color: #aab99f;
+  background-color: var(--accent-green-badge);
   border: none;
   border-radius: 9999px;
   color: #ffffff;
@@ -86,11 +86,11 @@
 }
 
 .fcm-btn-concluir:hover {
-  background-color: #9cb39e;
+  background-color: color-mix(in srgb, var(--accent-green-badge) 88%, black);
 }
 
 .fcm-card {
-  background-color: #ffffff;
+  background-color: var(--surface);
   border-radius: 1.5rem;
   box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
   width: 100%;
@@ -107,21 +107,21 @@
   background: none;
   border: none;
   padding: 0;
-  color: #9ca3af;
+  color: var(--text-muted-2);
   font-size: 1.25rem;
   line-height: 1;
   cursor: pointer;
 }
 
 .fcm-close-btn:hover {
-  color: #374151;
+  color: var(--text-body);
 }
 
 .fcm-titulo {
   font-size: 1.25rem;
   line-height: 1.75rem;
   font-weight: 700;
-  color: #1f2937;
+  color: var(--text-strong);
   margin-bottom: 1rem;
 }
 
@@ -141,12 +141,12 @@
   transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out;
   cursor: pointer;
   border: none;
-  background-color: #f3f4f6;
-  color: #4b5563;
+  background-color: var(--surface-alt);
+  color: var(--text-body);
 }
 
 .fcm-tab-ativa {
-  background-color: #aab99f;
+  background-color: var(--accent-green-badge);
   color: #ffffff;
 }
 
@@ -157,20 +157,20 @@
 }
 
 .fcm-input {
-  border: 1px solid #d1d5db; /* gray-300 */
+  border: 1px solid var(--border); /* gray-300 */
   border-radius: 0.75rem;
   padding: 0.5rem 0.75rem;
   font-size: 0.875rem;
   line-height: 1.25rem;
   cursor: text;
-  background-color: #ffffff;
+  background-color: var(--surface);
   width: 100%;
   box-sizing: border-box;
 }
 
 .fcm-input:focus {
   outline: none;
-  border-color: #aab99f;
+  border-color: var(--accent-green-badge);
 }
 
 .fcm-resultados-lista {
@@ -190,21 +190,21 @@
   transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out;
   cursor: pointer;
   border: none;
-  background-color: #f9fafb;
-  color: #374151;
+  background-color: var(--surface-input);
+  color: var(--text-body);
 }
 
 .fcm-resultado-item:hover {
-  background-color: #f3f4f6;
+  background-color: var(--surface-alt);
 }
 
 .fcm-resultado-item-selecionado {
-  background-color: #aab99f;
+  background-color: var(--accent-green-badge);
   color: #ffffff;
 }
 
 .fcm-resultado-item-selecionado:hover {
-  background-color: #aab99f;
+  background-color: var(--accent-green-badge);
 }
 
 .fcm-resultado-nome {
@@ -220,12 +220,12 @@
 .fcm-resultado-vazio {
   font-size: 0.75rem;
   line-height: 1rem;
-  color: #9ca3af;
+  color: var(--text-muted-2);
   padding: 0 0.25rem;
 }
 
 .fcm-textarea {
-  border: 1px solid #d1d5db;
+  border: 1px solid var(--border);
   border-radius: 0.75rem;
   padding: 0.5rem 0.75rem;
   font-size: 0.875rem;
@@ -240,7 +240,7 @@
 
 .fcm-textarea:focus {
   outline: none;
-  border-color: #aab99f;
+  border-color: var(--accent-green-badge);
 }
 
 .fcm-erro {
@@ -254,7 +254,7 @@
   width: 100%;
   margin-top: 1rem;
   padding: 0.5rem 0;
-  background-color: #aab99f;
+  background-color: var(--accent-green-badge);
   border: none;
   border-radius: 9999px;
   color: #ffffff;
@@ -265,7 +265,7 @@
 }
 
 .fcm-btn-confirmar:hover:not(:disabled) {
-  background-color: #9cb39e;
+  background-color: color-mix(in srgb, var(--accent-green-badge) 88%, black);
 }
 
 .fcm-btn-confirmar:disabled {

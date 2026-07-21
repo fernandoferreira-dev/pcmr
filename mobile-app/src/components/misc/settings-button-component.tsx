@@ -21,10 +21,7 @@ export default function SettingsButtonComponent() {
 
   useEffect(() => {
     document.body.classList.toggle("dark-theme", darkEnabled);
-
-    return () => {
-      document.body.classList.remove("dark-theme");
-    };
+    localStorage.setItem("darkTheme", String(darkEnabled));
   }, [darkEnabled]);
 
   return (

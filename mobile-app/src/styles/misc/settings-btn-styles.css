@@ -1,9 +1,9 @@
 .settings-container {
     display: block;
     align-self: flex-end;
-    border: 2px solid #a9c6a9;
+    border: 2px solid var(--accent-green-soft);
     border-radius: 3rem;
-    background-color: #a9c6a9;
+    background-color: var(--accent-green-soft);
     width: 50px;
     height: 40px;
 }
@@ -23,10 +23,10 @@
 }
 
 .email-body {
-    color: #000;
+    color: var(--text-strong);
     resize: none;
-    background-color: #ffffff;
-    border: 1px solid #6c757d;
+    background-color: var(--surface);
+    border: 1px solid var(--border-strong);
     border-radius: 1rem;
     align-self: center;
     width: 90%;
@@ -41,30 +41,30 @@
     display: block;
     width: 50%;
     padding: 0.6rem 0.8rem;
-    color: #000000;
-    border: 1px solid #6C757D;
-    background-color: #CFCDCD;
+    color: var(--text-strong);
+    border: 1px solid var(--border-strong);
+    background-color: var(--surface-input-alt);
     border-radius: 1rem;
 }
 
 .log-out-btn {
-    color: #000000;
+    color: var(--text-strong);
     font-weight: bold;
     padding: 0.6rem 1rem;
     border: none;
     border-radius: 1rem;
-    background-color: #EFEFEF;
+    background-color: var(--surface-alt);
 }
 
 .log-out-btn:hover {
-    background-color: #E2E2E2;
+    background-color: color-mix(in srgb, var(--surface-alt) 92%, black);
 }
 
 .overlay {
     display: flex;
     position: fixed;
     inset: 0;
-    background-color: rgba(0, 0, 0, 0.5);
+    background-color: var(--overlay-bg);
     align-items: center;
     justify-content: center;
     z-index: 1000;
@@ -73,8 +73,8 @@
 .modal {
     display: flex;
     flex-direction: column;
-    background-color: #FFFFFF;
-    color: #000000;
+    background-color: var(--surface);
+    color: var(--text-strong);
     padding: 1.5rem 1.75rem;
     border-radius: 16px;
     text-align: center;
@@ -107,7 +107,7 @@
     border: none;
     font-size: 1.25rem;
     line-height: 1;
-    color: #333;
+    color: var(--text-body);
 }
 
 .option-container {
@@ -130,9 +130,9 @@
     order: -1;
     flex: 1;
     padding: 0.5rem 0.7rem;
-    color: #000000;
-    border: 1px solid #6C757D;
-    background-color: #CFCDCD;
+    color: var(--text-strong);
+    border: 1px solid var(--border-strong);
+    background-color: var(--surface-input-alt);
     border-radius: 1rem;
     font-family: inherit;
 }
@@ -169,7 +169,7 @@
 .slider {
     position: absolute;
     inset: 0;
-    background-color: #ccc;
+    background-color: var(--switch-track);
     border-radius: 999px;
     transition: 0.2s;
 }
@@ -181,13 +181,13 @@
     height: 22px;
     left: 3px;
     top: 3px;
-    background-color: white;
+    background-color: var(--switch-thumb);
     border-radius: 50%;
     transition: 0.2s;
 }
 
 .switch input:checked+.slider {
-    background-color: #4caf50;
+    background-color: var(--switch-on);
 }
 
 .switch input:checked+.slider:before {
@@ -216,9 +216,9 @@
     display: block;
     width: 100%;
     padding: 0.6rem 0.8rem;
-    color: #000000;
-    border: 1px solid #6C757D;
-    background-color: #CFCDCD;
+    color: var(--text-strong);
+    border: 1px solid var(--border-strong);
+    background-color: var(--surface-input-alt);
     border-radius: 1rem;
     font-family: inherit;
 }
@@ -232,9 +232,9 @@
     list-style: none;
     margin: 0.35rem 0 0;
     padding: 0.25rem;
-    border: 1px solid #6C757D;
+    border: 1px solid var(--border-strong);
     border-radius: 0.75rem;
-    background-color: #FFFFFF;
+    background-color: var(--surface);
     max-height: 140px;
     overflow-y: auto;
     text-align: left;
@@ -248,11 +248,11 @@
 }
 
 .search-results li:hover {
-    background-color: #EFEFEF;
+    background-color: var(--surface-alt);
 }
 
 .error-message {
-    color: #B00020;
+    color: var(--danger);
     font-size: 0.85rem;
     margin: 0;
 }
@@ -268,9 +268,9 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    border: 2px solid #a9c6a9;
+    border: 2px solid var(--accent-green-soft);
     border-radius: 3rem;
-    background-color: #a9c6a9;
+    background-color: var(--accent-green-soft);
     width: 50px;
     height: 40px;
 }

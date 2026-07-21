@@ -4,9 +4,9 @@
     width: 100%;
     max-width: 150px;
     padding: 0.6rem 0.8rem;
-    color: #000000;
-    border: 1px solid #6C757D;
-    background-color: #CFCDCD;
+    color: var(--text-strong);
+    border: 1px solid var(--border-strong);
+    background-color: var(--surface-input-alt);
     border-radius: 1rem;
     box-sizing: border-box;
 }
@@ -17,9 +17,9 @@
     width: 100%;
     max-width: 320px;
     padding: 0.6rem 0.8rem;
-    color: #000000;
-    border: 1px solid #6C757D;
-    background-color: #CFCDCD;
+    color: var(--text-strong);
+    border: 1px solid var(--border-strong);
+    background-color: var(--surface-input-alt);
     border-radius: 1rem;
     box-sizing: border-box;
 }

@@ -10,10 +10,10 @@
 
 .notification-wrapper {
     width: 100%;
-    border: 2px solid #B2C8B2;
+    border: 2px solid var(--border-soft);
     border-radius: 18px;
     overflow: hidden;
-    background: #ffffff;
+    background: var(--surface);
     box-sizing: border-box;
     flex-shrink: 0;
 }
@@ -22,7 +22,7 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    background-color: #A8B8A0;
+    background-color: var(--accent-green-badge);
     padding: 10px 14px;
     min-height: 56px;
 }
@@ -43,7 +43,7 @@
 .sender-name {
     font-size: 1rem;
     font-weight: 700;
-    color: #223456;
+    color: var(--message-heading);
     display: -webkit-box;
     -webkit-line-clamp: 2;
     line-clamp: inherit;
@@ -53,7 +53,7 @@
 
 .message-date {
     font-size: 0.95rem;
-    color: #223456;
+    color: var(--message-heading);
     white-space: nowrap;
 }
 
@@ -62,7 +62,7 @@
     flex-direction: column;
     width: 100%;
     padding: 12px 16px;
-    background: #ffffff;
+    background: var(--surface);
     gap: 8px;
     box-sizing: border-box;
     height: fit-content;
@@ -82,12 +82,12 @@
     -webkit-box-orient: vertical;
     overflow: hidden;
     font-size: 0.9rem;
-    color: #34435C;
+    color: var(--message-text);
 }
 
 .message-subject {
     font-size: 1rem;
-    color: #34435C;
+    color: var(--message-text);
     text-align: left;
 }
 
@@ -97,7 +97,7 @@
 
 .message-corpo {
     font-size: 0.9rem;
-    color: #34435C;
+    color: var(--message-text);
     white-space: pre-wrap;
     word-break: break-word;
     text-align: left;
@@ -128,7 +128,7 @@
     width: 14px;
     height: 14px;
     border-radius: 50%;
-    background: #ff3b3b;
+    background: var(--unread-dot);
 }
 
 .messages-scroll-container {
@@ -137,9 +137,9 @@
     padding-right: 1.60rem;
     display: flex;
     flex-direction: column;
-    border: 3px solid #B2C8B2;
+    border: 3px solid var(--border-soft);
     border-radius: 1rem;
-    background-color: #ffffff;
+    background-color: var(--surface);
     gap: 0.75rem;
 }
 
@@ -152,7 +152,7 @@
 }
 
 .messages-scroll-container::-webkit-scrollbar-thumb {
-    background-color: #4E5452;
+    background-color: var(--btn-dark);
     border-radius: 4px;
 }
 
