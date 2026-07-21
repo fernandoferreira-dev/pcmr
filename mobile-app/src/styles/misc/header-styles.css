@@ -1,6 +1,6 @@
 .header-container {
   padding: 0.3rem;
-  background-color: #ffffff;
+  background-color: var(--surface);
 }
 
 .header-row {
@@ -13,14 +13,14 @@
   display: flex;
   flex-direction: row;
   margin-left: auto;
-  gap: 10px;
+  gap: 20px;
 }
 
 .header-page-title {
-  color: #2e8b57;
   margin: 0;
-  font-size: 1.4rem;
+  font-size: 1.2rem;
   font-weight: 600;
+  color: var(--text-strong);
   display: flex;
   align-items: center;
   gap: 8px;
@@ -29,4 +29,3 @@
 .header-page-title img {
   width: 60px;
 }
-

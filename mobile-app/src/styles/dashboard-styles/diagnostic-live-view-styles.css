@@ -79,7 +79,7 @@
   position: fixed;
   inset: 0;
   z-index: 50;
-  background-color: #ffffff;
+  background-color: var(--surface);
   display: flex;
   flex-direction: column;
 }
@@ -89,28 +89,28 @@
   align-items: center;
   justify-content: space-between;
   padding: 1rem 1.5rem;
-  border-bottom: 1px solid #e5e7eb; /* gray-200 */
+  border-bottom: 1px solid var(--border);
 }
 
 .diag-title {
   font-size: 1.25rem;
   line-height: 1.75rem;
   font-weight: 700;
-  color: #1f2937; /* gray-800 */
+  color: var(--text-strong);
 }
 
 .diag-close-btn {
   background: none;
   border: none;
   padding: 0;
-  color: #9ca3af; /* gray-400 */
+  color: var(--text-muted-2);
   font-size: 1.25rem;
   line-height: 1;
   cursor: pointer;
 }
 
 .diag-close-btn:hover {
-  color: #374151; /* gray-700 */
+  color: var(--text-body);
 }
 
 .diag-main {
@@ -146,7 +146,7 @@
 /* ---------- Gráfico ---------- */
 
 .diag-chart-card {
-  background-color: #f9fafb; /* gray-50 */
+  background-color: var(--surface-input);
   border-radius: 1rem;
   padding: 1rem;
   margin-bottom: 1.5rem;
@@ -163,16 +163,16 @@
   font-size: 0.875rem;
   line-height: 1.25rem;
   font-weight: 600;
-  color: #4b5563; /* gray-600 */
+  color: var(--text-body);
 }
 
 .diag-metric-tabs {
   display: flex;
   gap: 0.25rem;
-  background-color: #ffffff;
+  background-color: var(--surface);
   border-radius: 9999px;
   padding: 0.25rem;
-  border: 1px solid #e5e7eb; /* gray-200 */
+  border: 1px solid var(--border);
 }
 
 .diag-metric-tab {
@@ -185,20 +185,20 @@
   cursor: pointer;
   background: none;
   border: none;
-  color: #6b7280; /* gray-500 */
+  color: var(--text-muted);
 }
 
 .diag-metric-tab:hover {
-  background-color: #f3f4f6; /* gray-100 */
+  background-color: var(--surface-alt);
 }
 
 .diag-metric-tab-active {
-  background-color: #aab99f;
+  background-color: var(--accent-green-badge);
   color: #ffffff;
 }
 
 .diag-metric-tab-active:hover {
-  background-color: #aab99f;
+  background-color: var(--accent-green-badge);
 }
 
 .diag-chart-empty {
@@ -208,30 +208,30 @@
   justify-content: center;
   font-size: 0.875rem;
   line-height: 1.25rem;
-  color: #9ca3af; /* gray-400 */
+  color: var(--text-muted-2);
 }
 
 /* ---------- Estado do sensor de queda ---------- */
 
 .diag-fall-box {
-  background-color: #f9fafb; /* gray-50 */
+  background-color: var(--surface-input);
   border-radius: 1rem;
   padding: 0.75rem 1rem;
   font-size: 0.875rem;
   line-height: 1.25rem;
-  color: #4b5563; /* gray-600 */
+  color: var(--text-body);
 }
 
 .diag-fall-value {
   font-weight: 500;
-  color: #1f2937; /* gray-800 */
+  color: var(--text-strong);
 }
 
 .diag-last-update {
   margin-top: 1rem;
   font-size: 0.75rem;
   line-height: 1rem;
-  color: #9ca3af; /* gray-400 */
+  color: var(--text-muted-2);
 }
 
 .end-consulta {
@@ -245,7 +245,7 @@
 /* ---------- Footer ---------- */
 .diag-finalizar-btn {
   padding: 0.5rem 1.5rem;
-  background-color: #aab99f;
+  background-color: var(--accent-green-badge);
   border: none;
   border-radius: 9999px;
   color: #ffffff;
@@ -256,7 +256,7 @@
 }
 
 .diag-finalizar-btn:hover:not(:disabled) {
-  background-color: #9cb39e;
+  background-color: color-mix(in srgb, var(--accent-green-badge) 88%, black);
 }
 
 .diag-finalizar-btn:disabled {
@@ -278,8 +278,8 @@
 }
 
 .diag-cartao-calibrando {
-  background-color: rgba(243, 244, 246, 0.7); /* gray-100/70 */
-  border: 2px dashed #d1d5db; /* gray-300 */
+  background-color: color-mix(in srgb, var(--surface-alt) 70%, transparent);
+  border: 2px dashed var(--border);
 }
 
 .diag-cartao-alerta {
@@ -288,12 +288,12 @@
 }
 
 .diag-cartao-pulsando {
-  background-color: #f9fafb; /* gray-50 */
+  background-color: var(--surface-input);
   border: 2px solid transparent; /* a cor real vem da animação pulso-verde-ativo */
 }
 
 .diag-cartao-default {
-  background-color: #f9fafb; /* gray-50 */
+  background-color: var(--surface-input);
   border: 2px solid transparent;
 }
 
@@ -315,7 +315,7 @@
   text-transform: uppercase;
   letter-spacing: 0.025em;
   font-weight: 600;
-  color: #6b7280; /* gray-500 */
+  color: var(--text-muted);
 }
 
 .diag-cartao-titulo-alerta {
@@ -324,9 +324,9 @@
 
 .diag-cartao-calibrando-badge {
   font-size: 0.625rem;
-  color: #9ca3af; /* gray-400 */
+  color: var(--text-muted-2);
   font-weight: 500;
-  background-color: #e5e7eb; /* gray-200 */
+  background-color: var(--surface-alt);
   padding: 0.125rem 0.5rem;
   border-radius: 9999px;
 }
@@ -335,11 +335,11 @@
   font-size: 1.875rem;
   line-height: 2.25rem;
   font-weight: 700;
-  color: #1f2937; /* gray-800 (default) */
+  color: var(--text-strong); /* default */
 }
 
 .diag-cartao-valor-calibrando {
-  color: #9ca3af; /* gray-400 */
+  color: var(--text-muted-2);
 }
 
 .diag-cartao-valor-alerta {

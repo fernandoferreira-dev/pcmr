@@ -2,7 +2,7 @@
   position: fixed;
   inset: 0;
   z-index: 50;
-  background-color: rgba(0, 0, 0, 0.4);
+  background-color: var(--overlay-bg);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -10,7 +10,7 @@
 }
 
 .modal {
-  background-color: #ffffff;
+  background-color: var(--surface);
   border-radius: 1.5rem;
   box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
   width: 100%;
@@ -23,7 +23,7 @@
   position: absolute;
   top: 1rem;
   right: 1rem;
-  color: #9ca3af;
+  color: var(--text-muted-2);
   font-size: 1.25rem;
   line-height: 1.75rem;
   background: none;
@@ -32,14 +32,14 @@
 }
 
 .closeButton:hover {
-  color: #374151;
+  color: var(--text-body);
 }
 
 .title {
   font-size: 1.25rem;
   line-height: 1.75rem;
   font-weight: 700;
-  color: #1f2937;
+  color: var(--text-strong);
   margin-bottom: 1rem;
 }
 
@@ -52,7 +52,7 @@
 .checkingText {
   font-size: 0.875rem;
   line-height: 1.25rem;
-  color: #9ca3af;
+  color: var(--text-muted-2);
 }
 
 .warningBox {
@@ -68,7 +68,7 @@
 .confirmText {
   font-size: 0.875rem;
   line-height: 1.25rem;
-  color: #4b5563;
+  color: var(--text-body);
 }
 
 .buttonRow {
@@ -84,12 +84,12 @@
   font-weight: 500;
   border: none;
   transition: background-color 0.15s ease-in-out, color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
-  background-color: #f3f4f6;
-  color: #374151;
+  background-color: var(--surface-alt);
+  color: var(--text-body);
 }
 
 .noButton:hover {
-  background-color: #e5e7eb;
+  background-color: color-mix(in srgb, var(--surface-alt) 90%, black);
 }
 
 .yesButton {
@@ -100,13 +100,13 @@
   font-weight: 500;
   border: none;
   transition: background-color 0.15s ease-in-out, color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
-  background-color: #AAB99F;
+  background-color: var(--accent-green-badge);
   color: #ffffff;
   box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
 }
 
 .yesButton:hover {
-  background-color: #9CB39E;
+  background-color: color-mix(in srgb, var(--accent-green-badge) 88%, black);
 }
 
 .yesButton:disabled {
