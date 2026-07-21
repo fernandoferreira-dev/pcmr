@@ -90,7 +90,8 @@ export default function DiagnosticButtonComponent({
             </button>
             <button
               onClick={handleConfirmarInicio}
-              disabled={presente !== true || loading}
+              //disabled={presente !== true || loading}
+              disabled={loading}
               className="yesButton"
             >
               {loading ? "A ativar..." : "Sim"}
