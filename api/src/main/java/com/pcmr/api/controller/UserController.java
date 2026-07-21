@@ -11,27 +11,32 @@ import java.time.LocalDate;
 import java.util.Optional;
 
 @RestController
-@RequestMapping("/api/utilizadores")
-public class UserController {
+@RequestMapping("/api")
+public class UserController {   // Changed base path to /api for flexibility
 
     @Autowired
     private UserRepository userRepository;
 
+    // ==================== GET USER (English - for frontend) ====================
+    @GetMapping("/users/{id}")
+    public ResponseEntity<?> getUserById(@PathVariable Long id) {
+        return getUserResponse(id);
+    }
+
+    // ==================== GET USER (Portuguese) ====================
+    @GetMapping("/utilizadores/{id}")
+    public ResponseEntity<?> getUtilizadorById(@PathVariable Long id) {
+        return getUserResponse(id);
+    }
+
     // ==================== GET PERFIL ====================
-    @GetMapping("/{id}/perfil")
+    @GetMapping("/utilizadores/{id}/perfil")
     public ResponseEntity<?> getPerfil(@PathVariable Long id) {
-        Optional<Utilizador> userOpt = userRepository.findById(id);
-        
-        if (userOpt.isPresent()) {
-            return ResponseEntity.ok(new UserProfileResponse(userOpt.get()));
-        } else {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body("Utilizador não encontrado");
-        }
+        return getUserResponse(id);
     }
 
     // ==================== UPDATE PERFIL ====================
-    @PutMapping("/{id}/perfil")
+    @PutMapping("/utilizadores/{id}/perfil")
     public ResponseEntity<?> updatePerfil(@PathVariable Long id, @RequestBody UserProfileRequest request) {
         Optional<Utilizador> userOpt = userRepository.findById(id);
         
@@ -52,6 +57,17 @@ public class UserController {
 
         userRepository.save(user);
         return ResponseEntity.ok(new UserProfileResponse(user));
+    }
+
+    // Private helper
+    private ResponseEntity<?> getUserResponse(Long id) {
+        Optional<Utilizador> userOpt = userRepository.findById(id);
+        if (userOpt.isPresent()) {
+            return ResponseEntity.ok(new UserProfileResponse(userOpt.get()));
+        } else {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body("Utilizador não encontrado");
+        }
     }
 
     // ==================== DTOs ====================

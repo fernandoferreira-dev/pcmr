@@ -41,4 +41,15 @@ public class AlertaController {
 
         return ResponseEntity.ok(alertaService.listarPorDispositivo(deviceId, dataInicio));
     }
+
+    /**
+     * NEW: Endpoint called by frontend
+     */
+    @GetMapping("/recentes")
+    public ResponseEntity<List<AlertaResponseDTO>> getAlertasRecentes(
+            @RequestParam(defaultValue = "10") int limite) {
+        
+        // TODO: Implement this method in AlertaService if it doesn't exist yet
+        return ResponseEntity.ok(alertaService.listarRecentes(limite));
+    }
 }

@@ -13,6 +13,7 @@ export default function DiagnosticButtonComponent({
 }) {
   const [passo, setPasso] = useState<Passo>('confirmar')
   const [presente, setPresente] = useState<boolean | null>(null)
+  const [loading, setLoading] = useState<boolean>(false)
 
   useEffect(() => {
     const verificarPresenca = async () => {
@@ -31,6 +32,30 @@ export default function DiagnosticButtonComponent({
     return () => clearInterval(interval)
   }, [])
 
+  const handleConfirmarInicio = async () => {
+    setLoading(true)
+    try {
+      // Ativa o diagnóstico no backend
+      const res = await fetch('/api/diagnosticos/wearable01/iniciar', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+      })
+
+      if (res.ok) {
+        console.log("Diagnóstico ativado com sucesso")
+        setPasso('ao_vivo')
+      } else {
+        console.error("Erro ao ativar diagnóstico")
+        setPasso('ao_vivo') // fallback
+      }
+    } catch (err) {
+      console.error("Erro de rede:", err)
+      setPasso('ao_vivo') // fallback
+    } finally {
+      setLoading(false)
+    }
+  }
+
   if (passo === 'ao_vivo') {
     return <DiagnosticoLiveView onClose={onClose} idMedico={idMedico} />
   }
@@ -38,24 +63,18 @@ export default function DiagnosticButtonComponent({
   return (
     <div className="overlay">
       <div className="modal">
-        <button
-          onClick={onClose}
-          className="closeButton"
-          title="Fechar"
-        >
+        <button onClick={onClose} className="closeButton" title="Fechar" disabled={loading}>
           ✕
         </button>
 
         <h2 className="title">Consulta Rápida</h2>
 
         <div className="content">
-          {presente === null && (
-            <p className="checkingText">A verificar presença do paciente...</p>
-          )}
+          {presente === null && <p className="checkingText">A verificar presença...</p>}
 
           {presente === false && (
             <div className="warningBox">
-              Não foi detetada a presença de nenhum paciente. Aproxima-te do sensor e aguarda alguns segundos.
+              Não foi detetada a presença de nenhum paciente. Aproxima-te do sensor.
             </div>
           )}
 
@@ -66,17 +85,15 @@ export default function DiagnosticButtonComponent({
           )}
 
           <div className="buttonRow">
-            <button
-              onClick={onClose}
-              className="noButton"
-            >
+            <button onClick={onClose} className="noButton" disabled={loading}>
               Não
             </button>
             <button
-              onClick={() => setPasso('ao_vivo')}
+              onClick={handleConfirmarInicio}
+              disabled={presente !== true || loading}
               className="yesButton"
             >
-              Sim
+              {loading ? "A ativar..." : "Sim"}
             </button>
           </div>
         </div>
