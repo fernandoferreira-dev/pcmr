@@ -111,6 +111,7 @@ export default function CreateAccountComponent({ onAccountCreated }: Props) {
                       className="input"
                       value={username}
                       onChange={(e) => setUsername(e.target.value)}
+                      disabled={isSubmitting}
                       required
                     />
                   </label>
@@ -122,6 +123,7 @@ export default function CreateAccountComponent({ onAccountCreated }: Props) {
                       className="input"
                       value={phoneNumber}
                       onChange={(e) => setPhoneNumber(e.target.value)}
+                      disabled={isSubmitting}
                     />
                   </label>
                 </div>
@@ -133,6 +135,7 @@ export default function CreateAccountComponent({ onAccountCreated }: Props) {
                       type="email"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
+                      disabled={isSubmitting}
                       required
                     />
                   </label>
@@ -145,6 +148,7 @@ export default function CreateAccountComponent({ onAccountCreated }: Props) {
                       type="password"
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
+                      disabled={isSubmitting}
                       required
                     />
                   </label>
@@ -158,6 +162,7 @@ export default function CreateAccountComponent({ onAccountCreated }: Props) {
                       max={maxDate}
                       value={birthDate}
                       onChange={(e) => setBirthDate(e.target.value)}
+                      disabled={isSubmitting}
                     />
                   </label>
                 </div>
@@ -167,6 +172,7 @@ export default function CreateAccountComponent({ onAccountCreated }: Props) {
                     <select
                       value={selectedOption}
                       onChange={(e) => setSelectedOption(e.target.value)}
+                      disabled={isSubmitting}
                     >
                       <option value="opcao-pt">Português</option>
                       <option value="opcao-ing">Inglês</option>

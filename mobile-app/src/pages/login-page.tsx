@@ -146,6 +146,8 @@ export default function LoginPage({ onLogin, onAccountCreated }: Props) {
             name="username"
             type="text"
             value={username}
+            required
+            disabled={isSubmitting}
             onChange={(event) => setUsername(event.target.value)}
           />
           <label htmlFor="password">Password</label>
@@ -155,6 +157,8 @@ export default function LoginPage({ onLogin, onAccountCreated }: Props) {
             name="password"
             type="password"
             value={password}
+            disabled={isSubmitting}
+            required
             onChange={(event) => setPassword(event.target.value)}
           />
           <div className="button-row">
@@ -190,23 +194,31 @@ export default function LoginPage({ onLogin, onAccountCreated }: Props) {
               className="modal-input"
               placeholder="Nome Completo"
               value={novoNome} onChange={e => setNovoNome(e.target.value)}
+              disabled={isSubmitting}
+              required
             />
             <input
               className="modal-input"
               placeholder="Email"
               type="email"
               value={novoEmail} onChange={e => setNovoEmail(e.target.value)}
+              disabled={isSubmitting}
+              required
             />
             <input
               className="modal-input"
               placeholder="Username"
               value={novoUsername} onChange={e => setNovoUsername(e.target.value)}
+              disabled={isSubmitting}
+              required
             />
             <input
               className="modal-input"
               placeholder="Password"
               type="password"
               value={novaPassword} onChange={e => setNovaPassword(e.target.value)}
+              disabled={isSubmitting}
+              required
             />
             {modalStatus && (
               <div className={`modal-status ${modalStatus.tipo === 'erro' ? 'modal-status-erro' : 'modal-status-sucesso'}`}>
