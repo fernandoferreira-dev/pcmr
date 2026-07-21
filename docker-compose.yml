@@ -18,7 +18,7 @@ services:
       SPRING_JPA_SHOW_SQL: "true"
       MQTT_BROKER_URL: tcp://mosquitto:1883
       MQTT_TOPIC: sensors/#
-      MQTT_CIPHER_KEY: hcxvJttC6Xt4trgP3HDtxGbxyhBjJa6v
+      MQTT_CIPHER_KEY: y1RpGJ0lRkxFEB29C7qmJ0KU2u8skiwrKwWWpj+jyGs=
     depends_on:
       - mqtt5
     networks:

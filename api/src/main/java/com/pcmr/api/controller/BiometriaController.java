@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -17,7 +18,7 @@ import java.util.concurrent.TimeoutException;
 
 @RestController
 @RequestMapping("/api/biometria")
-@CrossOrigin(origins = "http://localhost:3001")
+@CrossOrigin(origins = {"http://localhost:3000", "http://localhost"})
 public class BiometriaController {
 
     @Autowired
@@ -30,12 +31,12 @@ public class BiometriaController {
     public ResponseEntity<?> iniciarRegisto(@RequestBody Map<String, Long> body) {
         Long userId = body.get("userId");
         if (userId == null || userId <= 0) {
-            return ResponseEntity.badRequest().body(Map.of("erro", "userId é obrigatório"));
+            return ResponseEntity.badRequest().body(Map.of("sucesso", false, "mensagem", "userId é obrigatório"));
         }
 
         Optional<Utilizador> userOpt = userRepository.findById(userId);
         if (userOpt.isEmpty()) {
-            return ResponseEntity.badRequest().body(Map.of("erro", "Utilizador não encontrado"));
+            return ResponseEntity.badRequest().body(Map.of("sucesso", false, "mensagem", "Utilizador não encontrado"));
         }
 
         Utilizador user = userOpt.get();
@@ -48,6 +49,7 @@ public class BiometriaController {
 
         try {
             CompletableFuture<Boolean> future = biometriaService.iniciarRegisto(userId);
+            // Aguarda a resposta do ESP32 até ao tempo limite do Controller
             Boolean resultado = future.get(35, TimeUnit.SECONDS);
 
             if (Boolean.TRUE.equals(resultado)) {
@@ -62,6 +64,8 @@ public class BiometriaController {
                 ));
             }
         } catch (TimeoutException e) {
+            // Cancela e notifica por HTTP sem causar Erro 500
+            biometriaService.cancelarRegisto(userId);
             return ResponseEntity.status(HttpStatus.REQUEST_TIMEOUT).body(Map.of(
                     "sucesso", false,
                     "mensagem", "Tempo excedido. Não detetámos o seu dedo a tempo."
@@ -80,14 +84,20 @@ public class BiometriaController {
                         "mensagem", "Tempo excedido. Não detetámos o seu dedo a tempo."
                 ));
             }
+            if (causa instanceof CancellationException) {
+                return ResponseEntity.status(HttpStatus.OK).body(Map.of(
+                        "sucesso", false,
+                        "mensagem", "Processo cancelado pelo utilizador."
+                ));
+            }
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of(
                     "sucesso", false,
-                    "mensagem", "Erro interno ao processar o registo biométrico."
+                    "mensagem", "Erro interno ao processar o registo biométrico: " + (causa != null ? causa.getMessage() : e.getMessage())
             ));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of(
                     "sucesso", false,
-                    "mensagem", "Erro desconhecido"
+                    "mensagem", "Erro inesperado: " + e.getMessage()
             ));
         }
     }
@@ -122,18 +132,16 @@ public class BiometriaController {
     }
 
     @PostMapping("/registar/cancelar")
-public ResponseEntity<?> cancelarRegisto(@RequestBody Map<String, Long> body) {
-    Long userId = body.get("userId");
-    if (userId != null) biometriaService.cancelarRegisto(userId);
-    return ResponseEntity.ok(Map.of("cancelado", true));
-}
+    public ResponseEntity<?> cancelarRegisto(@RequestBody Map<String, Long> body) {
+        Long userId = body.get("userId");
+        if (userId != null) biometriaService.cancelarRegisto(userId);
+        return ResponseEntity.ok(Map.of("cancelado", true));
+    }
 
-@PostMapping("/login/cancelar")
-public ResponseEntity<?> cancelarLogin(@RequestBody Map<String, String> body) {
-    String correlationId = body.get("correlationId");
-    if (correlationId != null) biometriaService.cancelarLogin(correlationId);
-    return ResponseEntity.ok(Map.of("cancelado", true));
-}
-
-
+    @PostMapping("/login/cancelar")
+    public ResponseEntity<?> cancelarLogin(@RequestBody Map<String, String> body) {
+        String correlationId = body.get("correlationId");
+        if (correlationId != null) biometriaService.cancelarLogin(correlationId);
+        return ResponseEntity.ok(Map.of("cancelado", true));
+    }
 }
