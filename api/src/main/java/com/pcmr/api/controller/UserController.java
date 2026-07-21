@@ -11,27 +11,28 @@ import java.time.LocalDate;
 import java.util.Optional;
 
 @RestController
-@RequestMapping("/api/utilizadores")
-public class UserController {
+@RequestMapping("/api")
+public class UserController {   
 
     @Autowired
     private UserRepository userRepository;
 
-    // ==================== GET PERFIL ====================
-    @GetMapping("/{id}/perfil")
-    public ResponseEntity<?> getPerfil(@PathVariable Long id) {
-        Optional<Utilizador> userOpt = userRepository.findById(id);
-        
-        if (userOpt.isPresent()) {
-            return ResponseEntity.ok(new UserProfileResponse(userOpt.get()));
-        } else {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body("Utilizador não encontrado");
-        }
+    @GetMapping("/users/{id}")
+    public ResponseEntity<?> getUserById(@PathVariable Long id) {
+        return getUserResponse(id);
     }
 
-    // ==================== UPDATE PERFIL ====================
-    @PutMapping("/{id}/perfil")
+    @GetMapping("/utilizadores/{id}")
+    public ResponseEntity<?> getUtilizadorById(@PathVariable Long id) {
+        return getUserResponse(id);
+    }
+
+    @GetMapping("/utilizadores/{id}/perfil")
+    public ResponseEntity<?> getPerfil(@PathVariable Long id) {
+        return getUserResponse(id);
+    }
+
+    @PutMapping("/utilizadores/{id}/perfil")
     public ResponseEntity<?> updatePerfil(@PathVariable Long id, @RequestBody UserProfileRequest request) {
         Optional<Utilizador> userOpt = userRepository.findById(id);
         
@@ -52,6 +53,17 @@ public class UserController {
 
         userRepository.save(user);
         return ResponseEntity.ok(new UserProfileResponse(user));
+    }
+
+    // Private helper
+    private ResponseEntity<?> getUserResponse(Long id) {
+        Optional<Utilizador> userOpt = userRepository.findById(id);
+        if (userOpt.isPresent()) {
+            return ResponseEntity.ok(new UserProfileResponse(userOpt.get()));
+        } else {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body("Utilizador não encontrado");
+        }
     }
 
     // ==================== DTOs ====================

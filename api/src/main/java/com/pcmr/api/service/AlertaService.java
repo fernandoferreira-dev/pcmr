@@ -9,6 +9,8 @@ import com.pcmr.api.repository.AlertaClinicoRepository;
 import com.pcmr.api.repository.SensorRepository;
 import com.pcmr.api.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -38,8 +40,8 @@ public class AlertaService {
 
         Sensor sensor = sensorRepository.findByNome(dto.getDeviceId())
                 .orElseThrow(() -> new RuntimeException("Sensor não encontrado. Nome: " + dto.getDeviceId()));
-        alerta.setSensor(sensor);
 
+        alerta.setSensor(sensor);
         alerta.setTipoAlerta(dto.getTipoAlerta());
         alerta.setValorRegistado(dto.getValorRegistado());
         alerta.setMensagem(dto.getMensagem());
@@ -50,6 +52,20 @@ public class AlertaService {
     public List<AlertaResponseDTO> listarPorDispositivo(String deviceId, LocalDateTime desde) {
         List<AlertaClinico> alertas = alertaRepository
                 .findBySensor_NomeAndDataHoraAfterOrderByDataHoraDesc(deviceId, desde);
+
+        return alertas.stream().map(a -> new AlertaResponseDTO(
+                a.getIdAlerta(),
+                a.getTipoAlerta(),
+                a.getValorRegistado(),
+                a.getMensagem(),
+                a.getDataHora().toString()
+        )).collect(Collectors.toList());
+    }
+    
+    public List<AlertaResponseDTO> listarRecentes(int limite) {
+        Pageable pageable = PageRequest.of(0, limite);
+        
+        List<AlertaClinico> alertas = alertaRepository.findRecentAlerts(pageable);
 
         return alertas.stream().map(a -> new AlertaResponseDTO(
                 a.getIdAlerta(),

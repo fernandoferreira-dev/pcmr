@@ -41,4 +41,11 @@ public class AlertaController {
 
         return ResponseEntity.ok(alertaService.listarPorDispositivo(deviceId, dataInicio));
     }
+
+    @GetMapping("/recentes")
+    public ResponseEntity<List<AlertaResponseDTO>> getAlertasRecentes(
+            @RequestParam(defaultValue = "10") int limite) {
+        
+        return ResponseEntity.ok(alertaService.listarRecentes(limite));
+    }
 }

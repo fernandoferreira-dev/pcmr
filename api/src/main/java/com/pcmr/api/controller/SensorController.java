@@ -99,6 +99,31 @@ public class SensorController {
         ));
     }
 
+    @GetMapping("/procurar")
+    public ResponseEntity<List<SensorDTO>> procurarSensores(
+            @RequestParam String nome,
+            @RequestParam(required = false) Long excluirId
+    ) {
+        List<Sensor> resultados = sensorRepository.findByNomeContainingIgnoreCase(nome);
+
+        List<SensorDTO> dtos = resultados.stream()
+                .filter(s -> excluirId == null || !s.getIdSensor().equals(excluirId))
+                .map(s -> new SensorDTO(
+                        s.getIdSensor(),
+                        s.getNome(),
+                        null,
+                        s.getLocalizacao(),
+                        s.getEstado(),
+                        null
+                ))
+                .collect(Collectors.toList());
+
+        return ResponseEntity.ok(dtos);
+    }
+
+    /**
+     * ENDPOINT CRÍTICO - Última leitura do sensor (usado pelo frontend)
+     */
     @GetMapping("/{deviceId}/ultima-leitura")
     public ResponseEntity<?> ultimaLeitura(@PathVariable String deviceId) {
         LeituraSensorService.LeituraAtual leitura = leituraSensorService.getUltimaLeitura(deviceId);

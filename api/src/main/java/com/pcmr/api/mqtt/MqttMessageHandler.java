@@ -77,8 +77,7 @@ public class MqttMessageHandler {
             String deviceId = extrairDeviceId(topic);
             if (deviceId != null) {
                 System.out.println("⚠️ [MQTT STATUS] O dispositivo '" + deviceId + "' reportou estado: " + payloadBruto);
-
-                // Regista atividade também pelos avisos de status MQTT
+                
                 atividadeSensorService.registarAtividade(deviceId);
 
                 if ("OFFLINE".equalsIgnoreCase(payloadBruto)) {
@@ -98,7 +97,7 @@ public class MqttMessageHandler {
                     "Erro ao decifrar/validar mensagem MQTT no tópico '"
                             + topic + "': " + e.getMessage()
             );
-            return; // descarta mensagens inválidas
+            return; 
         }
 
         try {
@@ -160,11 +159,11 @@ public class MqttMessageHandler {
             String deviceId = extrairDeviceId(topic);
 
             if (deviceId != null) {
-
-                // Regista atividade do wearable imediatamente
                 atividadeSensorService.registarAtividade(deviceId);
 
-                // Gate de diagnóstico (novo, vindo do documento 2)
+                System.out.println("📥 [MQTT RECEBIDO] Tópico: " + topic + " | DeviceID extraído: " + deviceId + " | Diagnóstico Ativo? " + leituraSensorService.isDiagnosticoAtivo(deviceId));
+
+                // 2. Valida se o diagnóstico está ativo no LeituraSensorService para este ID
                 if (!leituraSensorService.isDiagnosticoAtivo(deviceId)) {
                     System.out.println(
                             "ℹ️ [DIAGNÓSTICO INATIVO] Dados de '" + deviceId
