@@ -26,11 +26,11 @@ interface UseBiometriaRegistoResult {
 const POLL_INTERVAL_MS = 2000
 const MAX_POLL_ATTEMPTS = 15
 
-
 export function useBiometriaLogin(): UseBiometriaLoginResult {
   const [status, setStatus] = useState<BiometriaStatus>('idle')
   const [mensagem, setMensagem] = useState('')
   const [userData, setUserData] = useState<{ userId: number; nome: string; email: string } | null>(null)
+  
   const correlationIdRef = useRef<string | null>(null)
   const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const attemptsRef = useRef(0)
@@ -44,12 +44,14 @@ export function useBiometriaLogin(): UseBiometriaLoginResult {
 
   const cancelar = useCallback(() => {
     if (correlationIdRef.current) {
+      const activeId = correlationIdRef.current
       fetch('/api/biometria/login/cancelar', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ correlationId: correlationIdRef.current }),
+        body: JSON.stringify({ correlationId: activeId }),
       }).catch(() => {})
     }
+    
     pararPolling()
     correlationIdRef.current = null
     attemptsRef.current = 0
@@ -75,6 +77,13 @@ export function useBiometriaLogin(): UseBiometriaLoginResult {
       }
 
       const data = await res.json()
+      
+      if (!data?.correlationId) {
+        setStatus('erro')
+        setMensagem('Sessão de leitura inválida.')
+        return
+      }
+
       correlationIdRef.current = data.correlationId
       attemptsRef.current = 0
 
@@ -90,6 +99,14 @@ export function useBiometriaLogin(): UseBiometriaLoginResult {
           const statusRes = await fetch(
             `/api/biometria/login/status?correlationId=${correlationIdRef.current}`
           )
+
+          if (!statusRes.ok) {
+            pararPolling()
+            setStatus('erro')
+            setMensagem('Falha na verificação de estado.')
+            return
+          }
+
           const statusData = await statusRes.json()
 
           if (statusData.status === 'autenticado') {
@@ -127,25 +144,33 @@ export function useBiometriaLogin(): UseBiometriaLoginResult {
   return { status, mensagem, userData, iniciarLoginBiometria, cancelar }
 }
 
-
 export function useBiometriaRegisto(): UseBiometriaRegistoResult {
   const [status, setStatus] = useState<BiometriaStatus>('idle')
   const [mensagem, setMensagem] = useState('')
+  
   const statusRef = useRef<BiometriaStatus>('idle')
   const userIdRef = useRef<number | null>(null)
+  const abortControllerRef = useRef<AbortController | null>(null)
 
   useEffect(() => {
     statusRef.current = status
   }, [status])
 
   const cancelar = useCallback(() => {
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort()
+      abortControllerRef.current = null
+    }
+
     if (userIdRef.current !== null) {
+      const activeUserId = userIdRef.current
       fetch('/api/biometria/registar/cancelar', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId: userIdRef.current }),
+        body: JSON.stringify({ userId: activeUserId }),
       }).catch(() => {})
     }
+
     userIdRef.current = null
     setStatus('idle')
     setMensagem('')
@@ -156,6 +181,12 @@ export function useBiometriaRegisto(): UseBiometriaRegistoResult {
       return
     }
 
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort()
+    }
+    
+    abortControllerRef.current = new AbortController()
+
     userIdRef.current = userId
     setStatus('aguardar_dedo')
     setMensagem('Coloque o dedo no sensor de impressão digital para registo...')
@@ -165,9 +196,10 @@ export function useBiometriaRegisto(): UseBiometriaRegistoResult {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ userId }),
+        signal: abortControllerRef.current.signal,
       })
 
-      const data = await res.json()
+      const data = await res.json().catch(() => ({}))
 
       if (res.ok && data.sucesso) {
         setStatus('sucesso')
@@ -176,11 +208,23 @@ export function useBiometriaRegisto(): UseBiometriaRegistoResult {
         setStatus('erro')
         setMensagem(data.mensagem || 'Falha ao registar impressão digital.')
       }
-    } catch {
+    } catch (err: unknown) {
+      if (err instanceof DOMException && err.name === 'AbortError') {
+        return
+      }
       setStatus('erro')
       setMensagem('Erro de comunicação com o servidor')
     } finally {
       userIdRef.current = null
+      abortControllerRef.current = null
+    }
+  }, [])
+
+  useEffect(() => {
+    return () => {
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort()
+      }
     }
   }, [])
 

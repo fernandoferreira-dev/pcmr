@@ -40,21 +40,23 @@ public class BiometriaService {
         if (existente != null && !existente.isDone()) {
             CompletableFuture<Boolean> falha = new CompletableFuture<>();
             falha.completeExceptionally(
-                new IllegalStateException("Já existe um registo pendente para este utilizador"));
+                    new IllegalStateException("Já existe um registo pendente para este utilizador"));
             return falha;
         }
 
         CompletableFuture<Boolean> future = new CompletableFuture<>();
         pendingEnrollments.put(userId, future);
 
-        mqttPublisher.publish(topicComando, "{\"modo\": \"enroll\"}");
+        // Envia o comando estruturado via MqttPublisher
+        mqttPublisher.publish(topicComando, "{\"modo\":\"enroll\"}");
 
+        // Temporizador de segurança a 30 segundos
         CompletableFuture.delayedExecutor(30, TimeUnit.SECONDS).execute(() -> {
             pendingEnrollments.computeIfPresent(userId, (id, f) -> {
                 if (f == future && !f.isDone()) {
                     f.completeExceptionally(new java.util.concurrent.TimeoutException(
-                        "Registo excedeu 30s"));
-                    mqttPublisher.publish(topicComando, "{\"modo\": \"idle\"}");
+                            "Registo excedeu 30s no sensor"));
+                    mqttPublisher.publish(topicComando, "{\"modo\":\"idle\"}");
                     return null;
                 }
                 return f;
@@ -65,67 +67,63 @@ public class BiometriaService {
     }
 
     public void completarRegisto(int fingerprintId, boolean sucesso) {
-        Long userId = null;
-        CompletableFuture<Boolean> futureCompletada = null;
+    Long userId = null;
+    CompletableFuture<Boolean> future = null;
 
-        for (Map.Entry<Long, CompletableFuture<Boolean>> entry : pendingEnrollments.entrySet()) {
-            if (!entry.getValue().isDone()) {
-                userId = entry.getKey();
-                futureCompletada = entry.getValue();
-                break;
-            }
-        }
-
-        if (userId == null) {
-            System.out.println("Resposta de enroll recebida sem registo pendente correspondente.");
-            return;
-        }
-
-        if (sucesso) {
-            try {
-                Utilizador user = userRepository.findById(userId)
-                        .orElseThrow(() -> new RuntimeException("Utilizador não encontrado"));
-
-                AcessoBiometrico acesso = acessoBiometricoRepository
-                        .findByUtilizador_IdUtilizador(userId)
-                        .orElseGet(AcessoBiometrico::new);
-
-                acesso.setUtilizador(user);
-                acesso.setImpAcesso(String.valueOf(fingerprintId));
-                acesso.setDataRegisto(OffsetDateTime.now());
-
-                acessoBiometricoRepository.save(acesso);
-
-                System.out.println("Utilizador " + userId + " associado ao ID biométrico " + fingerprintId);
-
-                pendingEnrollments.remove(userId);
-                futureCompletada.complete(true);
-            } catch (Exception e) {
-                System.err.println("Erro ao gravar registo biométrico: " + e.getMessage());
-                pendingEnrollments.remove(userId);
-                futureCompletada.complete(false);
-            } finally {
-                mqttPublisher.publish(topicComando, "{\"modo\": \"idle\"}");
-            }
-        } else {
-            pendingEnrollments.remove(userId);
-            futureCompletada.complete(false);
-            mqttPublisher.publish(topicComando, "{\"modo\": \"idle\"}");
+    for (var entry : pendingEnrollments.entrySet()) {
+        if (!entry.getValue().isDone()) {
+            userId = entry.getKey();
+            future = entry.getValue();
+            break;
         }
     }
+
+    if (userId == null) {
+        System.out.println("⚠️ Resposta de enroll sem enrollment pendente.");
+        return;
+    }
+
+    try {
+        if (sucesso && fingerprintId > 0) {
+            Utilizador user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("Utilizador não encontrado"));
+
+            AcessoBiometrico acesso = acessoBiometricoRepository
+                .findByUtilizador_IdUtilizador(userId)
+                .orElseGet(AcessoBiometrico::new);
+
+            acesso.setUtilizador(user);
+            acesso.setImpAcesso(String.valueOf(fingerprintId));
+            acesso.setDataRegisto(OffsetDateTime.now());
+
+            acessoBiometricoRepository.save(acesso);
+
+            future.complete(true);
+            System.out.println("✅ Biometria associada: User " + userId + " → ID " + fingerprintId);
+        } else {
+            future.complete(false);
+        }
+    } catch (Exception e) {
+        e.printStackTrace();
+        future.complete(false);
+    } finally {
+        pendingEnrollments.remove(userId);
+        mqttPublisher.publish("casa/biometria/comando", "{\"modo\":\"idle\"}");
+    }
+}
 
     public String iniciarLogin() {
         String correlationId = UUID.randomUUID().toString();
         CompletableFuture<Integer> future = new CompletableFuture<>();
         pendingLogins.put(correlationId, future);
 
-        mqttPublisher.publish(topicComando, "{\"modo\": \"login\"}");
+        mqttPublisher.publish(topicComando, "{\"modo\":\"login\"}");
 
         CompletableFuture.delayedExecutor(30, TimeUnit.SECONDS).execute(() -> {
             CompletableFuture<Integer> f = pendingLogins.remove(correlationId);
             if (f != null && !f.isDone()) {
                 f.completeExceptionally(new RuntimeException("Timeout: Leitura de impressão digital excedeu 30s"));
-                mqttPublisher.publish(topicComando, "{\"modo\": \"idle\"}");
+                mqttPublisher.publish(topicComando, "{\"modo\":\"idle\"}");
             }
         });
 
@@ -143,7 +141,7 @@ public class BiometriaService {
             Optional<AcessoBiometrico> bioAcesso =
                     acessoBiometricoRepository.findByImpAcesso(String.valueOf(fingerprintId));
 
-            mqttPublisher.publish(topicComando, "{\"modo\": \"idle\"}");
+            mqttPublisher.publish(topicComando, "{\"modo\":\"idle\"}");
 
             if (bioAcesso.isPresent()) {
                 Utilizador user = bioAcesso.get().getUtilizador();
@@ -169,18 +167,18 @@ public class BiometriaService {
     }
 
     public void cancelarRegisto(long userId) {
-    CompletableFuture<Boolean> f = pendingEnrollments.remove(userId);
-    if (f != null && !f.isDone()) {
-        f.completeExceptionally(new java.util.concurrent.CancellationException("Cancelado pelo utilizador"));
+        CompletableFuture<Boolean> f = pendingEnrollments.remove(userId);
+        if (f != null && !f.isDone()) {
+            f.completeExceptionally(new java.util.concurrent.CancellationException("Cancelado pelo utilizador"));
+        }
+        mqttPublisher.publish(topicComando, "{\"modo\":\"idle\"}");
     }
-    mqttPublisher.publish(topicComando, "{\"modo\": \"idle\"}");
-}
 
     public void cancelarLogin(String correlationId) {
         CompletableFuture<Integer> f = pendingLogins.remove(correlationId);
         if (f != null && !f.isDone()) {
             f.completeExceptionally(new java.util.concurrent.CancellationException("Cancelado pelo utilizador"));
         }
-        mqttPublisher.publish(topicComando, "{\"modo\": \"idle\"}");
+        mqttPublisher.publish(topicComando, "{\"modo\":\"idle\"}");
     }
 }

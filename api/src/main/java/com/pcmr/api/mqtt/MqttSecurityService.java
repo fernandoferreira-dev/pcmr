@@ -21,9 +21,18 @@ public class MqttSecurityService {
     }
 
     public String cifrarEEmpacotar(String payloadPlano) throws Exception {
+        if (payloadPlano == null || payloadPlano.isEmpty()) {
+            throw new IllegalArgumentException("Payload plano não pode ser nulo ou vazio");
+        }
+
         byte[] iv = cipherUtil.gerarIv();
+        // 1. Obter os bytes exatos em UTF-8 antes de cifrar
         byte[] plano = payloadPlano.getBytes(StandardCharsets.UTF_8);
+        
+        // 2. Cifrar os bytes
         byte[] cifrado = cipherUtil.cifrar(plano, iv);
+        
+        // 3. Calcular CRC32 EXATAMENTE a partir dos bytes em texto limpo (UTF-8)
         long crc = Crc32Util.calcular(plano);
 
         MqttEnvelopeDTO envelope = new MqttEnvelopeDTO();
@@ -35,6 +44,10 @@ public class MqttSecurityService {
     }
 
     public String desempacotarEDecifrar(String payloadEnvelope) throws Exception {
+        if (payloadEnvelope == null || payloadEnvelope.isBlank()) {
+            throw new IllegalArgumentException("Envelope de mensagem vazio");
+        }
+
         MqttEnvelopeDTO envelope = mapper.readValue(payloadEnvelope, MqttEnvelopeDTO.class);
 
         byte[] iv = Base64.getDecoder().decode(envelope.getIv());
