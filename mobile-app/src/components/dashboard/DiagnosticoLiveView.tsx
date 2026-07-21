@@ -255,7 +255,7 @@ export default function DiagnosticoLiveView({
 
       <div className="end-consulta">
         <button
-          //disabled={!leitura}
+          disabled={!leitura}
           onClick={() => setMostrarFinalizar(true)}
           className="diag-finalizar-btn"
         >
