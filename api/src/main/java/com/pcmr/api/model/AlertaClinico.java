@@ -27,8 +27,17 @@ public class AlertaClinico {
 
     private String mensagem;
 
-    @Column(name = "data_hora", insertable = false, updatable = false)
+    @Column(name = "data_hora")
     private LocalDateTime dataHora;
+
+    public AlertaClinico() {}
+
+    @PrePersist
+    protected void onCreate() {
+        if (this.dataHora == null) {
+            this.dataHora = LocalDateTime.now();
+        }
+    }
 
     // Getters e Setters
     public Integer getIdAlerta() { return idAlerta; }

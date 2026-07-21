@@ -1,10 +1,5 @@
-{
-    # Configurações globais (opcional)
-    debug
-}
-
 app.fernandoferreira.dev {
-    reverse_proxy desktop-app:80
+    reverse_proxy desktop_app:80
 }
 
 mobile.fernandoferreira.dev {

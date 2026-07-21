@@ -33,7 +33,7 @@ public class MqttMessageHandler {
 
     private final ObjectMapper objectMapper = new ObjectMapper();
 
-    // Limites de segurança para avaliação de leituras
+    // Limites usados pela avaliação local de notificações (novo, vindo do documento 2)
     private static final int BPM_WARNING_MIN = 50;
     private static final int BPM_WARNING_MAX = 110;
     private static final int BPM_CRITICAL_MIN = 40;
@@ -72,7 +72,7 @@ public class MqttMessageHandler {
             return;
         }
 
-        // ================= STATUS MONITORING =================
+        // ================= STATUS MONITORING (novo, vindo do documento 2) =================
         if (topic.endsWith("/status")) {
             String deviceId = extrairDeviceId(topic);
             if (deviceId != null) {
@@ -101,7 +101,7 @@ public class MqttMessageHandler {
         }
 
         try {
-            // ================= NODE 1: PRESENÇA =================
+            // Nó de presença
             if (topic.equals("sensors/node1/presenca")) {
                 atividadeSensorService.registarAtividade(DEVICE_ID_NODE1);
 
@@ -117,7 +117,7 @@ public class MqttMessageHandler {
                 return;
             }
 
-            // ================= BIOMETRIA (LOGIN) =================
+            // Login biométrico
             if (topic.equals("sensor/login")) {
                 atividadeSensorService.registarAtividade(DEVICE_ID_NODE3);
 
@@ -131,7 +131,7 @@ public class MqttMessageHandler {
                 return;
             }
 
-            // ================= BIOMETRIA (ENROLL) =================
+            // Registo biométrico
             if (topic.equals("sensor/enroll")) {
                 atividadeSensorService.registarAtividade(DEVICE_ID_NODE3);
 
@@ -155,7 +155,7 @@ public class MqttMessageHandler {
                 return;
             }
 
-            // ================= WEARABLE DATA (DIAGNÓSTICO OBRIGATÓRIO) =================
+            // Leituras dos sensores
             String deviceId = extrairDeviceId(topic);
 
             if (deviceId != null) {
@@ -165,7 +165,10 @@ public class MqttMessageHandler {
 
                 // 2. Valida se o diagnóstico está ativo no LeituraSensorService para este ID
                 if (!leituraSensorService.isDiagnosticoAtivo(deviceId)) {
-                    System.out.println("ℹ️ [DIAGNÓSTICO INATIVO] Dados de '" + deviceId + "' ignorados. Ative o diagnóstico clicando em 'Sim' no ecrã.");
+                    System.out.println(
+                            "ℹ️ [DIAGNÓSTICO INATIVO] Dados de '" + deviceId
+                                    + "' ignorados. Ative o diagnóstico clicando em 'Sim' no ecrã."
+                    );
                     return;
                 }
 
@@ -181,23 +184,21 @@ public class MqttMessageHandler {
                 wrapper.fallState = leitura.getFallState();
                 wrapper.alertaQuedaAtivo = leitura.isAlertaQuedaAtivo();
 
-                // Grava o ponto de leitura na memória
                 leituraSensorService.registarLeitura(deviceId, wrapper);
 
-                // Regista a atividade do nó central que retransmitiu os dados
                 atividadeSensorService.registarAtividade(DEVICE_ID_NODE1);
 
-                // Avalia limites legados/monitorização interna
                 alertaMonitorService.avaliarLimites(
                         deviceId,
                         wrapper.temperatura,
                         wrapper.bpm
                 );
 
-                // Aciona/desliga o buzzer do Nó 3 consoante o estado de queda reportado
+                // Aciona/desliga o buzzer do Nó 3 consoante o estado de queda
+                // reportado pelo wearable, independentemente da app estar aberta.
                 alertaQuedaBuzzerService.notificarQueda(deviceId, wrapper.alertaQuedaAtivo);
 
-                // Dispara notificações detalhadas baseadas nos limiares críticos/avisos
+                // Notificações in-app (novo, vindo do documento 2)
                 avaliarLeitura(deviceId, leitura);
             }
 
@@ -214,6 +215,7 @@ public class MqttMessageHandler {
         return partes.length >= 2 ? partes[1] : null;
     }
 
+    // Novo, vindo do documento 2: gera notificações in-app com base em limites de bpm/temperatura
     private void avaliarLeitura(String deviceId, SensorReadingDTO leitura) {
         int bpm = leitura.getBpm();
         double temperatura = leitura.getTemperatura();

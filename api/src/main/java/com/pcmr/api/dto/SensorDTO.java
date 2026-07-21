@@ -6,6 +6,7 @@ public class SensorDTO {
     private String nomeExibicao;
     private String localizacao;
     private String estado;
+    private String tipoMetrica;
 
     public SensorDTO() {}
 
@@ -15,6 +16,7 @@ public class SensorDTO {
         this.nomeExibicao = nomeExibicao;
         this.localizacao = localizacao;
         this.estado = estado;
+        this.tipoMetrica = tipoMetrica;
     }
 
     public Long getIdSensor() { return idSensor; }
@@ -31,4 +33,7 @@ public class SensorDTO {
 
     public String getEstado() { return estado; }
     public void setEstado(String estado) { this.estado = estado; }
+
+    public String getTipoMetrica() { return tipoMetrica; }
+    public void setTipoMetrica(String tipoMetrica) { this.tipoMetrica = tipoMetrica; }
 }

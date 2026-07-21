@@ -347,7 +347,6 @@ export default function App({ userName, userId, tipo, onLogout }: PaginaInicialP
   return (
     <div className="h-screen w-screen bg-(--background) flex flex-col font-sans overflow-hidden relative">
       <PresencaToast />
-      <MensagemToast userId={userId} onAbrirMensagem={abrirComunicacaoComMensagem} />
       <div className="flex-1 flex p-4 gap-6 overflow-hidden">
 
         {/* Barra Lateral */}

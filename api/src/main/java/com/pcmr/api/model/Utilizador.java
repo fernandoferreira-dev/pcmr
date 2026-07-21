@@ -28,7 +28,7 @@ public class Utilizador {
     @JoinColumn(name = "id_tipo_utilizador", nullable = false)
     private TipoUtilizador tipoUtilizador;
 
-    @ManyToOne(cascade = CascadeType.PERSIST)
+    @ManyToOne
     @JoinColumn(name = "id_pessoa", nullable = false)
     private Pessoa pessoa;
 
