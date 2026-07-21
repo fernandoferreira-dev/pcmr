@@ -66,7 +66,7 @@ public class MqttSecurityService {
         System.out.println("🔍 CRC Esperado: " + envelope.getCrc() + " | CRC Calculado: " + crcCalculado);
         System.out.println("----------------------------------------");
 
-        Validação estrita do CRC32
+        //Validação estrita do CRC32
         if (crcCalculado != envelope.getCrc()) {
             throw new SecurityException(
                     "CRC32 inválido — integridade dos dados comprometida (esperado=" +
