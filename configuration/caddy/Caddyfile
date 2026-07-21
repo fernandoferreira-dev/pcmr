@@ -6,6 +6,6 @@ mobile.fernandoferreira.dev {
     reverse_proxy mobile-app:80
 }
 
-paciente.fernandoferreira.dev {
-    reverse_proxy paciente-app:80
-}
+#paciente.fernandoferreira.dev {
+#    reverse_proxy paciente-app:80
+#}
