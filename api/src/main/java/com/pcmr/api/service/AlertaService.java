@@ -61,10 +61,7 @@ public class AlertaService {
                 a.getDataHora().toString()
         )).collect(Collectors.toList());
     }
-
-    /**
-     * NEW: Listar os alertas mais recentes (usado pelo frontend)
-     */
+    
     public List<AlertaResponseDTO> listarRecentes(int limite) {
         Pageable pageable = PageRequest.of(0, limite);
         

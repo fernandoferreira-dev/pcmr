@@ -12,30 +12,26 @@ import java.util.Optional;
 
 @RestController
 @RequestMapping("/api")
-public class UserController {   // Changed base path to /api for flexibility
+public class UserController {   
 
     @Autowired
     private UserRepository userRepository;
 
-    // ==================== GET USER (English - for frontend) ====================
     @GetMapping("/users/{id}")
     public ResponseEntity<?> getUserById(@PathVariable Long id) {
         return getUserResponse(id);
     }
 
-    // ==================== GET USER (Portuguese) ====================
     @GetMapping("/utilizadores/{id}")
     public ResponseEntity<?> getUtilizadorById(@PathVariable Long id) {
         return getUserResponse(id);
     }
 
-    // ==================== GET PERFIL ====================
     @GetMapping("/utilizadores/{id}/perfil")
     public ResponseEntity<?> getPerfil(@PathVariable Long id) {
         return getUserResponse(id);
     }
 
-    // ==================== UPDATE PERFIL ====================
     @PutMapping("/utilizadores/{id}/perfil")
     public ResponseEntity<?> updatePerfil(@PathVariable Long id, @RequestBody UserProfileRequest request) {
         Optional<Utilizador> userOpt = userRepository.findById(id);
