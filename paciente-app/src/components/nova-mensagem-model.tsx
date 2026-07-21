@@ -82,7 +82,7 @@ function NovaMensagemModal({ idRemetente, onClose, onEnviada }: Props) {
     };
 
     return (
-        <div className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-100 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
             <div className="bg-background rounded-3xl shadow-xl w-full max-w-lg p-6 relative font-sans">
                 <button
                     onClick={onClose}

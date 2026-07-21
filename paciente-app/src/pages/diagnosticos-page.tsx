@@ -26,7 +26,7 @@ function DiagnosticoDetalheModal({ diagnostico, onClose }: ModalProps) {
         });
 
     return (
-        <div className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-100 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
             <div className="bg-background rounded-3xl shadow-xl w-full max-w-lg max-h-[85vh] overflow-y-auto p-6 relative font-sans border-t-8 border-primary">
                 <button
                     onClick={onClose}
