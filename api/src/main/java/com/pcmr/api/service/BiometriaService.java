@@ -54,47 +54,49 @@ public class BiometriaService {
      * e devolve a string JSON plano se tudo estiver correto.
      */
     public String desempacotarEDecifrar(String envelopeJsonMQTT) {
-        try {
-            ObjectMapper mapper = new ObjectMapper();
-            JsonNode envelope = mapper.readTree(envelopeJsonMQTT);
-            
-            if (!envelope.has("iv") || !envelope.has("data") || !envelope.has("crc")) {
-                System.err.println("❌ Envelope MQTT inválido: faltam campos obrigatórios.");
-                return null;
-            }
-
-            String ivB64 = envelope.get("iv").asText();
-            String dataB64 = envelope.get("data").asText();
-            long crcEsperado = envelope.get("crc").asLong();
-
-            byte[] iv = Base64.getDecoder().decode(ivB64);
-            byte[] cifrado = Base64.getDecoder().decode(dataB64);
-
-            Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
-            SecretKeySpec keySpec = new SecretKeySpec(AES_KEY, "AES");
-            IvParameterSpec ivSpec = new IvParameterSpec(iv);
-            cipher.init(Cipher.DECRYPT_MODE, keySpec, ivSpec);
-
-            byte[] plaintext = cipher.doFinal(cifrado);
-
-            // Validação CRC diretamente nos bytes limpos
-            CRC32 crc32 = new CRC32();
-            crc32.update(plaintext);
-            long crcCalculado = crc32.getValue();
-
-            if (crcEsperado != crcCalculado) {
-                System.err.println("❌ CRC inválido! Esperado: " + crcEsperado + " | Calculado: " + crcCalculado);
-                System.err.println("Tamanho plaintext: " + plaintext.length);
-                return null;
-            }
-
-            return new String(plaintext, StandardCharsets.UTF_8);
-
-        } catch (Exception e) {
-            System.err.println("❌ Falha na decifragem/validade CRC: " + e.getMessage());
+    try {
+        ObjectMapper mapper = new ObjectMapper();
+        JsonNode envelope = mapper.readTree(envelopeJsonMQTT);
+        
+        if (!envelope.has("iv") || !envelope.has("data") || !envelope.has("crc")) {
+            System.err.println("❌ Envelope MQTT inválido: faltam campos obrigatórios.");
             return null;
         }
+
+        String ivB64 = envelope.get("iv").asText();
+        String dataB64 = envelope.get("data").asText();
+        
+        // Garante a leitura como unsigned 32-bit usando Long
+        long crcEsperado = envelope.get("crc").asLong() & 0xFFFFFFFFL;
+
+        byte[] iv = Base64.getDecoder().decode(ivB64);
+        byte[] cifrado = Base64.getDecoder().decode(dataB64);
+
+        Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
+        SecretKeySpec keySpec = new SecretKeySpec(AES_KEY, "AES");
+        IvParameterSpec ivSpec = new IvParameterSpec(iv);
+        cipher.init(Cipher.DECRYPT_MODE, keySpec, ivSpec);
+
+        byte[] plaintext = cipher.doFinal(cifrado);
+
+        // Validação CRC diretamente nos bytes decifrados
+        CRC32 crc32 = new CRC32();
+        crc32.update(plaintext);
+        long crcCalculado = crc32.getValue() & 0xFFFFFFFFL;
+
+        if (crcEsperado != crcCalculado) {
+            System.err.println("❌ CRC inválido! Esperado: " + crcEsperado + " | Calculado: " + crcCalculado);
+            System.err.println("Tamanho do plaintext decifrado: " + plaintext.length + " bytes");
+            return null;
+        }
+
+        return new String(plaintext, StandardCharsets.UTF_8);
+
+    } catch (Exception e) {
+        System.err.println("❌ Falha na decifragem/validade CRC: " + e.getMessage());
+        return null;
     }
+}
 
     public CompletableFuture<Boolean> iniciarRegisto(long userId) {
         CompletableFuture<Boolean> existente = pendingEnrollments.get(userId);
@@ -110,7 +112,7 @@ public class BiometriaService {
 
         mqttPublisher.publish(topicComando, "{\"modo\": \"enroll\"}");
 
-        CompletableFuture.delayedExecutor(30, TimeUnit.SECONDS).execute(() -> {
+        CompletableFuture.delayedExecutor(45, TimeUnit.SECONDS).execute(() -> {
             pendingEnrollments.computeIfPresent(userId, (id, f) -> {
                 if (f == future && !f.isDone()) {
                     f.completeExceptionally(new java.util.concurrent.TimeoutException(

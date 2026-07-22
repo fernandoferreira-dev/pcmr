@@ -51,8 +51,8 @@ public class MqttConfig {
                         mqttClientFactory(),
                         topicSensors,      // Escuta "sensors/#" (Sinais, Status/LWT, Presença)
                         topicBiometria,
-                        "sensor/login",   
-                        "sensor/enroll",
+                        "casa/biometria/acesso",   
+                        "casa/biometria/enroll",
                         "sensors/node1/presenca" 
                 );
         adapter.setCompletionTimeout(5000);
