@@ -2,8 +2,8 @@ import { useState } from "react";
 import "../styles/login-page/login-page-styles.css";
 import LoginButtonComponent from "../components/login-page/login-button-component";
 import appImage from "../assets/logo.png";
-import RegisterButtonComponent from "../components/login-page/register-button-component";
 import CreateAccountComponent from "../components/login-page/create-account-btn-component";
+import '../i18nConfig';
 
 type UserProfile = {
   username: string;

@@ -12,6 +12,8 @@ import { useAuth } from "../context/auth-context";
 import { useNotificationStore } from "../context/notification-store";
 import "../styles/misc/header-styles.css";
 import appImage from "../assets/logosemback.png"
+import { useTranslation } from "react-i18next";
+import '../i18nConfig';
 
 type Props = { username: string; phonenumber: string; email: string; birthDate: string; selectedOption: string };
 
@@ -21,6 +23,7 @@ export default function MainPage({ username, phonenumber, email, birthDate, sele
   const fetchHistory = useNotificationStore((state) => state.fetchHistory);
   const connect = useNotificationStore((state) => state.connect);
   const disconnect = useNotificationStore((state) => state.disconnect);
+  const {t} = useTranslation();
   const [view, setView] = useState<
     "home" | "comms" | "status" | "doctor" | "records"
   >("home");

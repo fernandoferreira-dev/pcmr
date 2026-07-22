@@ -3,6 +3,7 @@ import "../../styles/misc/settings-btn-styles.css"
 import '../../styles/status-page-styles/status-ping-styles.css'
 import SendIcon from "../../assets/send-icon.png"
 import EmailIcon from "../../assets/email-icon.png"
+import { useTranslation } from "react-i18next";
 
 const API_URL = "http://localhost:8080";
 
@@ -20,7 +21,7 @@ interface NovaMensagemDTO {
 
 export default function SendEmailButtonComponent({ idRemetente }: { idRemetente: number | null }) {
   const [isOpen, setIsOpen] = useState(false);
-
+  const {t} = useTranslation();
   const [termo, setTermo] = useState("");
   const [resultados, setResultados] = useState<UtilizadorResumo[]>([]);
   const [destinatario, setDestinatario] = useState<UtilizadorResumo | null>(null);
@@ -115,7 +116,7 @@ export default function SendEmailButtonComponent({ idRemetente }: { idRemetente:
           <div className="overlay">
             <div className="modal modal--form">
               <div className="modal-header">
-                <h2>Enviar Mensagem</h2>
+                <h2>{t('communication.title')}</h2>
                 <button
                   onClick={() => { setIsOpen(false); resetForm(); }}
                   className="modal-close-btn"
@@ -126,7 +127,7 @@ export default function SendEmailButtonComponent({ idRemetente }: { idRemetente:
 
               <div className="settings">
                 <div className="modal-field">
-                  <label htmlFor="destinatario">Destinatário:</label>
+                  <label htmlFor="destinatario">{t('communication.receiver')}</label>
                   <input
                     id="destinatario"
                     type="text"
@@ -156,7 +157,7 @@ export default function SendEmailButtonComponent({ idRemetente }: { idRemetente:
                 </div>
 
                 <div className="modal-field">
-                  <label htmlFor="assunto">Assunto:</label>
+                  <label htmlFor="assunto">{t('communication.subject')}</label>
                   <input
                     id="assunto"
                     type="text"
@@ -167,7 +168,7 @@ export default function SendEmailButtonComponent({ idRemetente }: { idRemetente:
                 </div>
 
                 <div className="modal-field">
-                  <label htmlFor="corpo">Corpo da mensagem:</label>
+                  <label htmlFor="corpo">{t('communication.body')}</label>
                   <textarea
                     id="corpo"
                     className="email-body"

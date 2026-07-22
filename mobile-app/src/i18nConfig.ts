@@ -32,6 +32,8 @@ export const resources = {
                 historyTitle: 'Diagnostics History',
                 tablePatient: 'Patient',
                 tableTime: 'Time',
+                tableObs: 'Observations',
+                tableCause: 'Cause-effect',
                 exportButton: 'Export',
             },
             equipment: {
@@ -47,7 +49,11 @@ export const resources = {
                 title: 'Communication',
                 searchPlaceholder: 'Search messages',
                 filterBy: 'Filter by:',
-                filterSent: 'Sent',
+                sent: 'Sent',
+                received: 'Received',
+                receiver: 'Receiver',
+                all: 'All',
+                saved: 'Saved',
                 subject: 'Subject:',
                 body: 'Body:',
             },
@@ -60,7 +66,8 @@ export const resources = {
             },
             general: {
                 error: 'Error',
-                loading: 'Loading...'
+                loading: 'Loading...',
+                diagNotFound: 'No diagnostics found',
             }
         },
     },
@@ -94,6 +101,8 @@ export const resources = {
                 historyTitle: 'Histórico de Diagnósticos',
                 tablePatient: 'Paciente',
                 tableTime: 'Horário',
+                tableObs: 'Observações',
+                tableCause: 'Causa-efeito',
                 exportButton: 'Exportar',
             },
             equipment: {
@@ -101,7 +110,7 @@ export const resources = {
                 connection: 'Conexão',
                 testConnectionButton: 'Testar Conexão',
                 searchPlaceholder: 'Pesquisar por nome...',
-                status: 'Estado: {{value}}',
+                status: 'Estado:',
                 equipmentName: 'Nome do equipamento:',
                 lastReading: 'Ultima leitura:',
             },
@@ -109,7 +118,11 @@ export const resources = {
                 title: 'Comunicação',
                 searchPlaceholder: 'Pesquisar mensagens',
                 filterBy: 'Filtrar por:',
-                filterSent: 'Enviadas',
+                sent: 'Enviadas',
+                received: 'Recebidas',
+                receiver: 'Destinatário',
+                all: 'Todas',
+                saved: 'Guardadas',
                 subject: 'Assunto:',
                 body: 'Corpo:',
             },
@@ -122,7 +135,8 @@ export const resources = {
             },
             general: {
                 error: 'Erro',
-                loading: 'A carregar...'
+                loading: 'A carregar...',
+                diagNotFound: 'Nenhum diagnóstico encontrado',
             }
         },
     },
