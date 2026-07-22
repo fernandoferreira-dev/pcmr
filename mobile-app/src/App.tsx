@@ -4,6 +4,7 @@ import LoginPage from "./pages/login-page";
 import MainPage from "./pages/main-page";
 import DiagnosticExportPage from "./components/client-info-page-components/diagnostic-export-download-component";
 import { AuthProvider, useAuth } from "./context/auth-context";
+import './i18nConfig';
 
 type UserProfile = {
   username: string;

@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import "../../styles/diagnostic-data-styles/data-table-styles.css";
+import { useTranslation } from "react-i18next";
 
 type Diagnostic = {
     id: number;
@@ -17,7 +18,6 @@ type DiagnosticoResponseDTO = {
     relacaoCausaEfeito: string;
 };
 
-// TODO: replace with your real deployed backend URL (not localhost)
 const API_BASE_URL = "http://localhost:8080";
 
 const EXPORT_BASE_URL = `${window.location.origin}${import.meta.env.BASE_URL}export`.replace(/([^:])\/{2,}/g, "$1/");
@@ -36,7 +36,7 @@ export default function DiagnosticsTableComponent() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [search, setSearch] = useState("");
-
+    const {t} = useTranslation()
     const loadDiagnostics = () => {
         setLoading(true);
 
@@ -120,27 +120,27 @@ export default function DiagnosticsTableComponent() {
                     onChange={(e) => setSearch(e.target.value)}
                 />
                 <button className="search-button" onClick={loadDiagnostics}>
-                    Atualizar
+                    {t('diagnostics.updateButton')}
                 </button>
             </div>
             {error && <div className="dashboard-error">{error}</div>}
             <section className="table-section">
-                <h1 className="table-title">Histórico de Diagnósticos</h1>
+                <h1 className="table-title">{t('diagnostics.historyTitle')}</h1>
                 <div className="table-wrapper">
                     <div className="table-scroll">
                         <div className="table-container">
                             <div className="table-header">
-                                <span>Paciente</span>
-                                <span>Horário</span>
-                                <span>Observações</span>
-                                <span>Causa-Efeito</span>
+                                <span>{t('diagnostics.tablePatient')}</span>
+                                <span>{t('diagnostics.tableTime')}</span>
+                                <span>{t('diagnostics.tableObs')}</span>
+                                <span>{t('diagnostics.tableCause')}</span>
                             </div>
                             <div className="table-body">
                                 {loading ? (
-                                    <p className="table-loading">A carregar dados...</p>
+                                    <p className="table-loading">{t('general.loading')}</p>
                                 ) : filteredDiagnostics.length === 0 ? (
                                     <p className="table-empty">
-                                        Nenhum diagnóstico encontrado.
+                                        {t('general.diagNotFound')}
                                     </p>
                                 ) : (
                                     filteredDiagnostics.map((diagnostic) => (
@@ -150,7 +150,7 @@ export default function DiagnosticsTableComponent() {
                                                     className="export-button"
                                                     onClick={() => handleExportClick(diagnostic)}
                                                 >
-                                                    Exportar
+                                                    {t('diagnostics.exportButton')}
                                                 </button>
                                                 <span className="patient-name">
                                                     {diagnostic.patient}

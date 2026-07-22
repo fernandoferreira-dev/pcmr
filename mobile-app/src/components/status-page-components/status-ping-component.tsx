@@ -3,6 +3,7 @@ import { useState, useEffect, useMemo, useRef } from 'react';
 import '../../styles/status-page-styles/status-ping-styles.css';
 import SysNotificationImg from "../../assets/system-notification.png";
 import StatusPingImg from '../../assets/status-ping.png';
+import { useTranslation } from "react-i18next";
 
 interface StatusPingComponentProps { }
 
@@ -28,6 +29,7 @@ const StatusPingComponent: FC<StatusPingComponentProps> = () => {
     const [estadoPing, setEstadoPing] = useState<EstadoSensorDTO | null>(null);
     const [carregando, setCarregando] = useState(false);
     const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const { t } = useTranslation();
 
     // Carrega todos os sensores (mesma forma que DadosEquipamentos)
     const carregarSensores = async () => {
@@ -92,12 +94,12 @@ const StatusPingComponent: FC<StatusPingComponentProps> = () => {
                 <div className="status-header-row">
                     <div className="status-btn-box">
                         <img src={StatusPingImg} alt="Conexão" />
-                        <p>Conexão</p>
-                        <button 
-                            onClick={testarConexao} 
+                        <p>{t('equipment.connection')}</p>
+                        <button
+                            onClick={testarConexao}
                             disabled={!sensorSelecionado || carregando}
                         >
-                            Testar Conexão
+                            {t('equipment.testConnectionButton')}
                         </button>
                     </div>
 
@@ -143,14 +145,14 @@ const StatusPingComponent: FC<StatusPingComponentProps> = () => {
                 <div className="status-ping-box">
                     <div>
                         <h1>
-                            Estado: {estadoPing 
-                                ? (estadoPing.online ? 'Online' : 'Offline') 
-                                : '—'}
+                            {t('equipment.status', {
+                                value: estadoPing ? (estadoPing.online ? 'Online' : 'Offline') : '—',
+                            })}
                         </h1>
                     </div>
                     <h2>
-                        {sensorSelecionado 
-                            ? (sensorSelecionado.nomeExibicao || sensorSelecionado.nome) 
+                        {sensorSelecionado
+                            ? (sensorSelecionado.nomeExibicao || sensorSelecionado.nome)
                             : 'Nome do equipamento:'}
                     </h2>
                     <div className="status-ping-messsage-box">

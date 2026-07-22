@@ -6,6 +6,7 @@ import "../../styles/diagnostic-data-styles/data-containers-styles.css";
 import '../../styles/status-page-styles/status-ping-styles.css'
 import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "../../context/auth-context";
+import { useTranslation } from "react-i18next";
 
 const API_URL = "http://localhost:8080";
 
@@ -30,7 +31,7 @@ interface MensagemDTO {
 export default function MessageComponent() {
     const { user } = useAuth();
     const userId = user?.userId ?? null;
-
+    const {t} = useTranslation();
     const [selectedOption, setSelectedOption] = useState<FiltroOpcao>("env");
     const [pesquisa, setPesquisa] = useState<string>("");
     const [mensagens, setMensagens] = useState<MensagemDTO[]>([]);
@@ -180,16 +181,16 @@ export default function MessageComponent() {
                     value={pesquisa}
                     onChange={(e) => setPesquisa(e.target.value)}
                 />
-                Filtrar por:
+                {t('communication.filterBy')}
                 <label className="option-container">
                     <select
                         value={selectedOption}
                         onChange={(e) => setSelectedOption(e.target.value as FiltroOpcao)}
                     >
-                        <option value="env">Enviadas</option>
-                        <option value="rec">Recebidas</option>
-                        <option value="all">Todas</option>
-                        <option value="saved">Guardadas</option>
+                        <option value="env">{t('communication.sent')}</option>
+                        <option value="rec">{t('communication.received')}</option>
+                        <option value="all">{t('communication.all')}</option>
+                        <option value="saved">{t('communication.saved')}</option>
                     </select>
                 </label>
             </div>
@@ -219,7 +220,7 @@ export default function MessageComponent() {
                                 >
                                     <div className="message-top-row">
                                         <span className="message-subject">
-                                            <strong>Assunto:</strong> {msg.assunto}
+                                            <strong>{t('communication.subject')}</strong> {msg.assunto}
                                         </span>
                                         <div className="message-actions">
                                             <FaRegTrashAlt
@@ -245,7 +246,7 @@ export default function MessageComponent() {
                                         </div>
                                     </div>
                                     <div className="message-corpo">
-                                        <strong>Corpo:</strong> {msg.corpo}
+                                        <strong>{t('communication.body')}</strong> {msg.corpo}
                                     </div>
                                 </div>
                             </div>
