@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { useApp } from "../context/AppContext";
 import logo from "../assets/images/logo.png";
 import "../assets/styles/index.css";
 
@@ -18,6 +19,7 @@ type Props = {
 };
 
 function LoginPage({ onLogin }: Props) {
+    const { t } = useApp();
     const [codigo, setCodigo] = useState("");
     const [erro, setErro] = useState<string | null>(null);
     const [aEntrar, setAEntrar] = useState(false);
@@ -32,7 +34,12 @@ function LoginPage({ onLogin }: Props) {
 
     const handleEntrar = async () => {
         if (codigo.length !== CODIGO_LENGTH) {
-            setErro(`O código tem de ter ${CODIGO_LENGTH} dígitos`);
+            setErro(
+                t(
+                    `O código tem de ter ${CODIGO_LENGTH} dígitos`,
+                    `The code must be ${CODIGO_LENGTH} digits long`
+                )
+            );
             return;
         }
 
@@ -51,7 +58,7 @@ function LoginPage({ onLogin }: Props) {
             });
 
             if (!res.ok) {
-                setErro("Código inválido ou expirado");
+                setErro(t("Código inválido ou expirado", "Invalid or expired code"));
                 return;
             }
 
@@ -67,7 +74,12 @@ function LoginPage({ onLogin }: Props) {
             localStorage.setItem(SESSION_KEY, JSON.stringify(session));
             onLogin(session);
         } catch {
-            setErro("Erro de comunicação com o servidor");
+            setErro(
+                t(
+                    "Erro de comunicação com o servidor",
+                    "Communication error with the server"
+                )
+            );
         } finally {
             setAEntrar(false);
         }
@@ -83,25 +95,28 @@ function LoginPage({ onLogin }: Props) {
     }, [codigo]);
 
     return (
-        <section className="flex min-h-screen bg-background font-sans">
+        <section className="flex min-h-screen bg-background font-sans text-text select-none">
             <main className="flex-1 flex items-center justify-center p-6 w-full max-w-md mx-auto">
-                <div className="bg-background rounded-2xl shadow-xl p-8 w-full border-t-8 border-primary">
+                <div className="bg-background rounded-2xl shadow-xl p-8 w-full border-t-8 border-primary border border-primary-outline/30">
                     <div className="flex justify-center mb-8">
                         <img
                             src={logo}
                             alt="MedyCist"
-                            className="w-90 h-90 object-contain"
+                            className="w-90 h-90 object-contain dark:brightness-110"
                         />
                     </div>
 
-                    <p className="text-sm text-center text-muted mb-6 border-b pb-4">
-                        Introduza o código de acesso fornecido pelo seu médico.
+                    <p className="text-sm text-center text-muted mb-6 border-b border-primary-outline/30 pb-4 font-medium">
+                        {t(
+                            "Introduza o código de acesso fornecido pelo seu médico.",
+                            "Enter the access code provided by your doctor."
+                        )}
                     </p>
 
                     <div className="space-y-5">
                         <div>
                             <label className="block text-sm font-semibold mb-1 text-text">
-                                Código de Acesso
+                                {t("Código de Acesso", "Access Code")}
                             </label>
 
                             <input
@@ -139,7 +154,7 @@ function LoginPage({ onLogin }: Props) {
                                     <span
                                         key={i}
                                         className={`h-1.5 w-6 rounded-full transition-colors ${
-                                            i < codigo.length ? "bg-primary" : "bg-primary-outline"
+                                            i < codigo.length ? "bg-primary" : "bg-primary-outline/40"
                                         }`}
                                     />
                                 ))}
@@ -147,7 +162,7 @@ function LoginPage({ onLogin }: Props) {
                         </div>
 
                         {erro && (
-                            <div className="text-center text-red-600 bg-red-100 p-3 rounded-lg text-sm font-semibold">
+                            <div className="text-center text-red-600 dark:text-red-400 bg-red-500/10 border border-red-500/20 p-3 rounded-lg text-sm font-semibold animate-fadeIn">
                                 {erro}
                             </div>
                         )}
@@ -174,9 +189,12 @@ function LoginPage({ onLogin }: Props) {
                                 disabled:hover:bg-text
                                 disabled:active:scale-100
                                 disabled:cursor-not-allowed
+                                cursor-pointer
                             "
                         >
-                            {aEntrar ? "A validar..." : "Entrar"}
+                            {aEntrar
+                                ? t("A validar...", "Validating...")
+                                : t("Entrar", "Log In")}
                         </button>
                     </div>
                 </div>
