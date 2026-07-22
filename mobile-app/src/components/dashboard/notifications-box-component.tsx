@@ -25,21 +25,23 @@ const NotificationBoxComponent: FC<NotificationBoxComponentProps> = () => {
     <div className="notification-box">
       <h1>Ultimas notificações:</h1>
 
-      {ultimas.length === 0 && (
-        <div className="notification-box-text notification-box-text--empty">
-          <h3>Sem notificações por agora.</h3>
-        </div>
-      )}
+      <div className="notification-box-list">
+        {ultimas.length === 0 && (
+          <div className="notification-box-text notification-box-text--empty">
+            <h3>Sem notificações por agora.</h3>
+          </div>
+        )}
 
-      {ultimas.map((n) => (
-        <div key={n.id} className="notification-box-text">
-          <h2>{n.titulo}</h2>
-          <h3>{n.corpo}</h3>
-          <span className="notification-box-text-meta">{formatarData(n.createdAt)}</span>
-        </div>
-      ))}
+        {ultimas.map((n) => (
+          <div key={n.id} className="notification-box-text">
+            <h2>{n.titulo}</h2>
+            <h3>{n.corpo}</h3>
+            <span className="notification-box-text-meta">{formatarData(n.createdAt)}</span>
+          </div>
+        ))}
+      </div>
     </div>
   );
 };
 
-export default NotificationBoxComponent;
+export default NotificationBoxComponent;
