@@ -1,9 +1,9 @@
 import { useState, useEffect } from "react";
 import { useApp } from "../context/AppContext";
 import "../assets/styles/index.css";
-import { NovaMensagemModal } from "../components";
+import { NewMessageModal } from "../components/NewMessageModal";
 
-type Mensagem = {
+type Message = {
     idMensagem: number;
     nomeRemetente: string;
     nomeDestinatario: string;
@@ -13,26 +13,26 @@ type Mensagem = {
     lida: boolean;
 };
 
-type Vista = "recebidas" | "enviadas";
+type ViewMode = "inbox" | "sent";
 
-function MensagensPage({ userId }: { userId: number }) {
+function MessagesPage({ userId }: { userId: number }) {
     const { idioma, t } = useApp();
-    const [vista, setVista] = useState<Vista>("recebidas");
-    const [mensagens, setMensagens] = useState<Mensagem[]>([]);
-    const [carregando, setCarregando] = useState(true);
-    const [erro, setErro] = useState<string | null>(null);
-    const [expandida, setExpandida] = useState<number | null>(null);
-    const [mostrarNovaMensagem, setMostrarNovaMensagem] = useState(false);
+    const [viewMode, setViewMode] = useState<ViewMode>("inbox");
+    const [messages, setMessages] = useState<Message[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+    const [expandedId, setExpandedId] = useState<number | null>(null);
+    const [isNewMessageOpen, setIsNewMessageOpen] = useState(false);
 
     useEffect(() => {
         const controller = new AbortController();
 
-        async function carregarMensagens() {
-            setCarregando(true);
-            setErro(null);
+        async function fetchMessages() {
+            setIsLoading(true);
+            setError(null);
 
             try {
-                const endpoint = vista === "recebidas" ? "recebidas" : "enviadas";
+                const endpoint = viewMode === "inbox" ? "recebidas" : "enviadas";
                 const res = await fetch(`/api/mensagens/${endpoint}?userId=${userId}`, {
                     signal: controller.signal,
                 });
@@ -40,30 +40,30 @@ function MensagensPage({ userId }: { userId: number }) {
                 if (!res.ok) throw new Error();
 
                 const data = await res.json();
-                setMensagens(data);
+                setMessages(data);
             } catch (err: unknown) {
                 if (err instanceof Error && err.name !== "AbortError") {
-                    setErro(t("Não foi possível carregar as mensagens.", "Unable to load messages."));
+                    setError(t("Não foi possível carregar as mensagens.", "Unable to load messages."));
                 }
             } finally {
                 if (!controller.signal.aborted) {
-                    setCarregando(false);
+                    setIsLoading(false);
                 }
             }
         }
 
-        carregarMensagens();
+        fetchMessages();
         return () => controller.abort();
-    }, [vista, userId, t]);
+    }, [viewMode, userId, t]);
 
-    const abrir = async (m: Mensagem) => {
-        const novoEstadoExpandida = expandida === m.idMensagem ? null : m.idMensagem;
-        setExpandida(novoEstadoExpandida);
+    const handleOpenMessage = async (m: Message) => {
+        const newExpandedState = expandedId === m.idMensagem ? null : m.idMensagem;
+        setExpandedId(newExpandedState);
 
-        if (vista === "recebidas" && !m.lida) {
+        if (viewMode === "inbox" && !m.lida) {
             try {
                 await fetch(`/api/mensagens/${m.idMensagem}/lida?userId=${userId}`, { method: "PATCH" });
-                setMensagens((prev) =>
+                setMessages((prev) =>
                     prev.map((x) => (x.idMensagem === m.idMensagem ? { ...x, lida: true } : x))
                 );
             } catch {
@@ -72,26 +72,26 @@ function MensagensPage({ userId }: { userId: number }) {
         }
     };
 
-    const formatarData = (iso: string) => {
-        const data = new Date(iso);
-        const agora = new Date();
-        const ehHoje = data.toDateString() === agora.toDateString();
+    const formatDate = (iso: string) => {
+        const date = new Date(iso);
+        const today = new Date();
+        const isToday = date.toDateString() === today.toDateString();
         const locale = idioma === "pt" ? "pt-PT" : "en-US";
 
-        if (ehHoje) {
-            return data.toLocaleTimeString(locale, { hour: "2-digit", minute: "2-digit" });
+        if (isToday) {
+            return date.toLocaleTimeString(locale, { hour: "2-digit", minute: "2-digit" });
         }
-        return data.toLocaleDateString(locale, { day: "2-digit", month: "short" });
+        return date.toLocaleDateString(locale, { day: "2-digit", month: "short" });
     };
 
-    const obterIniciais = (nome: string) => {
-        if (!nome) return "?";
-        const partes = nome.trim().split(" ");
-        if (partes.length === 1) return partes[0].charAt(0).toUpperCase();
-        return (partes[0].charAt(0) + partes[partes.length - 1].charAt(0)).toUpperCase();
+    const getInitials = (name: string) => {
+        if (!name) return "?";
+        const parts = name.trim().split(" ");
+        if (parts.length === 1) return parts[0].charAt(0).toUpperCase();
+        return (parts[0].charAt(0) + parts[parts.length - 1].charAt(0)).toUpperCase();
     };
 
-    const naoLidas = mensagens.filter((m) => vista === "recebidas" && !m.lida).length;
+    const unreadCount = messages.filter((m) => viewMode === "inbox" && !m.lida).length;
 
     return (
         <div className="min-h-screen bg-background font-sans px-4 pt-4 pb-28 sm:max-w-md sm:mx-auto select-none touch-manipulation">
@@ -102,9 +102,9 @@ function MensagensPage({ userId }: { userId: number }) {
                         {t("Mensagens", "Messages")}
                     </h1>
                     <p className="text-xs text-muted mt-0.5 font-medium">
-                        {vista === "recebidas"
-                            ? naoLidas > 0
-                                ? t(`Tem ${naoLidas} por ler`, `You have ${naoLidas} unread`)
+                        {viewMode === "inbox"
+                            ? unreadCount > 0
+                                ? t(`Tem ${unreadCount} por ler`, `You have ${unreadCount} unread`)
                                 : t("Caixa de entrada limpa", "Inbox is clear")
                             : t("Mensagens enviadas", "Sent messages")}
                     </p>
@@ -114,24 +114,24 @@ function MensagensPage({ userId }: { userId: number }) {
             {/* Selector de Abas Mobile */}
             <div className="flex bg-primary/10 p-1 rounded-2xl mb-4 border border-primary-outline/30">
                 <button
-                    onClick={() => setVista("recebidas")}
-                    className={`flex-1 py-3 px-3 rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-2 active:scale-98 ${
-                        vista === "recebidas"
+                    onClick={() => setViewMode("inbox")}
+                    className={`flex-1 py-3 px-3 rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-2 active:scale-98 cursor-pointer ${
+                        viewMode === "inbox"
                             ? "bg-background text-text shadow-xs"
                             : "text-muted hover:text-text"
                     }`}
                 >
                     <span>{t("Recebidas", "Inbox")}</span>
-                    {naoLidas > 0 && (
+                    {unreadCount > 0 && (
                         <span className="px-2 py-0.5 text-[11px] font-black rounded-full bg-red-500 text-white">
-                            {naoLidas}
+                            {unreadCount}
                         </span>
                     )}
                 </button>
                 <button
-                    onClick={() => setVista("enviadas")}
-                    className={`flex-1 py-3 px-3 rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-2 active:scale-98 ${
-                        vista === "enviadas"
+                    onClick={() => setViewMode("sent")}
+                    className={`flex-1 py-3 px-3 rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-2 active:scale-98 cursor-pointer ${
+                        viewMode === "sent"
                             ? "bg-background text-text shadow-xs"
                             : "text-muted hover:text-text"
                     }`}
@@ -141,14 +141,14 @@ function MensagensPage({ userId }: { userId: number }) {
             </div>
 
             {/* Erro */}
-            {erro && (
+            {error && (
                 <div className="bg-red-500/10 border border-red-500/20 text-red-600 rounded-2xl p-3.5 text-xs font-semibold text-center mb-4">
-                    {erro}
+                    {error}
                 </div>
             )}
 
             {/* Skeleton Loading */}
-            {carregando && (
+            {isLoading && (
                 <div className="flex flex-col gap-2.5">
                     {[0, 1, 2, 3].map((i) => (
                         <div key={i} className="bg-background rounded-2xl border border-primary-outline/40 p-3.5 animate-pulse flex gap-3 items-center">
@@ -163,7 +163,7 @@ function MensagensPage({ userId }: { userId: number }) {
             )}
 
             {/* Estado Vazio */}
-            {!carregando && !erro && mensagens.length === 0 && (
+            {!isLoading && !error && messages.length === 0 && (
                 <div className="flex flex-col items-center justify-center text-center py-12 px-4 bg-background rounded-3xl border border-dashed border-primary-outline/60 my-4">
                     <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary mb-3">
                         <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
@@ -174,7 +174,7 @@ function MensagensPage({ userId }: { userId: number }) {
                         {t("Sem mensagens", "No messages")}
                     </p>
                     <p className="text-xs text-muted mt-1">
-                        {vista === "recebidas"
+                        {viewMode === "inbox"
                             ? t("Não tem mensagens por ler.", "You have no unread messages.")
                             : t("Ainda não enviou mensagens.", "You haven't sent any messages yet.")}
                     </p>
@@ -183,46 +183,46 @@ function MensagensPage({ userId }: { userId: number }) {
 
             {/* Lista de Mensagens */}
             <div className="flex flex-col gap-2.5">
-                {mensagens.map((m) => {
-                    const nome = vista === "recebidas" ? m.nomeRemetente : m.nomeDestinatario;
-                    const naoLida = vista === "recebidas" && !m.lida;
-                    const estaExpandida = expandida === m.idMensagem;
+                {messages.map((m) => {
+                    const name = viewMode === "inbox" ? m.nomeRemetente : m.nomeDestinatario;
+                    const isUnread = viewMode === "inbox" && !m.lida;
+                    const isExpanded = expandedId === m.idMensagem;
 
                     return (
                         <article
                             key={m.idMensagem}
-                            onClick={() => abrir(m)}
+                            onClick={() => handleOpenMessage(m)}
                             className={`rounded-2xl p-3.5 transition-all active:scale-[0.99] border cursor-pointer ${
-                                naoLida
+                                isUnread
                                     ? "bg-primary/5 border-primary/40 shadow-2xs"
                                     : "bg-background border-primary-outline/40"
                             }`}
                         >
                             <div className="flex items-start gap-3">
                                 <div className={`w-11 h-11 rounded-full flex items-center justify-center text-xs font-black shrink-0 ${
-                                    naoLida ? "bg-primary text-background" : "bg-primary/10 text-primary"
+                                    isUnread ? "bg-primary text-background" : "bg-primary/10 text-primary"
                                 }`}>
-                                    {obterIniciais(nome)}
+                                    {getInitials(name)}
                                 </div>
 
                                 <div className="flex-1 min-w-0 pt-0.5">
                                     <div className="flex justify-between items-baseline gap-2">
                                         <div className="flex items-center gap-1.5 min-w-0">
-                                            {naoLida && <span className="w-2 h-2 rounded-full bg-red-500 shrink-0" />}
-                                            <span className={`truncate text-sm ${naoLida ? "font-black text-text" : "font-bold text-text"}`}>
-                                                {nome}
+                                            {isUnread && <span className="w-2 h-2 rounded-full bg-red-500 shrink-0" />}
+                                            <span className={`truncate text-sm ${isUnread ? "font-black text-text" : "font-bold text-text"}`}>
+                                                {name}
                                             </span>
                                         </div>
                                         <span className="text-[11px] font-medium text-muted shrink-0">
-                                            {formatarData(m.dataEnvio)}
+                                            {formatDate(m.dataEnvio)}
                                         </span>
                                     </div>
 
-                                    <p className={`text-xs mt-1 truncate ${naoLida ? "text-text font-semibold" : "text-muted"}`}>
+                                    <p className={`text-xs mt-1 truncate ${isUnread ? "text-text font-semibold" : "text-muted"}`}>
                                         {m.assunto}
                                     </p>
 
-                                    {estaExpandida && (
+                                    {isExpanded && (
                                         <div className="mt-3 text-xs text-text whitespace-pre-wrap border-t border-primary-outline/30 pt-3 leading-relaxed animate-fadeIn select-text">
                                             {m.corpo || <span className="italic text-muted">{t("Sem conteúdo adicional.", "No additional content.")}</span>}
                                         </div>
@@ -236,7 +236,7 @@ function MensagensPage({ userId }: { userId: number }) {
 
             {/* FAB (Floating Action Button) */}
             <button
-                onClick={() => setMostrarNovaMensagem(true)}
+                onClick={() => setIsNewMessageOpen(true)}
                 className="fixed bottom-[calc(5rem+env(safe-area-inset-bottom))] right-4 h-14 px-5 rounded-full bg-primary text-background font-bold shadow-xl active:scale-95 transition-all flex items-center gap-2 z-30 cursor-pointer"
                 aria-label={t("Nova mensagem", "New message")}
             >
@@ -247,13 +247,13 @@ function MensagensPage({ userId }: { userId: number }) {
                 <span className="text-sm">{t("Nova", "New")}</span>
             </button>
 
-            {mostrarNovaMensagem && (
-                <NovaMensagemModal
-                    idRemetente={userId}
-                    onClose={() => setMostrarNovaMensagem(false)}
-                    onEnviada={() => {
-                        setMostrarNovaMensagem(false);
-                        setVista("enviadas");
+            {isNewMessageOpen && (
+                <NewMessageModal
+                    senderId={userId}
+                    onClose={() => setIsNewMessageOpen(false)}
+                    onSent={() => {
+                        setIsNewMessageOpen(false);
+                        setViewMode("sent");
                     }}
                 />
             )}
@@ -261,4 +261,4 @@ function MensagensPage({ userId }: { userId: number }) {
     );
 }
 
-export default MensagensPage;
+export default MessagesPage;

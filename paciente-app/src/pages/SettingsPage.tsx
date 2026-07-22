@@ -4,7 +4,7 @@ type Props = {
     onLogout: () => void;
 };
 
-export default function DefinicoesPage({ onLogout }: Props) {
+export default function SettingsPage({ onLogout }: Props) {
     const { tema, idioma, alternarTema, mudarIdioma, t } = useApp();
 
     return (

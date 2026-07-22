@@ -54,7 +54,7 @@ function DiagnosticoDetalheModal({ diagnostico, onClose }: ModalProps) {
                 <div className="flex items-start justify-between mb-3">
                     <div>
                         <span className="text-[10px] font-black uppercase tracking-wider text-primary">
-                            {t("Diagnóstico", "Diagnosis")} #{diagnostico.id}
+                            {t("Diagnóstico", "Diagnosis")} :
                         </span>
                         <h2 className="text-base font-bold text-text mt-0.5">
                             {formatarData(diagnostico.date)}
@@ -69,12 +69,10 @@ function DiagnosticoDetalheModal({ diagnostico, onClose }: ModalProps) {
                     </button>
                 </div>
 
-                {/* Conteúdo */}
                 <div className="overflow-y-auto flex-1 pr-0.5 space-y-4 touch-pan-y">
-                    {/* Grelha de Métricas */}
                     <div className="grid grid-cols-3 gap-2 my-2">
                         <div className="flex flex-col items-center bg-primary/5 border border-primary/10 rounded-2xl p-3">
-                            <span className="text-xl">🌡️</span>
+                            <span className="text-xl">.</span>
                             <span className="text-sm font-black text-text mt-1">
                                 {diagnostico.temperatura?.toFixed?.(1) ?? diagnostico.temperatura} <span className="text-[10px] font-normal">°C</span>
                             </span>
@@ -84,7 +82,7 @@ function DiagnosticoDetalheModal({ diagnostico, onClose }: ModalProps) {
                         </div>
 
                         <div className="flex flex-col items-center bg-primary/5 border border-primary/10 rounded-2xl p-3">
-                            <span className="text-xl">❤️</span>
+                            <span className="text-xl">.</span>
                             <span className="text-sm font-black text-text mt-1">
                                 {diagnostico.bpm} <span className="text-[10px] font-normal">bpm</span>
                             </span>
@@ -94,7 +92,7 @@ function DiagnosticoDetalheModal({ diagnostico, onClose }: ModalProps) {
                         </div>
 
                         <div className="flex flex-col items-center bg-primary/5 border border-primary/10 rounded-2xl p-3">
-                            <span className="text-xl">📈</span>
+                            <span className="text-xl">.</span>
                             <span className="text-sm font-black text-text mt-1">
                                 {diagnostico.magnitudeG?.toFixed?.(2) ?? diagnostico.magnitudeG} <span className="text-[10px] font-normal">G</span>
                             </span>
@@ -104,7 +102,6 @@ function DiagnosticoDetalheModal({ diagnostico, onClose }: ModalProps) {
                         </div>
                     </div>
 
-                    {/* Observações Médicas */}
                     <div className="bg-primary/5 border border-primary-outline/30 rounded-2xl p-3.5">
                         <h3 className="text-xs font-bold text-text uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
                             <svg className="w-3.5 h-3.5 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
@@ -120,7 +117,6 @@ function DiagnosticoDetalheModal({ diagnostico, onClose }: ModalProps) {
                     </div>
                 </div>
 
-                {/* Botão para Fechar */}
                 <button
                     onClick={onClose}
                     className="w-full mt-4 py-3.5 bg-primary text-background font-bold rounded-xl active:scale-98 transition-all shadow-md text-sm shrink-0 cursor-pointer"
@@ -132,7 +128,7 @@ function DiagnosticoDetalheModal({ diagnostico, onClose }: ModalProps) {
     );
 }
 
-export default function DiagnosticosPage({ idPessoa }: { idPessoa: number }) {
+export default function DiagnosticsPage({ idPessoa }: { idPessoa: number }) {
     const { idioma, t } = useApp();
     const [diagnosticos, setDiagnosticos] = useState<Diagnostico[]>([]);
     const [carregando, setCarregando] = useState(true);
@@ -196,7 +192,6 @@ export default function DiagnosticosPage({ idPessoa }: { idPessoa: number }) {
                 </div>
             )}
 
-            {/* Skeleton Loading */}
             {carregando && (
                 <div className="flex flex-col gap-2.5">
                     {[0, 1, 2].map((i) => (
@@ -214,7 +209,6 @@ export default function DiagnosticosPage({ idPessoa }: { idPessoa: number }) {
                 </div>
             )}
 
-            {/* Estado Vazio */}
             {!carregando && !erro && diagnosticos.length === 0 && (
                 <div className="flex flex-col items-center justify-center text-center py-12 px-4 bg-background rounded-3xl border border-dashed border-primary-outline/60 my-4">
                     <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary mb-3">
@@ -231,7 +225,6 @@ export default function DiagnosticosPage({ idPessoa }: { idPessoa: number }) {
                 </div>
             )}
 
-            {/* Lista de Cards */}
             <div className="flex flex-col gap-2.5">
                 {diagnosticos.map((d) => (
                     <button
@@ -241,7 +234,7 @@ export default function DiagnosticosPage({ idPessoa }: { idPessoa: number }) {
                     >
                         <div className="flex justify-between items-center gap-2">
                             <span className="text-[10px] font-black uppercase tracking-wider text-primary">
-                                {t("Diagnóstico", "Diagnosis")} #{d.id}
+                                {t("Diagnóstico", "Diagnosis")} :
                             </span>
                             <span className="text-[11px] font-medium text-muted shrink-0">
                                 {formatarData(d.date)}

@@ -1,11 +1,11 @@
 import { useState, useEffect } from "react";
-import DiagnosticosPage from "./pages/diagnosticos-page";
-import MensagensPage from "./pages/mensagens-page";
-import DefinicoesPage from "./pages/definicoes-page";
-import LoginPage from "./pages/login-page";
-import type { PacienteSession } from "./pages/login-page";
-import { Navbar } from "./components/navbar";
-import type { TabNavegacao } from "./components/navbar";
+import DiagnosticsPage from "./pages/DiagnosticsPage.tsx";
+import MensagensPage from "./pages/MessagesPage.tsx";
+import SettingsPage from "./pages/SettingsPage.tsx";
+import LoginPage from "./pages/LoginPage.tsx";
+import type { PacienteSession } from "./pages/LoginPage.tsx";
+import { Navbar } from "./components/Navbar.tsx";
+import type { TabNavegacao } from "./components/Navbar.tsx";
 import { AppProvider } from "./context/AppContext";
 
 const SESSION_KEY = "paciente-auth-session";
@@ -50,9 +50,9 @@ function MainContent() {
     return (
         <div className="min-h-screen bg-background text-text font-sans antialiased">
             <main className="transition-all duration-200">
-                {abaAtiva === "diagnosticos" && <DiagnosticosPage idPessoa={sessao.idPessoa} />}
+                {abaAtiva === "diagnosticos" && <DiagnosticsPage idPessoa={sessao.idPessoa} />}
                 {abaAtiva === "mensagens" && <MensagensPage userId={sessao.userId} />}
-                {abaAtiva === "definicoes" && <DefinicoesPage onLogout={handleLogout} />}
+                {abaAtiva === "definicoes" && <SettingsPage onLogout={handleLogout} />}
             </main>
 
             <Navbar abaAtiva={abaAtiva} aoMudarAba={setAbaAtiva} />
