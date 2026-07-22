@@ -19,8 +19,6 @@ services:
       MQTT_BROKER_URL: tcp://mosquitto:1883
       MQTT_TOPIC: sensors/#
       MQTT_CIPHER_KEY: "hCQLhtCTCbhoGEiWISLi+g=="
-    depends_on:
-      - mqtt5
     networks:
       - pcmr-network
     restart: unless-stopped
@@ -65,7 +63,6 @@ services:
       - "3002:80"
     depends_on:
      - spring-app
-     - mqtt5
     networks:
      - pcmr-network
     restart: unless-stopped
@@ -76,6 +73,8 @@ services:
     ports:
       - "1883:1883"
       - "9001:9001"
+    depends_on:
+      - spring-app
     volumes:
       - ./configuration/mqtt5:/mosquitto/config
       - mqtt-data:/mosquitto/data
