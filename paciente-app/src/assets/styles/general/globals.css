@@ -1,12 +1,29 @@
+@theme {
+    --color-primary: var(--color-primary);
+    --color-primary-outline: var(--color-primary-outline);
+    --color-text: var(--color-text);
+    --color-muted: var(--color-muted);
+    --color-background: var(--color-background);
+    --color-surface-footer: var(--color-surface-footer);
+    --font-sans: var(--font-sans);
+}
+
+/* 3. Definir os valores do teu tema */
 :root {
     --font-sans: "Poppins", system-ui, sans-serif;
-
     --color-primary: #A8B8A0;
     --color-primary-outline: #B2C8B2;
-
     --color-text: #4E5452;
     --color-muted: #6C757D;
-
     --color-background: #E8E8E8;
     --color-surface-footer: #535353;
+}
+
+html.dark {
+    --color-primary: #8F9F87;
+    --color-primary-outline: #334155;
+    --color-text: #F8FAFC;
+    --color-muted: #94A3B8;
+    --color-background: #0F172A;
+    --color-surface-footer: #1E293B;
 }

@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
+import { useTranslation } from 'react-i18next'
 
 interface UtilizadorResumo {
   idUtilizador: number
@@ -24,6 +25,7 @@ export default function NovaMensagemModal({
   const [aEnviar, setAEnviar] = useState(false)
   const [erro, setErro] = useState<string | null>(null)
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const { t } = useTranslation();
 
   const procurar = useCallback(async (nome: string) => {
     if (!nome.trim()) {
@@ -87,18 +89,18 @@ export default function NovaMensagemModal({
         <button
           onClick={onClose}
           className="absolute top-4 right-4 text-gray-400 hover:text-gray-700 text-xl cursor-pointer"
-          title="Fechar"
+          title={t('novaMensagemModal.messageClose')}
         >
           ✕
         </button>
 
-        <h2 className="text-xl font-bold text-gray-800 mb-4">Nova Mensagem</h2>
+        <h2 className="text-xl font-bold text-gray-800 mb-4">{t('novaMensagemModal.messageNew')}</h2>
 
         {!destinatario ? (
           <div className="flex flex-col gap-3">
             <input
               type="text"
-              placeholder="Procurar destinatário por nome..."
+              placeholder={t('novaMensagemModal.messageSearchRecipient')}
               value={termo}
               onChange={(e) => setTermo(e.target.value)}
               className="border border-gray-300 rounded-xl px-3 py-2 text-sm cursor-text"
@@ -116,7 +118,7 @@ export default function NovaMensagemModal({
                 </button>
               ))}
               {resultados.length === 0 && termo.trim() !== '' && (
-                <p className="text-xs text-gray-400 px-1">Nenhum utilizador encontrado.</p>
+                <p className="text-xs text-gray-400 px-1">{t('novaMensagemModal.messageNoUsersFound')}</p>
               )}
             </div>
           </div>
@@ -131,20 +133,20 @@ export default function NovaMensagemModal({
                 onClick={() => setDestinatario(null)}
                 className="text-xs text-gray-400 hover:text-gray-700 underline cursor-pointer"
               >
-                Trocar
+                {t('novaMensagemModal.messageChangeRecipient')}
               </button>
             </div>
 
             <input
               type="text"
-              placeholder="Assunto"
+              placeholder={t('novaMensagemModal.messageSubject')}
               value={assunto}
               onChange={(e) => setAssunto(e.target.value)}
               className="border border-gray-300 rounded-xl px-3 py-2 text-sm cursor-text"
             />
 
             <textarea
-              placeholder="Mensagem"
+              placeholder={t('novaMensagemModal.messageBody')}
               value={corpo}
               onChange={(e) => setCorpo(e.target.value)}
               rows={5}
@@ -160,7 +162,7 @@ export default function NovaMensagemModal({
           onClick={enviar}
           className="w-full mt-4 py-2 bg-[#AAB99F] hover:bg-[#9CB39E] disabled:opacity-40 cursor-pointer disabled:cursor-not-allowed rounded-full text-white font-medium transition-colors shadow-sm"
         >
-          {aEnviar ? 'A enviar...' : 'Enviar'}
+          {aEnviar ? t('novaMensagemModal.messageSending') : t('novaMensagemModal.messageSend')}
         </button>
       </div>
     </div>

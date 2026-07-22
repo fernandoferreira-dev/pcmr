@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { useTranslation } from "react-i18next";
 
 interface SensorNo {
   idSensor: number
@@ -73,6 +74,8 @@ export default function ConfiguracoesModal({
   const [aGuardar, setAGuardar] = useState(false)
   const [erroConfig, setErroConfig] = useState<string | null>(null)
   const [sucessoConfig, setSucessoConfig] = useState(false)
+
+  const { t } = useTranslation();
 
   useEffect(() => {
     carregarSensores()
@@ -155,7 +158,7 @@ export default function ConfiguracoesModal({
       setSensores((prev) =>
         prev.map((s) => (s.idSensor === sensorSelecionadoId ? { ...s, nomeExibicao: data.nomeExibicao } : s))
       )
-      
+
       setSucessoRenomear(true)
       setTimeout(() => setSucessoRenomear(false), 2000)
     } catch {
@@ -331,20 +334,18 @@ export default function ConfiguracoesModal({
           <div className="flex gap-2 mb-4">
             <button
               onClick={() => setAba('nos')}
-              className={`px-4 py-2 rounded-full text-sm font-medium transition-colors cursor-pointer ${
-                aba === 'nos' ? 'bg-[#AAB99F] text-white' : 'bg-gray-100 text-gray-600'
-              }`}
+              className={`px-4 py-2 rounded-full text-sm font-medium transition-colors cursor-pointer ${aba === 'nos' ? 'bg-[#AAB99F] text-white' : 'bg-gray-100 text-gray-600'
+                }`}
             >
-              Nós Sensores
+              {t('configModal.modalSensor')}
             </button>
             <button
               onClick={() => setAba('configurar')}
               disabled={!sensorSelecionado}
-              className={`px-4 py-2 rounded-full text-sm font-medium transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed ${
-                aba === 'configurar' ? 'bg-[#AAB99F] text-white' : 'bg-gray-100 text-gray-600'
-              }`}
+              className={`px-4 py-2 rounded-full text-sm font-medium transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed ${aba === 'configurar' ? 'bg-[#AAB99F] text-white' : 'bg-gray-100 text-gray-600'
+                }`}
             >
-              Configurar Sensor {sensorSelecionado ? `— ${sensorSelecionado.nomeExibicao || sensorSelecionado.nome}` : ''}
+              {t('configModal.modalSensorConfig')} {sensorSelecionado ? `— ${sensorSelecionado.nomeExibicao || sensorSelecionado.nome}` : ''}
             </button>
           </div>
         </div>
@@ -363,7 +364,6 @@ export default function ConfiguracoesModal({
                       <div className="flex items-center gap-3 min-w-0">
                         <div className={`w-3 h-3 rounded-full shrink-0 ${corEstado(estado)}`} />
                         <div className="min-w-0">
-                          {/* Modificado para mostrar o nome de exibição caso exista */}
                           <div className="text-sm font-semibold text-gray-800 truncate">
                             {s.nomeExibicao ? `${s.nomeExibicao} ` : s.nome}
                             {s.nomeExibicao && <span className="font-normal text-xs text-gray-400">({s.nome})</span>}
@@ -381,24 +381,23 @@ export default function ConfiguracoesModal({
                         >
                           {estado === 'a_testar' ? 'A testar...' : 'Ping'}
                         </button>
-                        {/* Removida a limitação de tipo de métrica para que TODOS possam ser renomeados */}
                         <button
                           onClick={() => selecionarSensorParaConfigurar(s)}
                           className="px-3 py-1.5 bg-[#AAB99F] hover:bg-[#9CB39E] text-white text-xs font-semibold rounded-full transition-colors cursor-pointer"
                         >
-                          Configurar
+                          {t('configModal.modalConf')}
                         </button>
                       </div>
                     </div>
                   )
                 })}
                 {sensores.length === 0 && (
-                  <p className="text-sm text-gray-400 text-center py-4">Nenhum nó registado ainda.</p>
+                  <p className="text-sm text-gray-400 text-center py-4">{t('configModal.modalNoRegist')}</p>
                 )}
               </div>
 
               <div className="border-t border-gray-200 pt-4 flex flex-col gap-3">
-                <p className="text-sm font-semibold text-gray-700">Adicionar novo nó</p>
+                <p className="text-sm font-semibold text-gray-700">{t('configModal.modalAddKnot')}</p>
 
                 <input
                   type="text"
@@ -416,7 +415,7 @@ export default function ConfiguracoesModal({
                 />
 
                 <label className="flex flex-col gap-1">
-                  <span className="text-xs font-semibold text-gray-600">Tipo de sensor</span>
+                  <span className="text-xs font-semibold text-gray-600">{t('configModal.modalSensorType')}</span>
                   <select
                     value={novoTipo}
                     onChange={(e) => setNovoTipo(e.target.value as SensorNo['tipoMetrica'])}
@@ -444,13 +443,12 @@ export default function ConfiguracoesModal({
 
           {aba === 'configurar' && sensorSelecionado && (
             <div className="flex flex-col gap-6">
-              
-              {/* NOVO: Bloco de Renomear o Sensor (Comum a todos) */}
+
               <div className="flex flex-col gap-3 pb-5 border-b border-gray-100">
                 <div>
-                  <p className="text-sm font-semibold text-gray-700">Nome de Exibição</p>
+                  <p className="text-sm font-semibold text-gray-700">{t('configModal.modalExibitName')}</p>
                   <p className="text-xs text-gray-500">
-                    O identificador real (usado em MQTT e pings) manterá o valor <strong>{sensorSelecionado.nome}</strong>.
+                    {t('configModal.modalIdentificatorInfo')} <strong>{sensorSelecionado.nome}</strong>.
                   </p>
                 </div>
                 <div className="flex gap-2">
@@ -470,20 +468,18 @@ export default function ConfiguracoesModal({
                   </button>
                 </div>
                 {erroRenomear && <p className="text-sm text-red-600">{erroRenomear}</p>}
-                {sucessoRenomear && <p className="text-sm text-green-600">✓ Nome de exibição atualizado.</p>}
+                {sucessoRenomear && <p className="text-sm text-green-600">✓ {t('configModal.modalUpdateInfo')}</p>}
               </div>
 
-              {/* Configurações específicas de WEARABLE */}
               {sensorSelecionado.tipoMetrica === 'WEARABLE' && (
                 <div className="flex flex-col gap-4">
                   <p className="text-sm text-gray-500">
-                    Valores mínimo e máximo para <strong>{sensorSelecionado.nome}</strong> que,
-                    quando ultrapassados, geram um alerta clínico.
+                    {t('configModal.modalAlertInfo1')} <strong>{sensorSelecionado.nome}</strong> {t('configModal.modalAlertInfo2')}
                   </p>
 
                   <div className="grid grid-cols-2 gap-4">
                     <label className="flex flex-col gap-1">
-                      <span className="text-sm font-semibold text-gray-700">Temperatura mínima (°C)</span>
+                      <span className="text-sm font-semibold text-gray-700">{t('configModal.modalTempMin')}</span>
                       <input
                         type="number"
                         step="0.1"
@@ -494,7 +490,7 @@ export default function ConfiguracoesModal({
                     </label>
 
                     <label className="flex flex-col gap-1">
-                      <span className="text-sm font-semibold text-gray-700">Temperatura máxima (°C)</span>
+                      <span className="text-sm font-semibold text-gray-700">{t('configModal.modalTempMax')}</span>
                       <input
                         type="number"
                         step="0.1"
@@ -505,7 +501,7 @@ export default function ConfiguracoesModal({
                     </label>
 
                     <label className="flex flex-col gap-1">
-                      <span className="text-sm font-semibold text-gray-700">FC mínima (bpm)</span>
+                      <span className="text-sm font-semibold text-gray-700">{t('configModal.modalFCMin')}</span>
                       <input
                         type="number"
                         value={bpmMinInput}
@@ -515,7 +511,7 @@ export default function ConfiguracoesModal({
                     </label>
 
                     <label className="flex flex-col gap-1">
-                      <span className="text-sm font-semibold text-gray-700">FC máxima (bpm)</span>
+                      <span className="text-sm font-semibold text-gray-700">{t('configModal.modalFCMax')}</span>
                       <input
                         type="number"
                         value={bpmMaxInput}
@@ -525,17 +521,17 @@ export default function ConfiguracoesModal({
                     </label>
                   </div>
 
-                  {isTemperaturasInvalidas && <p className="text-sm text-red-600">A temperatura mínima deve ser inferior à máxima.</p>}
-                  {isBpmsInvalidos && <p className="text-sm text-red-600">O BPM mínimo deve ser inferior ao máximo.</p>}
+                  {isTemperaturasInvalidas && <p className="text-sm text-red-600">{t('configModal.modalTempInvalid')}</p>}
+                  {isBpmsInvalidos && <p className="text-sm text-red-600">{t('configModal.modalBpmInvalid')}</p>}
 
                   {configWearable && (
                     <p className="text-xs text-gray-400">
-                      Última atualização: {new Date(configWearable.atualizadoEm).toLocaleString('pt-PT')}
+                      {t('configModal.modalLastUpdate')} {new Date(configWearable.atualizadoEm).toLocaleString('pt-PT')}
                     </p>
                   )}
 
                   {erroConfig && <p className="text-sm text-red-600">{erroConfig}</p>}
-                  {sucessoConfig && <p className="text-sm text-green-600">✓ Configuração guardada.</p>}
+                  {sucessoConfig && <p className="text-sm text-green-600">✓ {t('configModal.modalConfSaved')}</p>}
 
                   <button
                     onClick={guardarWearable}
@@ -547,12 +543,11 @@ export default function ConfiguracoesModal({
                 </div>
               )}
 
-              {/* Configurações específicas de PRESENCA */}
               {sensorSelecionado.tipoMetrica === 'PRESENCA' && (
                 <div className="flex flex-col gap-4">
                   <p className="text-sm text-gray-500">
-                    Parâmetros de deteção de presença para <strong>{sensorSelecionado.nome}</strong>.
-                    Alterações são enviadas de imediato ao ESP32 via MQTT.
+                    {t('configModal.modalPresenceInfo1')} <strong>{sensorSelecionado.nome}</strong>.
+                    {t('configModal.modalPresenceInfo2')}
                   </p>
 
                   <label className="flex flex-col gap-1">
@@ -567,7 +562,7 @@ export default function ConfiguracoesModal({
                   </label>
 
                   <label className="flex flex-col gap-1">
-                    <span className="text-sm font-semibold text-gray-700">Tempo de confirmação (segundos)</span>
+                    <span className="text-sm font-semibold text-gray-700">{t('configModal.modalTemp')}</span>
                     <input
                       type="number"
                       step="1"
@@ -577,16 +572,16 @@ export default function ConfiguracoesModal({
                     />
                   </label>
 
-                  {isPresencaInvalida && <p className="text-sm text-red-600">Os valores devem ser números positivos.</p>}
+                  {isPresencaInvalida && <p className="text-sm text-red-600">{t('configModal.modalNumInvalid')}</p>}
 
                   {configPresenca && (
                     <p className="text-xs text-gray-400">
-                      Última atualização: {new Date(configPresenca.atualizadoEm).toLocaleString('pt-PT')}
+                      {t('configModal.modalLastUpdate')} {new Date(configPresenca.atualizadoEm).toLocaleString('pt-PT')}
                     </p>
                   )}
 
                   {erroConfig && <p className="text-sm text-red-600">{erroConfig}</p>}
-                  {sucessoConfig && <p className="text-sm text-green-600">✓ Configuração guardada e enviada ao sensor.</p>}
+                  {sucessoConfig && <p className="text-sm text-green-600">✓ {t('configModal.modalEnvInfo')}</p>}
 
                   <button
                     onClick={guardarPresenca}
@@ -598,10 +593,9 @@ export default function ConfiguracoesModal({
                 </div>
               )}
 
-              {/* Se não tem parâmetros técnicos, avisa que não há mais opções */}
               {sensorSelecionado.tipoMetrica !== 'WEARABLE' && sensorSelecionado.tipoMetrica !== 'PRESENCA' && (
                 <p className="text-sm text-gray-400 text-center py-4">
-                  Não existem parâmetros de calibração técnica para o tipo <strong>{TIPOS_LABEL[sensorSelecionado.tipoMetrica]}</strong>.
+                  {t('configModal.modalCalibError')} <strong>{TIPOS_LABEL[sensorSelecionado.tipoMetrica]}</strong>.
                 </p>
               )}
 

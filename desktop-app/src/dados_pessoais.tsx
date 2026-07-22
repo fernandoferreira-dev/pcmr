@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 
 interface PerfilUtilizador {
   username: string;
@@ -44,6 +45,7 @@ export default function DadosPessoais({ userId }: { userId: number }) {
   const [erro, setErro] = useState<string | null>(null);
   const [sucesso, setSucesso] = useState<string | null>(null);
   const [carregando, setCarregando] = useState(false);
+  const { t } = useTranslation();
 
   useEffect(() => {
     const carregarPerfil = async () => {
@@ -146,11 +148,11 @@ export default function DadosPessoais({ userId }: { userId: number }) {
         {/* Cartão principal - Informações de contacto */}
         <div className="flex-1 bg-white rounded-2xl border border-gray-300 shadow-sm p-6">
           <div className="text-sm font-bold text-gray-600 mb-2 tracking-wide uppercase">
-            Informações Gerais e de Contacto
+            {t('personalData.personalGeneralInfo')}
           </div>
 
           <InfoRow
-            label="Nome Completo"
+            label={t('personalData.personalFullName')}
             icon={
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -183,7 +185,7 @@ export default function DadosPessoais({ userId }: { userId: number }) {
           </InfoRow>
 
           <InfoRow
-            label="Nome de utilizador"
+            label={t('personalData.personalUsername')}
             icon={
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -207,7 +209,7 @@ export default function DadosPessoais({ userId }: { userId: number }) {
           </InfoRow>
 
           <InfoRow
-            label="Número de Telemóvel"
+            label={t('personalData.personalPhoneNumber')}
             icon={
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -235,13 +237,13 @@ export default function DadosPessoais({ userId }: { userId: number }) {
               />
             ) : (
               <span className="text-lg font-semibold text-gray-800">
-                {perfil?.telemovel ?? "Não definido"}
+                {perfil?.telemovel ?? t('personalData.personalPhoneNotDefined')}
               </span>
             )}
           </InfoRow>
 
           <InfoRow
-            label="Email"
+            label={t('personalData.personalEmail')}
             icon={
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -278,11 +280,11 @@ export default function DadosPessoais({ userId }: { userId: number }) {
         <div className="w-full lg:w-80 flex flex-col gap-4 shrink-0">
           <div className="bg-white rounded-2xl border border-gray-300 shadow-sm p-6 flex flex-col gap-4">
             <div className="text-sm font-bold text-gray-600 tracking-wide uppercase">
-              Resumo da conta
+              {t('personalData.personalAccountSummary')}
             </div>
 
             <div className="flex items-center justify-between">
-              <span className="text-sm text-gray-500 font-medium">Estado</span>
+              <span className="text-sm text-gray-500 font-medium">{t('personalData.personalStatus')}</span>
               <span className="px-3 py-1 rounded-full bg-[#AAB99F]/30 text-[#5c6b56] text-sm font-semibold uppercase cursor-default">
                 {perfil?.tipoUtilizador ?? "—"}
               </span>
@@ -290,7 +292,7 @@ export default function DadosPessoais({ userId }: { userId: number }) {
 
             <div className="flex flex-col gap-1">
               <span className="text-sm text-gray-500 font-medium">
-                Data de Nascimento
+                {t('personalData.personalBirthDate')}
               </span>
               {isEditing ? (
                 <input
@@ -319,7 +321,7 @@ export default function DadosPessoais({ userId }: { userId: number }) {
               disabled={!perfil}
               className="w-full py-3 bg-[#AAB99F] hover:bg-[#9CB39E] disabled:opacity-50 disabled:cursor-not-allowed transition-colors rounded-xl text-white font-medium shadow-sm cursor-pointer"
             >
-              Editar Dados
+              {t('personalData.personalEditData')}
             </button>
           ) : (
             <div className="flex flex-col gap-2">
@@ -328,14 +330,14 @@ export default function DadosPessoais({ userId }: { userId: number }) {
                 disabled={carregando}
                 className="w-full py-3 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-wait transition-colors rounded-xl text-white font-medium shadow-sm cursor-pointer"
               >
-                {carregando ? "A Gravar..." : "Gravar Alterações"}
+                {carregando ? t('personalData.personalSaving') : t('personalData.personalSaveChanges')}
               </button>
               <button
                 onClick={handleCancelarEdicao}
                 disabled={carregando}
                 className="w-full py-3 bg-gray-400 hover:bg-gray-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors rounded-xl text-white font-medium shadow-sm cursor-pointer"
               >
-                Cancelar
+                {t('personalData.personalCancel')}
               </button>
             </div>
           )}

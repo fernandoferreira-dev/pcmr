@@ -9,6 +9,7 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import FinalizarConsultaModal from "./FinalizarConsultaModal";
+import { useTranslation } from "react-i18next";
 
 interface LeituraSensor {
   temperatura: number;
@@ -55,15 +56,15 @@ const METRICAS: {
   cor: string;
   unidade: string;
 }[] = [
-  { key: "temperatura", label: "Temperatura", cor: "#f97316", unidade: "°C" },
-  { key: "bpm", label: "Frequência Cardíaca", cor: "#dc2626", unidade: "bpm" },
-  {
-    key: "magnitudeG",
-    label: "Magnitude (aceleração)",
-    cor: "#2563eb",
-    unidade: "G",
-  },
-];
+    { key: "temperatura", label: "Temperatura", cor: "#f97316", unidade: "°C" },
+    { key: "bpm", label: "Frequência Cardíaca", cor: "#dc2626", unidade: "bpm" },
+    {
+      key: "magnitudeG",
+      label: "Magnitude (aceleração)",
+      cor: "#2563eb",
+      unidade: "G",
+    },
+  ];
 
 export default function DiagnosticoLiveView({
   onClose,
@@ -78,7 +79,7 @@ export default function DiagnosticoLiveView({
   const [mostrarFinalizar, setMostrarFinalizar] = useState(false);
   const [metricaAtiva, setMetricaAtiva] = useState<MetricaKey>("temperatura");
   const [pulsando, setPulsando] = useState(false);
-  
+
   // Estado para controlar se o período de calibração terminou
   const [calibrado, setCalibrado] = useState(false);
 
@@ -97,6 +98,8 @@ export default function DiagnosticoLiveView({
   const alertaBpmAltoEnviado = useRef(false);
   const alertaBpmBaixoEnviado = useRef(false);
   const alertaQuedaEnviado = useRef(false); // MOVIDO PARA CÁ
+
+  const { t } = useTranslation();
 
   // Temporizador para calibração inicial de 10 segundos
   useEffect(() => {
@@ -140,12 +143,12 @@ export default function DiagnosticoLiveView({
 
         // Apenas processa os alertas lógicos após os 10s de calibração inicial
         if (calibrado) {
-          
+
           // --- PROCESSAMENTO DA TEMPERATURA ---
           if (data.temperatura > LIMITES_ALERTA.tempMaxima) {
             const msg = `Temperatura de ${data.temperatura.toFixed(1)}°C excede o limite de ${LIMITES_ALERTA.tempMaxima.toFixed(1)}°C`;
             setMensagemAlertaTemp(msg);
-            
+
             if (!alertaTempAltaEnviado.current) {
               registarAlertaNoServidor('TEMPERATURA_ALTA', data.temperatura, msg);
               alertaTempAltaEnviado.current = true;
@@ -240,28 +243,28 @@ export default function DiagnosticoLiveView({
   return (
     <div className="fixed inset-0 z-50 bg-white flex flex-col">
       <style>{`
-        @keyframes pulso-verde {
-          0% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.6); border-color: rgba(34, 197, 94, 0.9); }
-          70% { box-shadow: 0 0 0 10px rgba(34, 197, 94, 0); border-color: rgba(34, 197, 94, 0.4); }
-          100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); border-color: transparent; }
-        }
-        @keyframes pulso-vermelho {
-          0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.5); border-color: rgba(239, 68, 68, 0.8); }
-          70% { box-shadow: 0 0 0 12px rgba(239, 68, 68, 0); border-color: rgba(239, 68, 68, 0.3); }
-          100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); border-color: transparent; }
-        }
-        .pulso-verde-ativo { animation: pulso-verde ${DURACAO_PULSO_MS}ms ease-out; border: 2px solid transparent; }
-        .pulso-vermelho-ativo { animation: pulso-vermelho 1800ms infinite ease-in-out; border: 2px solid #ef4444; }
-      `}</style>
+    @keyframes pulso-verde {
+      0% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.6); border-color: rgba(34, 197, 94, 0.9); }
+      70% { box-shadow: 0 0 0 10px rgba(34, 197, 94, 0); border-color: rgba(34, 197, 94, 0.4); }
+      100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); border-color: transparent; }
+    }
+    @keyframes pulso-vermelho {
+      0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.5); border-color: rgba(239, 68, 68, 0.8); }
+      70% { box-shadow: 0 0 0 12px rgba(239, 68, 68, 0); border-color: rgba(239, 68, 68, 0.3); }
+      100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); border-color: transparent; }
+    }
+    .pulso-verde-ativo { animation: pulso-verde ${DURACAO_PULSO_MS}ms ease-out; border: 2px solid transparent; }
+    .pulso-vermelho-ativo { animation: pulso-vermelho 1800ms infinite ease-in-out; border: 2px solid #ef4444; }
+  `}</style>
 
       <header className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
         <h1 className="text-xl font-bold text-gray-800">
-          Consulta Rápida — Dados em Tempo Real
+          {t('diagLiveView.diagLiveTitle')}
         </h1>
         <button
           onClick={onClose}
           className="text-gray-400 hover:text-gray-700 text-xl cursor-pointer"
-          title="Fechar"
+          title={t('diagLiveView.diagLiveClose')}
         >
           ✕
         </button>
@@ -277,22 +280,22 @@ export default function DiagnosticoLiveView({
         {/* CARTÕES DOS BIOMÉTRICOS INTEGRADOS COM SISTEMA DE ALERTAS */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
           <CartaoSensor
-            titulo="Temperatura"
-            valor={leitura ? `${leitura.temperatura.toFixed(1)} °C` : "—"}
+            titulo={t('diagLiveView.diagLiveTemperature')}
+            valor={leitura ? `${leitura.temperatura.toFixed(1)} °C` : t('diagLiveView.diagLiveNoData')}
             pulsando={pulsando && !mensagemAlertaTemp}
             mensagemAlerta={mensagemAlertaTemp}
             estaCalibrando={!calibrado}
           />
           <CartaoSensor
-            titulo="Frequência Cardíaca"
-            valor={leitura ? `${leitura.bpm} bpm` : "—"}
+            titulo={t('diagLiveView.diagLiveHeartRate')}
+            valor={leitura ? `${leitura.bpm} bpm` : t('diagLiveView.diagLiveNoData')}
             pulsando={pulsando && !mensagemAlertaBpm}
             mensagemAlerta={mensagemAlertaBpm}
             estaCalibrando={!calibrado}
           />
           <CartaoSensor
-            titulo="Magnitude (aceleração)"
-            valor={leitura ? `${leitura.magnitudeG.toFixed(2)} G` : "—"}
+            titulo={t('diagLiveView.diagLiveAcceleration')}
+            valor={leitura ? `${leitura.magnitudeG.toFixed(2)} G` : t('diagLiveView.diagLiveNoData')}
             pulsando={pulsando}
             mensagemAlerta={null}
             estaCalibrando={!calibrado}
@@ -302,7 +305,7 @@ export default function DiagnosticoLiveView({
         <div className="bg-gray-50 rounded-2xl p-4 mb-6">
           <div className="flex items-center justify-between mb-3">
             <div className="text-sm font-semibold text-gray-600">
-              Evolução — {metrica.label}
+              {t('diagLiveView.diagLiveEvolution')} {metrica.label}
             </div>
 
             <div className="flex gap-1 bg-white rounded-full p-1 border border-gray-200">
@@ -310,11 +313,10 @@ export default function DiagnosticoLiveView({
                 <button
                   key={m.key}
                   onClick={() => setMetricaAtiva(m.key)}
-                  className={`px-3 py-1 rounded-full text-xs font-medium transition-colors cursor-pointer ${
-                    metricaAtiva === m.key
-                      ? "bg-[#AAB99F] text-white"
-                      : "text-gray-500 hover:bg-gray-100"
-                  }`}
+                  className={`px-3 py-1 rounded-full text-xs font-medium transition-colors cursor-pointer ${metricaAtiva === m.key
+                    ? "bg-[#AAB99F] text-white"
+                    : "text-gray-500 hover:bg-gray-100"
+                    }`}
                 >
                   {m.label}
                 </button>
@@ -337,7 +339,7 @@ export default function DiagnosticoLiveView({
                 />
                 <Tooltip
                   formatter={(value) => [
-                    `${value ?? "—"} ${metrica.unidade}`,
+                    `${value ?? t('diagLiveView.diagLiveNoData')} ${metrica.unidade}`,
                     metrica.label,
                   ]}
                 />
@@ -354,23 +356,23 @@ export default function DiagnosticoLiveView({
             </ResponsiveContainer>
           ) : (
             <div className="h-[280px] flex items-center justify-center text-sm text-gray-400">
-              A recolher dados suficientes para o gráfico...
+              {t('diagLiveView.diagLiveCollectingData')}
             </div>
           )}
         </div>
 
         <div className="bg-gray-50 rounded-2xl px-4 py-3 text-sm text-gray-600">
-          Estado do sensor de queda:{" "}
+          {t('diagLiveView.diagLiveFallSensorStatus')}{" "}
           <span className="font-medium text-gray-800">
             {leitura
-              ? (FALL_STATE_LABELS[leitura.fallState] ?? "Desconhecido")
-              : "—"}
+              ? (FALL_STATE_LABELS[leitura.fallState] ?? t('diagLiveView.diagLiveUnknown'))
+              : t('diagLiveView.diagLiveNoData')}
           </span>
         </div>
 
         {leitura && (
           <p className="mt-4 text-xs text-gray-400">
-            Última atualização:{" "}
+            {t('diagLiveView.diagLiveLastUpdate')}{" "}
             {new Date(leitura.atualizadoEm).toLocaleTimeString()}
           </p>
         )}
@@ -382,7 +384,7 @@ export default function DiagnosticoLiveView({
           onClick={() => setMostrarFinalizar(true)}
           className="px-6 py-2 bg-[#AAB99F] hover:bg-[#9CB39E] disabled:opacity-40 cursor-pointer disabled:cursor-not-allowed rounded-full text-white font-medium transition-colors shadow-sm"
         >
-          Terminar Consulta
+          {t('diagLiveView.diagLiveFinishConsultation')}
         </button>
       </footer>
 
@@ -414,18 +416,17 @@ function CartaoSensor({
   estaCalibrando,
 }: CartaoProps) {
   const emAlerta = !!mensagemAlerta;
-
+  const {t} = useTranslation();
   return (
     <div
-      className={`rounded-2xl p-4 flex flex-col gap-2 transition-all duration-300 min-h-[120px] justify-between ${
-        estaCalibrando
+      className={`rounded-2xl p-4 flex flex-col gap-2 transition-all duration-300 min-h-[120px] justify-between ${estaCalibrando
           ? "bg-gray-100/70 border-2 border-dashed border-gray-300"
           : emAlerta
-          ? "bg-red-50 pulso-vermelho-ativo border-2"
-          : pulsando
-          ? "bg-gray-50 pulso-verde-ativo border-2"
-          : "bg-gray-50 border-2 border-transparent"
-      }`}
+            ? "bg-red-50 pulso-vermelho-ativo border-2"
+            : pulsando
+              ? "bg-gray-50 pulso-verde-ativo border-2"
+              : "bg-gray-50 border-2 border-transparent"
+        }`}
     >
       <div className="flex flex-col gap-1">
         <div className="flex items-center justify-between">
@@ -434,18 +435,18 @@ function CartaoSensor({
           </span>
           {estaCalibrando && (
             <span className="text-[10px] text-gray-400 font-medium animate-pulse bg-gray-200 px-2 py-0.5 rounded-full">
-              A calibrar...
+              {t('diagLiveView.diagLiveCalibrating')}
             </span>
           )}
         </div>
         <span className={`text-3xl font-bold ${estaCalibrando ? "text-gray-400" : emAlerta ? "text-red-600" : "text-gray-800"}`}>
-          {estaCalibrando ? "—" : valor}
+          {estaCalibrando ? t('diagLiveView.diagLiveNoData') : valor}
         </span>
       </div>
 
       {emAlerta && !estaCalibrando && (
         <div className="text-xs text-red-700 bg-red-100/60 border border-red-200 rounded-lg p-2 font-medium leading-relaxed mt-1 animate-fade-in">
-          <span className="font-bold mr-1">Alerta:</span>
+          <span className="font-bold mr-1">{t('diagLiveView.diagLiveAlert')}</span>
           {mensagemAlerta}
         </div>
       )}
