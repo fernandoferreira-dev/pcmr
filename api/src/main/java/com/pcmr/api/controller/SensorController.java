@@ -1,5 +1,4 @@
 package com.pcmr.api.controller;
-
 import com.pcmr.api.dto.EstadoSensorDTO;
 import com.pcmr.api.dto.NovoSensorRequestDTO;
 import com.pcmr.api.dto.RenomearSensorRequestDTO;
