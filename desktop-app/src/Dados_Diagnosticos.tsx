@@ -17,6 +17,7 @@ import {
 } from "recharts";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
+import { useTranslation } from "react-i18next";
 
 interface Diagnostico {
   id: number;
@@ -62,6 +63,8 @@ export default function DadosDiagnostico() {
   const [dadosExport, setDadosExport] = useState<PontoGraficoExport[] | null>(null);
   const [diagnosticoExport, setDiagnosticoExport] = useState<Diagnostico | null>(null);
   const chartRef = useRef<HTMLDivElement>(null);
+
+  const {t} = useTranslation();
 
   useEffect(() => {
     fetch("/api/diagnosticos/dashboard")
@@ -189,7 +192,7 @@ export default function DadosDiagnostico() {
 
   return (
     <div className="relative flex flex-col w-full h-full p-6 bg-[#EBEBEB] rounded-4xl shadow-inner overflow-hidden">
-      
+
       {erro && (
         <div className="mb-4 bg-yellow-50 border border-yellow-300 text-yellow-700 rounded-2xl px-4 py-3 text-sm shrink-0">
           {erro}
@@ -200,11 +203,11 @@ export default function DadosDiagnostico() {
       <section className="grid gap-4 md:grid-cols-2 mb-4 shrink-0">
         <article className="flex items-center justify-between rounded-3xl border border-gray-300 bg-white px-5 py-4 shadow-sm">
           <div>
-            <p className="text-sm font-semibold text-gray-500">Pacientes</p>
+            <p className="text-sm font-semibold text-gray-500">{t('diagnosticData.title')}</p>
             <p className="mt-1 text-2xl font-bold text-gray-800">
               {loading ? "..." : data.totalPacientes}
             </p>
-            <p className="text-xs text-gray-400 mt-0.5">Total na Base de Dados</p>
+            <p className="text-xs text-gray-400 mt-0.5">{t('diagnosticData.diagBDTotal')}</p>
           </div>
           <div className="flex h-14 w-14 items-center justify-center rounded-full bg-[#f4f7f2] text-[#AAB99F]">
             <Stethoscope size={28} strokeWidth={1.8} />
@@ -213,11 +216,11 @@ export default function DadosDiagnostico() {
 
         <article className="flex items-center justify-between rounded-3xl border border-gray-300 bg-white px-5 py-4 shadow-sm">
           <div>
-            <p className="text-sm font-semibold text-gray-500">Diagnósticos</p>
+            <p className="text-sm font-semibold text-gray-500">{t('diagnosticData.diagDiag')}</p>
             <p className="mt-1 text-2xl font-bold text-gray-800">
               {loading ? "..." : data.totalDiagnosticos}
             </p>
-            <p className="text-xs text-gray-400 mt-0.5">Total Registado</p>
+            <p className="text-xs text-gray-400 mt-0.5">{t('diagnosticData.diagTotalRegist')}</p>
           </div>
           <div className="flex h-14 w-14 items-center justify-center rounded-full bg-[#f4f7f2] text-[#AAB99F]">
             <ClipboardList size={28} strokeWidth={1.8} />
@@ -229,16 +232,16 @@ export default function DadosDiagnostico() {
       <section className="bg-white rounded-3xl border border-gray-300 p-4 mb-4 shrink-0">
         <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 flex-1">
-            
+
             {/* Campo de Busca por Nome */}
             <div className="flex flex-col gap-1">
-              <span className="ml-2 text-xs font-semibold text-gray-600">Buscar Paciente:</span>
+              <span className="ml-2 text-xs font-semibold text-gray-600">{t('diagnosticData.diagSearch')}</span>
               <span className="relative flex h-11 items-center gap-2 rounded-full border border-gray-300 bg-white px-4 text-gray-700 focus-within:ring-2 focus-within:ring-[#AAB99F]">
                 <Search size={16} className="text-gray-400 shrink-0" />
                 <input
                   className="bg-transparent text-sm outline-none w-full text-gray-700"
                   type="text"
-                  placeholder="Nome do paciente..."
+                  placeholder={t('diagnosticData.diagPatientName')}
                   value={filtroNome}
                   onChange={(e) => setFiltroNome(e.target.value)}
                 />
@@ -247,7 +250,7 @@ export default function DadosDiagnostico() {
 
             {/* Data de Início */}
             <div className="flex flex-col gap-1">
-              <span className="ml-2 text-xs font-semibold text-gray-600">Data de Início:</span>
+              <span className="ml-2 text-xs font-semibold text-gray-600">{t('diagnosticData.diagDateStart')}</span>
               <span className="relative flex h-11 items-center gap-2 rounded-full border border-gray-300 bg-white px-4 text-gray-700 focus-within:ring-2 focus-within:ring-[#AAB99F]">
                 <CalendarDays size={16} className="text-gray-400" />
                 <input
@@ -261,7 +264,7 @@ export default function DadosDiagnostico() {
 
             {/* Data de Fim */}
             <div className="flex flex-col gap-1">
-              <span className="ml-2 text-xs font-semibold text-gray-600">Data de Fim:</span>
+              <span className="ml-2 text-xs font-semibold text-gray-600">{t('diagnosticData.diagDateEnd')}</span>
               <span className="relative flex h-11 items-center gap-2 rounded-full border border-gray-300 bg-white px-4 text-gray-700 focus-within:ring-2 focus-within:ring-[#AAB99F]">
                 <CalendarDays size={16} className="text-gray-400" />
                 <input
@@ -276,7 +279,7 @@ export default function DadosDiagnostico() {
 
           <button className="inline-flex h-11 items-center justify-center gap-2 rounded-full bg-[#AAB99F] px-5 text-sm font-medium text-white shadow-sm transition hover:bg-[#97a68d] cursor-pointer whitespace-nowrap">
             <BadgePlus size={16} />
-            Filtros Ativos
+            {t('diagnosticData.diagFilterActive')}
           </button>
         </div>
       </section>
@@ -284,27 +287,27 @@ export default function DadosDiagnostico() {
       {/* Tabela de Histórico de Diagnósticos */}
       <section className="flex min-h-0 flex-1 flex-col">
         <h2 className="px-1 mb-3 text-lg font-bold text-gray-800">
-          Histórico de Diagnósticos
+          {t('diagnosticData.diagHistory')}
         </h2>
 
         <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-2xl border border-gray-300 bg-white shadow-sm">
           {/* Cabeçalho da Grelha/Tabela */}
           <div className="grid grid-cols-[1.2fr_1.5fr_1.2fr_1fr] gap-4 bg-[#AAB99F] px-5 py-3.5 text-sm font-bold text-white shrink-0">
             <span>ID</span>
-            <span>Paciente</span>
-            <span>Data</span>
-            <span>Observações</span>
+            <span>{t('diagnosticData.diagPatient')}</span>
+            <span>{t('diagnosticData.diagDate')}</span>
+            <span>{t('diagnosticData.diagObs')}</span>
           </div>
 
           {/* Corpo da Grelha/Tabela com Scroll */}
           <div className="flex-1 overflow-y-auto divide-y divide-gray-200">
             {loading ? (
               <p className="p-5 text-center text-sm text-gray-400">
-                A carregar dados...
+                {t('diagnosticData.diagLoading')}
               </p>
             ) : diagnosticosFiltrados.length === 0 ? (
               <p className="p-5 text-center text-sm text-gray-400">
-                Nenhum diagnóstico encontrado para os filtros selecionados.
+                {t('diagnosticData.diagDiagNotFound')}
               </p>
             ) : (
               diagnosticosFiltrados.map((item) => (
@@ -318,7 +321,7 @@ export default function DadosDiagnostico() {
                       disabled={exportandoId !== null}
                       className="inline-flex h-8 items-center rounded-full border border-gray-300 bg-white px-3 text-xs font-medium text-gray-600 shadow-sm transition hover:bg-gray-50 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                      {exportandoId === item.id ? "A exportar..." : "Exportar"}
+                      {exportandoId === item.id ? t('diagnosticData.diagExporting') : t('diagnosticData.diagExportButton')}
                     </button>
                     <span className="font-bold text-gray-800">
                       #{item.id}
@@ -351,7 +354,7 @@ export default function DadosDiagnostico() {
                 yAxisId="temp"
                 type="monotone"
                 dataKey="temperatura"
-                name="Temperatura (°C)"
+                name={t('diagnosticData.diagTemp')}
                 stroke="#f97316"
                 strokeWidth={2}
                 dot={false}
@@ -371,7 +374,7 @@ export default function DadosDiagnostico() {
                 yAxisId="temp"
                 type="monotone"
                 dataKey="magnitudeG"
-                name="Magnitude (G)"
+                name={t('diagnosticData.diagMag')}
                 stroke="#2563eb"
                 strokeWidth={2}
                 dot={false}

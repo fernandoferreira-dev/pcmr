@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { Settings, Search, RefreshCw, Pencil, Check, X } from "lucide-react";
 import ConfiguracoesModal from "./ConfiguracoesModal";
+import { useTranslation } from "react-i18next";
 
 interface SensorNo {
   idSensor: number;
@@ -29,6 +30,8 @@ export default function DadosEquipamentos({ userId }: { userId: number }) {
   const [idAEditar, setIdAEditar] = useState<number | null>(null);
   const [nomeEditando, setNomeEditando] = useState("");
   const [aGuardarNome, setAGuardarNome] = useState(false);
+
+  const { t } = useTranslation();
 
   const carregarSensores = async () => {
     try {
@@ -143,13 +146,13 @@ export default function DadosEquipamentos({ userId }: { userId: number }) {
       <div className="flex items-center justify-between mb-8">
         <div className="flex items-center gap-3">
           <h1 className="text-xl font-semibold text-gray-900">
-            Testar Conexão
+            {t('equipData.equipTestConnection')}
           </h1>
           <button
             onClick={() => setMostrarConfig(true)}
             className="p-2 hover:bg-white rounded-full transition-colors cursor-pointer"
-            title="Definições"
-            aria-label="Definições do sistema"
+            title={t('equipData.equipSettings')}
+            aria-label={t('equipData.equipSystemSettings')}
           >
             <Settings size={20} className="text-gray-700" />
           </button>
@@ -160,7 +163,7 @@ export default function DadosEquipamentos({ userId }: { userId: number }) {
           className="flex items-center gap-2 px-4 py-2 bg-[#AAB99F] hover:bg-[#9CB39E] text-white text-sm font-medium rounded-full shadow-sm transition-colors cursor-pointer"
         >
           <RefreshCw size={16} />
-          Testar Todos
+          {t('equipData.equipTestAll')}
         </button>
       </div>
 
@@ -173,7 +176,7 @@ export default function DadosEquipamentos({ userId }: { userId: number }) {
           />
           <input
             type="text"
-            placeholder="Pesquisar por nome..."
+            placeholder={t('equipData.equipSearchPlaceholder')}
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="w-full pl-10 pr-4 py-2.5 bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm cursor-text"
@@ -186,13 +189,13 @@ export default function DadosEquipamentos({ userId }: { userId: number }) {
         <table className="w-full border-collapse">
           <thead>
             <tr className="border-b border-gray-200 bg-gray-50">
-              <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Estado</th>
-              <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Nome</th>
-              <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Localização</th>
-              <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Tipo</th>
-              <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Última Leitura</th>
-              <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Última Atualização</th>
-              <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Ação</th>
+              <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">{t('equipData.equipStatus')}</th>
+              <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">{t('equipData.equipName')}</th>
+              <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">{t('equipData.equipLocation')}</th>
+              <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">{t('equipData.equipType')}</th>
+              <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">{t('equipData.equipLastReading')}</th>
+              <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">{t('equipData.equipLastUpdate')}</th>
+              <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">{t('equipData.equipAction')}</th>
             </tr>
           </thead>
           <tbody>
@@ -211,9 +214,9 @@ export default function DadosEquipamentos({ userId }: { userId: number }) {
                       <div
                         className={`w-3 h-3 rounded-full ${getStatusColor(estado)}`}
                         title={
-                          estado === "online" ? "Conectado" :
-                          estado === "offline" ? "Sem resposta" :
-                          estado === "a_testar" ? "A testar..." : "Não testado"
+                          estado === "online" ? t('equipData.equipConnected') :
+                            estado === "offline" ? t('equipData.equipNoResponse') :
+                              estado === "a_testar" ? t('equipData.equipTesting') : t('equipData.equipNotTested')
                         }
                       />
                     </td>
@@ -231,14 +234,14 @@ export default function DadosEquipamentos({ userId }: { userId: number }) {
                             onClick={(e) => guardarNomeExibicao(item.idSensor, e)}
                             disabled={aGuardarNome}
                             className="text-green-600 hover:text-green-800 cursor-pointer disabled:opacity-50"
-                            title="Guardar"
+                            title={t('equipData.equipSave')}
                           >
                             <Check size={16} />
                           </button>
                           <button
                             onClick={(e) => cancelarEdicaoNome(e)}
                             className="text-gray-400 hover:text-red-500 cursor-pointer"
-                            title="Cancelar"
+                            title={t('equipData.equipCancel')}
                           >
                             <X size={16} />
                           </button>
@@ -254,7 +257,7 @@ export default function DadosEquipamentos({ userId }: { userId: number }) {
                           <button
                             onClick={(e) => iniciarEdicaoNome(item, e)}
                             className="text-gray-300 hover:text-gray-600 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
-                            title="Editar nome de exibição"
+                            title={t('equipData.equipEditDisplayName')}
                           >
                             <Pencil size={13} />
                           </button>
@@ -275,7 +278,7 @@ export default function DadosEquipamentos({ userId }: { userId: number }) {
                         disabled={estado === "a_testar"}
                         className="px-3 py-1.5 bg-gray-100 hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed text-xs font-semibold text-gray-700 rounded-full transition-colors cursor-pointer"
                       >
-                        {estado === "a_testar" ? "A testar..." : "Ping"}
+                        {estado === "a_testar" ? t('equipData.equipTesting') : "Ping"}
                       </button>
                     </td>
                   </tr>
@@ -284,7 +287,7 @@ export default function DadosEquipamentos({ userId }: { userId: number }) {
             ) : (
               <tr>
                 <td colSpan={7} className="px-4 py-8 text-center text-gray-500">
-                  Nenhum resultado encontrado para "{searchTerm}"
+                  {t('equipData.equipNoResults')} "{searchTerm}"
                 </td>
               </tr>
             )}

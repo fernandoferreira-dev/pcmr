@@ -25,6 +25,7 @@ import datapessoal from './assets/imagens/personal-information.png'
 import conf from './assets/imagens/setting.png'
 import logo from './assets/imagens/logosemback (1).png'
 import ConfPop from './confpop'   // ← Novo import
+import { useTranslation } from 'react-i18next'
 
 type View = 'home' | 'dados_diagnostico' | 'comunicacao' | 'dados_equipamentos' | 'dados_pessoais'
 
@@ -39,11 +40,10 @@ type NavButtonProps = {
 function NavButton({ id, label, icon, isActive, onClick }: NavButtonProps) {
   return (
     <button
-      className={`cursor-pointer w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-colors  ${
-        isActive
-          ? 'bg-[#8CA483] font-semibold text-black shadow-sm'
-          : 'hover:bg-[#9CB39E] text-gray-800'
-      }`}
+      className={`cursor-pointer w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-colors  ${isActive
+        ? 'bg-[#8CA483] font-semibold text-black shadow-sm'
+        : 'hover:bg-[#9CB39E] text-gray-800'
+        }`}
       onClick={() => onClick(id)}
     >
       {icon && (
@@ -125,6 +125,8 @@ const OverviewDashboard = ({ userId, onAbrirConsulta, onAbrirComunicacao }: Over
   const [notificacoes, setNotificacoes] = useState<NotificacaoResumo[]>([])
   const [erroNotificacoes, setErroNotificacoes] = useState<string | null>(null)
 
+  const { t } = useTranslation();
+
   useEffect(() => {
     const carregarEstatisticas = async () => {
       try {
@@ -173,38 +175,38 @@ const OverviewDashboard = ({ userId, onAbrirConsulta, onAbrirComunicacao }: Over
     <div className="flex flex-col gap-4 w-full h-full p-6 bg-[#EBEBEB] rounded-4xl shadow-inner overflow-y-auto">
       {/*OverviewDashboard*/}
       <div className="text-xs text-gray-500 font-bold tracking-wider shrink-0">
-        DIA | SEMANA | MÊS
+        {t('paginaInicial.mainDayWeekMonth')}
       </div>
 
       <div className="flex shrink-0 bg-white rounded-xl border border-gray-300 overflow-hidden shadow-sm">
         <div className="flex-1 p-4 flex justify-between items-center border-r border-gray-300">
           <div>
-            <div className="font-bold text-gray-800 text-sm">Diagnósticos</div>
-            <div className="text-xs text-gray-600">{stats ? stats.totalDiagnosticos : '—'}</div>
+            <div className="font-bold text-gray-800 text-sm">{t('paginaInicial.mainDiagnostics')}</div>
+            <div className="text-xs text-gray-600">{stats ? stats.totalDiagnosticos : t('paginaInicial.mainNoData')}</div>
           </div>
           <div className="w-8 h-8 bg-red-500 rounded-full shrink-0 shadow-sm" />
         </div>
 
         <div className="flex-1 p-4 flex justify-between items-center border-r border-gray-300">
           <div>
-            <div className="font-bold text-gray-800 text-sm">Pacientes</div>
-            <div className="text-xs text-gray-600">{stats ? stats.totalPacientes : '—'}</div>
+            <div className="font-bold text-gray-800 text-sm">{t('paginaInicial.mainPatients')}</div>
+            <div className="text-xs text-gray-600">{stats ? stats.totalPacientes : t('paginaInicial.mainNoData')}</div>
           </div>
           <div className="w-8 h-8 bg-red-500 rounded-full shrink-0 shadow-sm" />
         </div>
 
         <div className="flex-1 p-4 flex justify-between items-center border-r border-gray-300">
           <div>
-            <div className="font-bold text-gray-800 text-sm">Nó Sensor</div>
-            <div className="text-xs text-gray-600">Estado</div>
+            <div className="font-bold text-gray-800 text-sm">{t('paginaInicial.mainSensorNode')}</div>
+            <div className="text-xs text-gray-600">{t('paginaInicial.mainStatus')}</div>
           </div>
           <div className="w-8 h-8 bg-red-500 rounded-full shrink-0 shadow-sm" />
         </div>
 
         <div className="flex-1 p-4 flex justify-between items-center">
           <div>
-            <div className="font-bold text-gray-800 text-sm">Servidor</div>
-            <div className="text-xs text-gray-600">Estado</div>
+            <div className="font-bold text-gray-800 text-sm">{t('paginaInicial.mainServer')}</div>
+            <div className="text-xs text-gray-600">{t('paginaInicial.mainStatus')}</div>
           </div>
           <div className="w-8 h-8 bg-red-500 rounded-full shrink-0 shadow-sm" />
         </div>
@@ -212,11 +214,11 @@ const OverviewDashboard = ({ userId, onAbrirConsulta, onAbrirComunicacao }: Over
 
       {/* Gráfico e resto do dashboard (mantido igual) */}
       <div className="flex flex-col flex-1 min-h-37.5 bg-white rounded-xl border border-gray-300 p-4 shadow-sm">
-        <div className="text-sm font-semibold text-gray-500 mb-2">Diagnósticos Totais (por mês)</div>
+        <div className="text-sm font-semibold text-gray-500 mb-2">{t('paginaInicial.mainDiagnosticsPerMonth')}</div>
         {erroStats && <div className="flex-1 flex items-center justify-center text-sm text-red-500">{erroStats}</div>}
         {!erroStats && dadosGrafico.length === 0 && (
           <div className="flex-1 flex items-center justify-center text-sm text-gray-400">
-            {stats ? 'Ainda não há diagnósticos registados.' : 'A carregar...'}
+            {stats ? t('paginaInicial.mainNoDiagnostics') : t('paginaInicial.mainLoading')}
           </div>
         )}
         {!erroStats && dadosGrafico.length > 0 && (
@@ -227,7 +229,7 @@ const OverviewDashboard = ({ userId, onAbrirConsulta, onAbrirComunicacao }: Over
                 <XAxis dataKey="mes" tick={{ fontSize: 11 }} />
                 <YAxis tick={{ fontSize: 11 }} width={30} allowDecimals={false} />
                 <Tooltip />
-                <Bar dataKey="quantidade" name="Diagnósticos" fill="#AAB99F" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="quantidade" name={t('paginaInicial.mainDiagnostics')} fill="#AAB99F" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -237,7 +239,7 @@ const OverviewDashboard = ({ userId, onAbrirConsulta, onAbrirComunicacao }: Over
       <div className="flex flex-col sm:flex-row gap-4 shrink-0 h-auto sm:h-48">
         {/* Notificações e Consulta Rápida*/}
         <div className="flex-1 bg-white rounded-xl border border-gray-300 p-4 shadow-sm flex flex-col">
-          <div className="text-sm font-bold text-gray-600 mb-2">Notificações</div>
+          <div className="text-sm font-bold text-gray-600 mb-2">{t('paginaInicial.mainNotifications')}</div>
           {/* Código de notificações */}
           {erroNotificacoes && (
             <div className="flex-1 flex items-center justify-center text-xs text-red-500">
@@ -247,7 +249,7 @@ const OverviewDashboard = ({ userId, onAbrirConsulta, onAbrirComunicacao }: Over
 
           {!erroNotificacoes && notificacoes.length === 0 && (
             <div className="flex-1 flex items-center justify-center text-xs text-gray-400">
-              Sem notificações recentes.
+              {t('paginaInicial.mainNoRecentNotifications')}
             </div>
           )}
 
@@ -265,7 +267,7 @@ const OverviewDashboard = ({ userId, onAbrirConsulta, onAbrirComunicacao }: Over
                     </span>
                     <span
                       className={`w-2 h-2 rounded-full shrink-0 ${n.lida ? 'bg-green-500' : 'bg-red-500'}`}
-                      title={n.lida ? 'Lida' : 'Não lida'}
+                      title={n.lida ? t('paginaInicial.mainRead') : t('paginaInicial.mainUnread')}
                     />
                   </div>
                   <div className="text-xs text-gray-500 truncate">{n.assunto}</div>
@@ -277,16 +279,16 @@ const OverviewDashboard = ({ userId, onAbrirConsulta, onAbrirComunicacao }: Over
         </div>
 
         <div className="flex-1 bg-white rounded-xl border border-gray-300 p-4 shadow-sm flex flex-col">
-          <div className="text-sm font-bold text-gray-600 mb-2">Consulta Rápida</div>
+          <div className="text-sm font-bold text-gray-600 mb-2">{t('paginaInicial.mainQuickConsultation')}</div>
           <div className="flex-1 bg-[#AAB99F] rounded-xl border border-[#91a086] p-4 flex flex-col justify-between">
             <div className="w-10 h-10 bg-white/70 rounded-full flex items-center justify-center text-[#AAB99F] text-3xl font-bold shadow-sm">
-              <img src={cruzverde} alt="Diagnóstico" className="w-6 h-6 object-contain"/>
+              <img src={cruzverde} alt={t('paginaInicial.mainDiagnostics')} className="w-6 h-6 object-contain" />
             </div>
             <button
               onClick={onAbrirConsulta}
               className="w-full py-2 bg-white/40 rounded-full text-white font-medium hover:bg-white/50 transition-colors shadow-sm cursor-pointer"
             >
-              Iniciar Consulta
+              {t('paginaInicial.mainStartConsultation')}
             </button>
           </div>
         </div>
@@ -301,7 +303,7 @@ export default function App({ userName, userId, tipo, onLogout }: PaginaInicialP
   const [statsRefreshKey, setStatsRefreshKey] = useState(0)
   const [mensagemParaAbrir, setMensagemParaAbrir] = useState<number | null>(null)
   const [confOpen, setConfOpen] = useState(false)
-
+  const { t } = useTranslation();
   const tipoNormalizado = (tipo || '')
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "")
@@ -338,7 +340,7 @@ export default function App({ userName, userId, tipo, onLogout }: PaginaInicialP
   else if (view === 'comunicacao') content = (
     <Comunicacao userId={userId} idMensagemInicial={mensagemParaAbrir} />
   )
-  else if (view === 'dados_equipamentos' && !esMedico) content = <DadosEquipamentos userId={userId}/>
+  else if (view === 'dados_equipamentos' && !esMedico) content = <DadosEquipamentos userId={userId} />
   else if (view === 'dados_pessoais') content = <DadosPessoais userId={userId} />
   else content = (
     <OverviewDashboard
@@ -359,26 +361,26 @@ export default function App({ userName, userId, tipo, onLogout }: PaginaInicialP
         <aside className="w-72 h-full bg-[#AAB99F] rounded-4xl p-6 shadow-md flex flex-col">
           {/*LOGO*/}
           <div className="flex flex-col items-center justify-center gap-3 mb-8 mt-4">
-            <img 
-              src={logo} 
-              alt="Logo MedyCist" 
-              className="h-20 w-auto object-contain drop-shadow-md" 
+            <img
+              src={logo}
+              alt={t('paginaInicial.mainAppName')}
+              className="h-20 w-auto object-contain drop-shadow-md"
             />
             <div className="text-2xl font-bold text-gray-800 tracking-wide">
-              MedyCist
+              {t('paginaInicial.mainAppName')}
             </div>
           </div>
 
           <nav className="flex flex-col gap-2 overflow-y-auto">
-            <NavButton id="home" label="Overview" icon={OverviewIcon} isActive={view === 'home'} onClick={irParaView} />
-            <NavButton id="dados_diagnostico" label="Dados Diagnósticos" icon={DadosDiag} isActive={view === 'dados_diagnostico'} onClick={irParaView} />
-            <NavButton id="comunicacao" label="Comunicação" icon={comunicaicon} isActive={view === 'comunicacao'} onClick={irParaView} />
+            <NavButton id="home" label={t('paginaInicial.mainOverview')} icon={OverviewIcon} isActive={view === 'home'} onClick={irParaView} />
+            <NavButton id="dados_diagnostico" label={t('paginaInicial.mainDiagnosticData')} icon={DadosDiag} isActive={view === 'dados_diagnostico'} onClick={irParaView} />
+            <NavButton id="comunicacao" label={t('paginaInicial.mainCommunication')} icon={comunicaicon} isActive={view === 'comunicacao'} onClick={irParaView} />
 
             {!esMedico && (
-              <NavButton id="dados_equipamentos" label="Dados Equipamentos" icon={dadosequi} isActive={view === 'dados_equipamentos'} onClick={irParaView} />
+              <NavButton id="dados_equipamentos" label={t('paginaInicial.mainEquipmentData')} icon={dadosequi} isActive={view === 'dados_equipamentos'} onClick={irParaView} />
             )}
 
-            <NavButton id="dados_pessoais" label="Dados Pessoais" icon={datapessoal} isActive={view === 'dados_pessoais'} onClick={irParaView} />
+            <NavButton id="dados_pessoais" label={t('paginaInicial.mainPersonalData')} icon={datapessoal} isActive={view === 'dados_pessoais'} onClick={irParaView} />
           </nav>
         </aside>
 
@@ -393,24 +395,23 @@ export default function App({ userName, userId, tipo, onLogout }: PaginaInicialP
                 <button
                   onClick={() => iniciarRegisto(userId)}
                   className="flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-xl hover:bg-emerald-700 transition-colors shadow-sm cursor-pointer"
-                  title="Associar impressão digital a esta conta"
+                  title={t('paginaInicial.mainRegisterFingerprint')}
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M2 12C2 6.5 6.5 2 12 2s10 4.5 10 10" /><path d="M5 12C5 8.1 8.1 5 12 5s7 3.1 7 7" /><path d="M8 12c0-2.2 1.8-4 4-4s4 1.8 4 4" /><circle cx="12" cy="12" r="2" /><path d="M2 12h20" />
                   </svg>
                   <span className="text-sm font-medium whitespace-nowrap">
-                    {bioStatus === 'idle' ? 'Associar Impressão Digital' : bioStatus === 'sucesso' ? '✓ Registada' : 'Tentar Novamente'}
+                    {bioStatus === 'idle' ? t('paginaInicial.mainAssociateFingerprint') : bioStatus === 'sucesso' ? t('paginaInicial.mainFingerprintRegistered') : t('paginaInicial.mainTryAgain')}
                   </span>
                 </button>
               )}
 
               {bioStatus !== 'idle' && (
-                <div className={`text-xs px-3 py-1.5 rounded-lg ${
-                  bioStatus === 'aguardar_dedo' || bioStatus === 'a_processar' ? 'bg-blue-100 text-blue-800' : bioStatus === 'sucesso' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                }`}>
+                <div className={`text-xs px-3 py-1.5 rounded-lg ${bioStatus === 'aguardar_dedo' || bioStatus === 'a_processar' ? 'bg-blue-100 text-blue-800' : bioStatus === 'sucesso' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                  }`}>
                   <span>{bioMensagem}</span>
                   {(bioStatus === 'aguardar_dedo' || bioStatus === 'a_processar') && (
-                    <button onClick={bioCancelar} className="ml-2 underline cursor-pointer">Cancelar</button>
+                    <button onClick={bioCancelar} className="ml-2 underline cursor-pointer">{t('paginaInicial.mainCancel')}</button>
                   )}
                 </div>
               )}
@@ -419,17 +420,17 @@ export default function App({ userName, userId, tipo, onLogout }: PaginaInicialP
               <button
                 onClick={() => setConfOpen(true)}
                 className="w-11 h-11 flex items-center justify-center hover:bg-gray-100 rounded-2xl transition-colors cursor-pointer"
-                title="Configurações"
+                title={t('equipData.equipSettings')}
               >
                 <img
                   src={conf}
-                  alt="Configurações"
+                  alt={t('equipData.equipSettings')}
                   className="w-8 h-8 object-contain"
                 />
               </button>
 
               <span className="text-xl text-gray-800 font-medium pl-2">
-                Bem-vindo, {userName}! ({tipo})
+                {t('paginaInicial.mainWelcome')} {userName}! ({tipo})
               </span>
             </div>
           </header>

@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import sair from './assets/imagens/exit (1).png';
+import { useTranslation } from 'react-i18next';
 
 type ConfPopProps = {
   isOpen: boolean;
@@ -10,6 +11,13 @@ type ConfPopProps = {
 export default function ConfPop({ isOpen, onClose, onLogout }: ConfPopProps) {
   const [darkMode, setDarkMode] = useState(false);
   const [language, setLanguage] = useState('Português');
+  const { t, i18n } = useTranslation();
+
+  const handleLanguageChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const lang = e.target.value; // "pt" or "en"
+    i18n.changeLanguage(lang);
+    localStorage.setItem("language", lang);
+  };
 
   if (!isOpen) return null;
 
@@ -50,7 +58,7 @@ export default function ConfPop({ isOpen, onClose, onLogout }: ConfPopProps) {
             <span className="text-gray-700 font-medium">Preferência de Lingua</span>
             <select
               value={language}
-              onChange={(e) => setLanguage(e.target.value)}
+              onChange={handleLanguageChange}
               className="bg-gray-100 border border-gray-200 text-gray-700 rounded-2xl px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#8CA483] cursor-pointer"
             >
               <option value="Português">Português</option>

@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import NovaMensagemModal from './NovaMensagemModal'
+import { useTranslation } from "react-i18next";
 
 interface Mensagem {
   idMensagem: number
@@ -46,6 +47,7 @@ export default function Comunicacao({
   const [mensagemExpandida, setMensagemExpandida] = useState<number | null>(null)
   const [aGuardarId, setAGuardarId] = useState<number | null>(null)
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const { t } = useTranslation();
 
   const idJaAbertoRef = useRef<number | null>(null)
 
@@ -158,23 +160,21 @@ export default function Comunicacao({
       <div className="flex gap-2 mb-4 shrink-0">
         <button
           onClick={() => setVista('recebidas')}
-          className={`px-4 py-2 rounded-full text-sm font-medium transition-colors cursor-pointer ${
-            vista === 'recebidas'
-              ? 'bg-[#AAB99F] text-white shadow-sm'
-              : 'bg-white text-gray-600 border border-gray-300 hover:bg-gray-50'
-          }`}
+          className={`px-4 py-2 rounded-full text-sm font-medium transition-colors cursor-pointer ${vista === 'recebidas'
+            ? 'bg-[#AAB99F] text-white shadow-sm'
+            : 'bg-white text-gray-600 border border-gray-300 hover:bg-gray-50'
+            }`}
         >
-          Recebidas
+          {t('comunicacao.comReceived')}
         </button>
         <button
           onClick={() => setVista('enviadas')}
-          className={`px-4 py-2 rounded-full text-sm font-medium transition-colors cursor-pointer ${
-            vista === 'enviadas'
-              ? 'bg-[#AAB99F] text-white shadow-sm'
-              : 'bg-white text-gray-600 border border-gray-300 hover:bg-gray-50'
-          }`}
+          className={`px-4 py-2 rounded-full text-sm font-medium transition-colors cursor-pointer ${vista === 'enviadas'
+            ? 'bg-[#AAB99F] text-white shadow-sm'
+            : 'bg-white text-gray-600 border border-gray-300 hover:bg-gray-50'
+            }`}
         >
-          Enviadas
+          {t('comunicacao.comSent')}
         </button>
       </div>
 
@@ -192,7 +192,7 @@ export default function Comunicacao({
           <input
             value={pesquisa}
             onChange={(e) => setPesquisa(e.target.value)}
-            placeholder={vista === 'recebidas' ? 'Pesquisar por remetente...' : 'Pesquisar por destinatário...'}
+            placeholder={vista === 'recebidas' ? t('comunicacao.searchBySender') : t('comunicacao.searchByRecipient')}
             className="w-full pl-11 pr-4 py-3 bg-white rounded-full border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-[#AAB99F] cursor-text"
           />
         </div>
@@ -202,10 +202,10 @@ export default function Comunicacao({
           onChange={(e) => setFiltroEstado(e.target.value as FiltroEstado)}
           className="px-4 py-3 bg-white rounded-full border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-[#AAB99F] cursor-pointer text-gray-600 w-full sm:w-auto"
         >
-          <option value="todas">Todas as Mensagens</option>
-          <option value="lidas">Apenas Lidas</option>
-          <option value="nao_lidas">Apenas Não Lidas</option>
-          <option value="guardadas">Guardadas</option>
+          <option value="todas">{t('comunicacao.comAll')}</option>
+          <option value="lidas">{t('comunicacao.comRead')}</option>
+          <option value="nao_lidas">{t('comunicacao.comUnread')}</option>
+          <option value="guardadas">{t('comunicacao.comSaved')}</option>
         </select>
       </div>
 
@@ -220,14 +220,14 @@ export default function Comunicacao({
         {mensagensFiltradas.length === 0 && !erro && (
           <div className="flex-1 flex items-center justify-center text-sm text-gray-400">
             {mensagens.length === 0
-              ? (vista === 'recebidas' ? 'Sem mensagens recebidas.' : 'Sem mensagens enviadas.')
-              : 'Nenhuma mensagem corresponde aos filtros selecionados.'}
+              ? (vista === 'recebidas' ? t('comunicacao.noReceived') : t('comunicacao.noSent'))
+              : t('comunicacao.noMatchFilters')}
           </div>
         )}
 
         {mensagensFiltradas.map((m) => {
           const nomeContacto = vista === 'recebidas' ? m.nomeRemetente : m.nomeDestinatario
-          const rotuloContacto = vista === 'recebidas' ? 'De' : 'Para'
+          const rotuloContacto = vista === 'recebidas' ? t('comunicacao.from') : t('comunicacao.to')
 
           return (
             <div
@@ -237,7 +237,7 @@ export default function Comunicacao({
             >
               <div className="flex items-center justify-between bg-[#AAB99F] px-4 py-3">
                 <div className="flex items-center gap-3">
-                  
+
                   {/* Ícone de utilizador adicionado aqui */}
                   <div className="w-9 h-9 rounded-full bg-white flex items-center justify-center shrink-0 text-gray-500 shadow-sm">
                     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -254,7 +254,7 @@ export default function Comunicacao({
                       xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
                       fill="currentColor" className="text-white/80"
                     >
-                      <title>Mensagem guardada</title>
+                      <title>{t('comunicacao.savedTooltip')}</title>
                       <path d="M6 2a2 2 0 0 0-2 2v18l8-4 8 4V4a2 2 0 0 0-2-2H6z" />
                     </svg>
                   )}
@@ -264,7 +264,7 @@ export default function Comunicacao({
 
               <div className="flex items-center justify-between px-4 py-3">
                 <span className="text-sm text-gray-600 truncate pr-4">
-                  Assunto: {m.assunto}
+                  {t('comunicacao.subject')}: {m.assunto}
                 </span>
 
                 <div className="flex items-center gap-3 shrink-0">
@@ -272,7 +272,7 @@ export default function Comunicacao({
                     <button
                       onClick={(e) => apagarMensagem(m.idMensagem, e)}
                       className="text-gray-400 hover:text-red-500 transition-colors cursor-pointer"
-                      title="Apagar mensagem"
+                      title={t('comunicacao.deleteMessage')}
                     >
                       <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                         <path d="M3 6h18" />
@@ -284,8 +284,8 @@ export default function Comunicacao({
                     className={`w-3 h-3 rounded-full shrink-0 ${m.lida ? 'bg-green-500' : 'bg-red-500'}`}
                     title={
                       vista === 'recebidas'
-                        ? (m.lida ? 'Lida' : 'Não lida')
-                        : (m.lida ? 'Lida pelo destinatário' : 'Ainda não lida pelo destinatário')
+                        ? (m.lida ? t('comunicacao.read') : t('comunicacao.unread'))
+                        : (m.lida ? t('comunicacao.readByRecipient') : t('comunicacao.unreadByRecipient'))
                     }
                   />
                 </div>
@@ -296,28 +296,28 @@ export default function Comunicacao({
                   {(() => {
                     const temLink = m.corpo?.includes("LINK_ACAO:");
                     const partes = m.corpo?.split("LINK_ACAO:");
-                    const texto = partes ? partes[0] : (m.corpo || "Sem conteúdo.");
+                    const texto = partes ? partes[0] : (m.corpo || t('comunicacao.noContent'));
                     const link = temLink ? partes![1].trim() : null;
 
                     return (
                       <>
                         <p className="text-sm text-gray-700 whitespace-pre-wrap">{texto}</p>
-                        
+
                         {link && (
                           <button
                             onClick={async (e) => {
                               e.stopPropagation();
                               const res = await fetch(link);
                               if (res.ok) {
-                                alert("Registo aprovado com sucesso!");
-                                carregarMensagens(pesquisa, vista); 
+                                alert(t('comunicacao.approveSuccess'));
+                                carregarMensagens(pesquisa, vista);
                               } else {
-                                alert("Erro ao aprovar médico.");
+                                alert(t('comunicacao.approveError'));
                               }
                             }}
                             className="px-6 py-2 bg-[#AAB99F] text-white rounded-full text-sm font-bold hover:opacity-90 transition-opacity cursor-pointer"
                           >
-                            Aceitar Médico
+                            {t('comunicacao.medAccept')}
                           </button>
                         )}
                       </>
@@ -327,11 +327,10 @@ export default function Comunicacao({
                   <button
                     onClick={(e) => alternarGuardada(m.idMensagem, e)}
                     disabled={aGuardarId === m.idMensagem}
-                    className={`self-start flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium ${
-                      m.guardada ? 'bg-amber-100 text-amber-700' : 'bg-gray-100 text-gray-600'
-                    }`}
+                    className={`self-start flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium ${m.guardada ? 'bg-amber-100 text-amber-700' : 'bg-gray-100 text-gray-600'
+                      }`}
                   >
-                    {m.guardada ? 'Mensagem guardada' : 'Guardar mensagem'}
+                    {m.guardada ? t('comunicacao.markSaved') : t('comunicacao.markSave')}
                   </button>
                 </div>
               )}
@@ -344,7 +343,7 @@ export default function Comunicacao({
       <button
         onClick={() => setMostrarNovaMensagem(true)}
         className="absolute bottom-6 right-6 w-14 h-14 rounded-full bg-white border border-gray-300 shadow-md flex items-center justify-center hover:bg-gray-50 transition-colors cursor-pointer"
-        title="Nova mensagem"
+        title={t('comunicacao.newMessage')}
       >
         <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#5c6b56" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <path d="m22 2-7 20-4-9-9-4Z" />

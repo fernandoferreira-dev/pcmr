@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
+import { useTranslation } from 'react-i18next'
 
 interface Pessoa {
   idPessoa: number;
@@ -30,21 +31,20 @@ export default function FinalizarConsultaModal({
   const [observacoes, setObservacoes] = useState("");
   const [aGuardar, setAGuardar] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
-  
   const [tokenGerado, setTokenGerado] = useState<string | null>(null);
-  
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const { t } = useTranslation();
 
   const procurarPacientes = useCallback(async (nome: string) => {
-  try {
-    const res = await fetch(
-      `/api/pacientes/procurar?nome=${encodeURIComponent(nome)}`,
-    );
-    if (!res.ok) return;
-    const data: Pessoa[] = await res.json();
-    setResultados(data);
-  } catch {}
-}, []);
+    try {
+      const res = await fetch(
+        `/api/pacientes/procurar?nome=${encodeURIComponent(nome)}`,
+      );
+      if (!res.ok) return;
+      const data: Pessoa[] = await res.json();
+      setResultados(data);
+    } catch { }
+  }, []);
 
   useEffect(() => {
     if (modo !== "procurar") return;
@@ -71,20 +71,20 @@ export default function FinalizarConsultaModal({
     const body =
       modo === "procurar"
         ? {
-            idMedico,
-            idPacienteExistente: pacienteSelecionado?.idPessoa,
-            deviceId,
-            observacoes,
-          }
+          idMedico,
+          idPacienteExistente: pacienteSelecionado?.idPessoa,
+          deviceId,
+          observacoes,
+        }
         : {
-            idMedico,
-            novoPaciente: {
-              nome: novoNome,
-              email: novoEmail,
-            },
-            deviceId,
-            observacoes,
-          };
+          idMedico,
+          novoPaciente: {
+            nome: novoNome,
+            email: novoEmail,
+          },
+          deviceId,
+          observacoes,
+        };
 
     try {
       const res = await fetch("/api/consultas/finalizar", {
@@ -150,35 +150,33 @@ export default function FinalizarConsultaModal({
         <button
           onClick={onClose}
           className="absolute top-4 right-4 text-gray-400 hover:text-gray-700 text-xl cursor-pointer"
-          title="Fechar"
+          title={t('finalizarConsulta.diagEndClose')}
         >
           ✕
         </button>
 
         <h2 className="text-xl font-bold text-gray-800 mb-4">
-          Associar Paciente
+          {t('finalizarConsulta.diagEndAssociatePatient')}
         </h2>
 
         <div className="flex gap-2 mb-4">
           <button
             onClick={() => setModo("procurar")}
-            className={`flex-1 py-2 rounded-full text-sm font-medium transition-colors cursor-pointer ${
-              modo === "procurar"
-                ? "bg-[#AAB99F] text-white"
-                : "bg-gray-100 text-gray-600"
-            }`}
+            className={`flex-1 py-2 rounded-full text-sm font-medium transition-colors cursor-pointer ${modo === "procurar"
+              ? "bg-[#AAB99F] text-white"
+              : "bg-gray-100 text-gray-600"
+              }`}
           >
-            Paciente existente
+            {t('finalizarConsulta.diagEndExistingPatient')}
           </button>
           <button
             onClick={() => setModo("novo")}
-            className={`flex-1 py-2 rounded-full text-sm font-medium transition-colors cursor-pointer ${
-              modo === "novo"
-                ? "bg-[#AAB99F] text-white"
-                : "bg-gray-100 text-gray-600"
-            }`}
+            className={`flex-1 py-2 rounded-full text-sm font-medium transition-colors cursor-pointer ${modo === "novo"
+              ? "bg-[#AAB99F] text-white"
+              : "bg-gray-100 text-gray-600"
+              }`}
           >
-            Novo paciente
+            {t('finalizarConsulta.diagEndNewPatient')}
           </button>
         </div>
 
@@ -186,7 +184,7 @@ export default function FinalizarConsultaModal({
           <div className="flex flex-col gap-3">
             <input
               type="text"
-              placeholder="Procurar por nome..."
+              placeholder={t('finalizarConsulta.diagEndSearchPatient')}
               value={termo}
               onChange={(e) => {
                 setTermo(e.target.value);
@@ -200,11 +198,10 @@ export default function FinalizarConsultaModal({
                 <button
                   key={p.idPessoa}
                   onClick={() => setPacienteSelecionado(p)}
-                  className={`text-left px-3 py-2 rounded-xl text-sm transition-colors cursor-pointer ${
-                    pacienteSelecionado?.idPessoa === p.idPessoa
-                      ? "bg-[#AAB99F] text-white"
-                      : "bg-gray-50 hover:bg-gray-100 text-gray-700"
-                  }`}
+                  className={`text-left px-3 py-2 rounded-xl text-sm transition-colors cursor-pointer ${pacienteSelecionado?.idPessoa === p.idPessoa
+                    ? "bg-[#AAB99F] text-white"
+                    : "bg-gray-50 hover:bg-gray-100 text-gray-700"
+                    }`}
                 >
                   <div className="font-medium">{p.nome}</div>
                   <div className="text-xs opacity-80">{p.email}</div>
@@ -212,7 +209,7 @@ export default function FinalizarConsultaModal({
               ))}
               {resultados.length === 0 && termo.trim() !== "" && (
                 <p className="text-xs text-gray-400 px-1">
-                  Nenhum paciente encontrado.
+                  {t('finalizarConsulta.diagEndNoPatientFound')}
                 </p>
               )}
             </div>
@@ -221,14 +218,14 @@ export default function FinalizarConsultaModal({
           <div className="flex flex-col gap-3">
             <input
               type="text"
-              placeholder="Nome do paciente"
+              placeholder={t('finalizarConsulta.diagEndPatientName')}
               value={novoNome}
               onChange={(e) => setNovoNome(e.target.value)}
               className="border border-gray-300 rounded-xl px-3 py-2 text-sm cursor-text focus:outline-none focus:border-[#AAB99F]"
             />
             <input
               type="email"
-              placeholder="Email"
+              placeholder={t('finalizarConsulta.diagEndEmail')}
               value={novoEmail}
               onChange={(e) => setNovoEmail(e.target.value)}
               className="border border-gray-300 rounded-xl px-3 py-2 text-sm cursor-text focus:outline-none focus:border-[#AAB99F]"
@@ -237,7 +234,7 @@ export default function FinalizarConsultaModal({
         )}
 
         <textarea
-          placeholder="Observações (opcional)"
+          placeholder={t('finalizarConsulta.diagEndObservations')}
           value={observacoes}
           onChange={(e) => setObservacoes(e.target.value)}
           className="border border-gray-300 rounded-xl px-3 py-2 text-sm mt-3 w-full resize-none cursor-text focus:outline-none focus:border-[#AAB99F]"
@@ -251,7 +248,7 @@ export default function FinalizarConsultaModal({
           onClick={confirmar}
           className="w-full mt-4 py-2 bg-[#AAB99F] hover:bg-[#9CB39E] disabled:opacity-40 cursor-pointer disabled:cursor-not-allowed rounded-full text-white font-medium transition-colors shadow-sm"
         >
-          {aGuardar ? "A guardar..." : "Guardar Consulta"}
+          {aGuardar ? t('finalizarConsulta.diagEndSaving') : t('finalizarConsulta.diagEndSaveConsultation')}
         </button>
       </div>
     </div>
