@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import "../../styles/diagnostic-data-styles/data-containers-styles.css";
+import { useTranslation } from "react-i18next";
 
 interface DashboardData {
     totalDiagnosticos: number;
@@ -11,6 +12,7 @@ export default function CountersComponent() {
     const [data, setData] = useState<DashboardData | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const { t } = useTranslation();
 
     useEffect(() => {
         const fetchDashboard = async () => {
@@ -34,7 +36,7 @@ export default function CountersComponent() {
         <>
             <div className="data-wrapper">
                 <div className="data-container">
-                    <h2>Quantidade de Diagnósticos:</h2>
+                    <h2>{t('diagnostics.diagnosticsCount')}</h2>
                     <p>
                         {loading
                             ? "A carregar..."
@@ -44,7 +46,7 @@ export default function CountersComponent() {
                     </p>
                 </div>
                 <div className="data-container">
-                    <h2>Quantidade de utilizadores</h2>
+                    <h2>{t('diagnostics.usersCount')}</h2>
                     <p>
                         {loading
                             ? "A carregar..."
