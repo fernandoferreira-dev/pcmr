@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useApp } from "../context/AppContext";
 import "../assets/styles/index.css";
 import { NovaMensagemModal } from "../components";
 
@@ -15,6 +16,7 @@ type Mensagem = {
 type Vista = "recebidas" | "enviadas";
 
 function MensagensPage({ userId }: { userId: number }) {
+    const { idioma, t } = useApp();
     const [vista, setVista] = useState<Vista>("recebidas");
     const [mensagens, setMensagens] = useState<Mensagem[]>([]);
     const [carregando, setCarregando] = useState(true);
@@ -23,171 +25,226 @@ function MensagensPage({ userId }: { userId: number }) {
     const [mostrarNovaMensagem, setMostrarNovaMensagem] = useState(false);
 
     useEffect(() => {
-        let cancelado = false;
-        setCarregando(true);
+        const controller = new AbortController();
 
-        (async () => {
+        async function carregarMensagens() {
+            setCarregando(true);
+            setErro(null);
+
             try {
                 const endpoint = vista === "recebidas" ? "recebidas" : "enviadas";
-                const res = await fetch(`/api/mensagens/${endpoint}?userId=${userId}`);
-                if (!res.ok) {
-                    if (cancelado) return;
-                    setErro("Não foi possível carregar as mensagens.");
-                    setCarregando(false);
-                    return;
-                }
-                const data = await res.json();
-                if (cancelado) return;
-                // eslint-disable-next-line react-hooks/set-state-in-effect
-                setMensagens(data);
-                setErro(null);
-            } catch {
-                if (cancelado) return;
-                // eslint-disable-next-line react-hooks/set-state-in-effect
-                setErro("Não foi possível carregar as mensagens.");
-            } finally {
-                if (!cancelado) setCarregando(false);
-            }
-        })();
+                const res = await fetch(`/api/mensagens/${endpoint}?userId=${userId}`, {
+                    signal: controller.signal,
+                });
 
-        return () => {
-            cancelado = true;
-        };
-    }, [vista, userId]);
+                if (!res.ok) throw new Error();
+
+                const data = await res.json();
+                setMensagens(data);
+            } catch (err: unknown) {
+                if (err instanceof Error && err.name !== "AbortError") {
+                    setErro(t("Não foi possível carregar as mensagens.", "Unable to load messages."));
+                }
+            } finally {
+                if (!controller.signal.aborted) {
+                    setCarregando(false);
+                }
+            }
+        }
+
+        carregarMensagens();
+        return () => controller.abort();
+    }, [vista, userId, t]);
 
     const abrir = async (m: Mensagem) => {
-        setExpandida((atual) => (atual === m.idMensagem ? null : m.idMensagem));
+        const novoEstadoExpandida = expandida === m.idMensagem ? null : m.idMensagem;
+        setExpandida(novoEstadoExpandida);
+
         if (vista === "recebidas" && !m.lida) {
             try {
                 await fetch(`/api/mensagens/${m.idMensagem}/lida?userId=${userId}`, { method: "PATCH" });
-                setMensagens((prev) => prev.map((x) => (x.idMensagem === m.idMensagem ? { ...x, lida: true } : x)));
+                setMensagens((prev) =>
+                    prev.map((x) => (x.idMensagem === m.idMensagem ? { ...x, lida: true } : x))
+                );
             } catch {
-                // falha silenciosa
+                // Falha silenciosa
             }
         }
     };
 
-    const formatarData = (iso: string) =>
-        new Date(iso).toLocaleString("pt-PT", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" });
+    const formatarData = (iso: string) => {
+        const data = new Date(iso);
+        const agora = new Date();
+        const ehHoje = data.toDateString() === agora.toDateString();
+        const locale = idioma === "pt" ? "pt-PT" : "en-US";
+
+        if (ehHoje) {
+            return data.toLocaleTimeString(locale, { hour: "2-digit", minute: "2-digit" });
+        }
+        return data.toLocaleDateString(locale, { day: "2-digit", month: "short" });
+    };
+
+    const obterIniciais = (nome: string) => {
+        if (!nome) return "?";
+        const partes = nome.trim().split(" ");
+        if (partes.length === 1) return partes[0].charAt(0).toUpperCase();
+        return (partes[0].charAt(0) + partes[partes.length - 1].charAt(0)).toUpperCase();
+    };
 
     const naoLidas = mensagens.filter((m) => vista === "recebidas" && !m.lida).length;
 
     return (
-        <div className="min-h-screen bg-background font-sans p-4 pb-24">
-            <header className="mb-6 pt-2">
-                <h1 className="text-2xl font-bold text-text">Mensagens</h1>
-                <p className="text-sm text-muted mt-1">
-                    {vista === "recebidas"
-                        ? naoLidas > 0
-                            ? `Tem ${naoLidas} mensagem${naoLidas > 1 ? "s" : ""} por ler`
-                            : "Está tudo lido"
-                        : "Mensagens que enviou"}
-                </p>
+        <div className="min-h-screen bg-background font-sans px-4 pt-4 pb-28 sm:max-w-md sm:mx-auto select-none touch-manipulation">
+            {/* Cabeçalho */}
+            <header className="mb-4 flex items-center justify-between">
+                <div>
+                    <h1 className="text-2xl font-extrabold tracking-tight text-text">
+                        {t("Mensagens", "Messages")}
+                    </h1>
+                    <p className="text-xs text-muted mt-0.5 font-medium">
+                        {vista === "recebidas"
+                            ? naoLidas > 0
+                                ? t(`Tem ${naoLidas} por ler`, `You have ${naoLidas} unread`)
+                                : t("Caixa de entrada limpa", "Inbox is clear")
+                            : t("Mensagens enviadas", "Sent messages")}
+                    </p>
+                </div>
             </header>
 
-            <div className="flex gap-2 mb-5">
+            {/* Selector de Abas Mobile */}
+            <div className="flex bg-primary/10 p-1 rounded-2xl mb-4 border border-primary-outline/30">
                 <button
                     onClick={() => setVista("recebidas")}
-                    className={`flex-1 px-4 py-2.5 rounded-xl text-sm font-semibold cursor-pointer transition-colors ${
+                    className={`flex-1 py-3 px-3 rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-2 active:scale-98 ${
                         vista === "recebidas"
-                            ? "bg-primary text-background shadow-sm"
-                            : "border border-primary-outline text-muted bg-background hover:bg-primary/5"
+                            ? "bg-background text-text shadow-xs"
+                            : "text-muted hover:text-text"
                     }`}
                 >
-                    Recebidas
-                    {naoLidas > 0 && vista !== "recebidas" && (
-                        <span className="ml-2 inline-flex items-center justify-center w-4 h-4 rounded-full bg-red-500 text-white text-[0.6rem]">
+                    <span>{t("Recebidas", "Inbox")}</span>
+                    {naoLidas > 0 && (
+                        <span className="px-2 py-0.5 text-[11px] font-black rounded-full bg-red-500 text-white">
                             {naoLidas}
                         </span>
                     )}
                 </button>
                 <button
                     onClick={() => setVista("enviadas")}
-                    className={`flex-1 px-4 py-2.5 rounded-xl text-sm font-semibold cursor-pointer transition-colors ${
+                    className={`flex-1 py-3 px-3 rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-2 active:scale-98 ${
                         vista === "enviadas"
-                            ? "bg-primary text-background shadow-sm"
-                            : "border border-primary-outline text-muted bg-background hover:bg-primary/5"
+                            ? "bg-background text-text shadow-xs"
+                            : "text-muted hover:text-text"
                     }`}
                 >
-                    Enviadas
+                    {t("Enviadas", "Sent")}
                 </button>
             </div>
 
+            {/* Erro */}
             {erro && (
-                <div className="bg-red-100 text-red-700 rounded-xl p-4 text-sm font-medium text-center mb-4">
+                <div className="bg-red-500/10 border border-red-500/20 text-red-600 rounded-2xl p-3.5 text-xs font-semibold text-center mb-4">
                     {erro}
                 </div>
             )}
 
+            {/* Skeleton Loading */}
             {carregando && (
-                <div className="flex flex-col gap-3">
-                    {[0, 1, 2].map((i) => (
-                        <div key={i} className="bg-background rounded-2xl border border-primary-outline p-4 shadow-sm animate-pulse">
-                            <div className="h-4 w-28 bg-primary/15 rounded mb-2" />
-                            <div className="h-3 w-full bg-primary/10 rounded" />
+                <div className="flex flex-col gap-2.5">
+                    {[0, 1, 2, 3].map((i) => (
+                        <div key={i} className="bg-background rounded-2xl border border-primary-outline/40 p-3.5 animate-pulse flex gap-3 items-center">
+                            <div className="w-11 h-11 rounded-full bg-primary/10 shrink-0" />
+                            <div className="flex-1 min-w-0">
+                                <div className="h-4 w-28 bg-primary/15 rounded mb-2" />
+                                <div className="h-3 w-40 bg-primary/10 rounded" />
+                            </div>
                         </div>
                     ))}
                 </div>
             )}
 
+            {/* Estado Vazio */}
             {!carregando && !erro && mensagens.length === 0 && (
-                <div className="flex flex-col items-center justify-center text-center py-16 gap-3">
-                    <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center text-primary">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                            <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.8 11.6 19.79 19.79 0 0 1 1.72 3 2 2 0 0 1 3.7 1h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L7.91 8.7a16 16 0 0 0 6 6l1.06-1.06a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 15.92z" />
+                <div className="flex flex-col items-center justify-center text-center py-12 px-4 bg-background rounded-3xl border border-dashed border-primary-outline/60 my-4">
+                    <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary mb-3">
+                        <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                         </svg>
                     </div>
-                    <p className="text-muted text-sm">
-                        {vista === "recebidas" ? "Sem mensagens recebidas." : "Ainda não enviou nenhuma mensagem."}
+                    <p className="text-sm font-semibold text-text">
+                        {t("Sem mensagens", "No messages")}
+                    </p>
+                    <p className="text-xs text-muted mt-1">
+                        {vista === "recebidas"
+                            ? t("Não tem mensagens por ler.", "You have no unread messages.")
+                            : t("Ainda não enviou mensagens.", "You haven't sent any messages yet.")}
                     </p>
                 </div>
             )}
 
-            <div className="flex flex-col gap-3">
+            {/* Lista de Mensagens */}
+            <div className="flex flex-col gap-2.5">
                 {mensagens.map((m) => {
                     const nome = vista === "recebidas" ? m.nomeRemetente : m.nomeDestinatario;
                     const naoLida = vista === "recebidas" && !m.lida;
+                    const estaExpandida = expandida === m.idMensagem;
+
                     return (
                         <article
                             key={m.idMensagem}
                             onClick={() => abrir(m)}
-                            className={`rounded-2xl p-4 cursor-pointer bg-background shadow-sm hover:shadow-md transition-shadow border ${
-                                naoLida ? "border-primary" : "border-primary-outline"
+                            className={`rounded-2xl p-3.5 transition-all active:scale-[0.99] border cursor-pointer ${
+                                naoLida
+                                    ? "bg-primary/5 border-primary/40 shadow-2xs"
+                                    : "bg-background border-primary-outline/40"
                             }`}
                         >
-                            <div className="flex justify-between items-start gap-2">
-                                <div className="flex items-center gap-2 min-w-0">
-                                    {naoLida && <span className="w-2 h-2 rounded-full bg-red-500 shrink-0" />}
-                                    <span className={`truncate ${naoLida ? "font-bold text-text" : "font-semibold text-text"}`}>
-                                        {nome}
-                                    </span>
+                            <div className="flex items-start gap-3">
+                                <div className={`w-11 h-11 rounded-full flex items-center justify-center text-xs font-black shrink-0 ${
+                                    naoLida ? "bg-primary text-background" : "bg-primary/10 text-primary"
+                                }`}>
+                                    {obterIniciais(nome)}
                                 </div>
-                                <span className="text-xs text-muted shrink-0">{formatarData(m.dataEnvio)}</span>
+
+                                <div className="flex-1 min-w-0 pt-0.5">
+                                    <div className="flex justify-between items-baseline gap-2">
+                                        <div className="flex items-center gap-1.5 min-w-0">
+                                            {naoLida && <span className="w-2 h-2 rounded-full bg-red-500 shrink-0" />}
+                                            <span className={`truncate text-sm ${naoLida ? "font-black text-text" : "font-bold text-text"}`}>
+                                                {nome}
+                                            </span>
+                                        </div>
+                                        <span className="text-[11px] font-medium text-muted shrink-0">
+                                            {formatarData(m.dataEnvio)}
+                                        </span>
+                                    </div>
+
+                                    <p className={`text-xs mt-1 truncate ${naoLida ? "text-text font-semibold" : "text-muted"}`}>
+                                        {m.assunto}
+                                    </p>
+
+                                    {estaExpandida && (
+                                        <div className="mt-3 text-xs text-text whitespace-pre-wrap border-t border-primary-outline/30 pt-3 leading-relaxed animate-fadeIn select-text">
+                                            {m.corpo || <span className="italic text-muted">{t("Sem conteúdo adicional.", "No additional content.")}</span>}
+                                        </div>
+                                    )}
+                                </div>
                             </div>
-
-                            <p className={`text-sm mt-1.5 truncate ${naoLida ? "text-text font-medium" : "text-muted"}`}>
-                                {m.assunto}
-                            </p>
-
-                            {expandida === m.idMensagem && (
-                                <p className="mt-3 text-sm text-text whitespace-pre-wrap border-t border-primary-outline pt-3">
-                                    {m.corpo || "Sem conteúdo."}
-                                </p>
-                            )}
                         </article>
                     );
                 })}
             </div>
 
+            {/* FAB (Floating Action Button) */}
             <button
                 onClick={() => setMostrarNovaMensagem(true)}
-                className="fixed bottom-24 right-4 w-14 h-14 rounded-full bg-primary shadow-lg flex items-center justify-center hover:opacity-90 active:scale-95 transition-all cursor-pointer"
-                title="Nova mensagem"
+                className="fixed bottom-[calc(5rem+env(safe-area-inset-bottom))] right-4 h-14 px-5 rounded-full bg-primary text-background font-bold shadow-xl active:scale-95 transition-all flex items-center gap-2 z-30 cursor-pointer"
+                aria-label={t("Nova mensagem", "New message")}
             >
-                <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="m22 2-7 20-4-9-9-4Z" />
-                    <path d="M22 2 11 13" />
+                <svg className="w-6 h-6 stroke-current" fill="none" viewBox="0 0 24 24" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <line x1="12" y1="5" x2="12" y2="19" />
+                    <line x1="5" y1="12" x2="19" y2="12" />
                 </svg>
+                <span className="text-sm">{t("Nova", "New")}</span>
             </button>
 
             {mostrarNovaMensagem && (
