@@ -22,8 +22,9 @@ import comunicaicon from './assets/imagens/phone.png'
 import dadosequi from './assets/imagens/server.png'
 import cruzverde from './assets/imagens/Untitled design (1).png'
 import datapessoal from './assets/imagens/personal-information.png'
-import sair from './assets/imagens/exit (1).png'
+import conf from './assets/imagens/setting.png'
 import logo from './assets/imagens/logosemback (1).png'
+import ConfPop from './confpop'   // ← Novo import
 
 type View = 'home' | 'dados_diagnostico' | 'comunicacao' | 'dados_equipamentos' | 'dados_pessoais'
 
@@ -170,6 +171,7 @@ const OverviewDashboard = ({ userId, onAbrirConsulta, onAbrirComunicacao }: Over
 
   return (
     <div className="flex flex-col gap-4 w-full h-full p-6 bg-[#EBEBEB] rounded-4xl shadow-inner overflow-y-auto">
+      {/*OverviewDashboard*/}
       <div className="text-xs text-gray-500 font-bold tracking-wider shrink-0">
         DIA | SEMANA | MÊS
       </div>
@@ -208,6 +210,7 @@ const OverviewDashboard = ({ userId, onAbrirConsulta, onAbrirComunicacao }: Over
         </div>
       </div>
 
+      {/* Gráfico e resto do dashboard (mantido igual) */}
       <div className="flex flex-col flex-1 min-h-37.5 bg-white rounded-xl border border-gray-300 p-4 shadow-sm">
         <div className="text-sm font-semibold text-gray-500 mb-2">Diagnósticos Totais (por mês)</div>
         {erroStats && <div className="flex-1 flex items-center justify-center text-sm text-red-500">{erroStats}</div>}
@@ -232,9 +235,10 @@ const OverviewDashboard = ({ userId, onAbrirConsulta, onAbrirComunicacao }: Over
       </div>
 
       <div className="flex flex-col sm:flex-row gap-4 shrink-0 h-auto sm:h-48">
+        {/* Notificações e Consulta Rápida*/}
         <div className="flex-1 bg-white rounded-xl border border-gray-300 p-4 shadow-sm flex flex-col">
           <div className="text-sm font-bold text-gray-600 mb-2">Notificações</div>
-
+          {/* Código de notificações */}
           {erroNotificacoes && (
             <div className="flex-1 flex items-center justify-center text-xs text-red-500">
               {erroNotificacoes}
@@ -296,6 +300,7 @@ export default function App({ userName, userId, tipo, onLogout }: PaginaInicialP
   const [modalAberto, setModalAberto] = useState(false)
   const [statsRefreshKey, setStatsRefreshKey] = useState(0)
   const [mensagemParaAbrir, setMensagemParaAbrir] = useState<number | null>(null)
+  const [confOpen, setConfOpen] = useState(false)
 
   const tipoNormalizado = (tipo || '')
     .normalize("NFD")
@@ -352,7 +357,6 @@ export default function App({ userName, userId, tipo, onLogout }: PaginaInicialP
 
         {/* Barra Lateral */}
         <aside className="w-72 h-full bg-[#AAB99F] rounded-4xl p-6 shadow-md flex flex-col">
-          
           {/*LOGO*/}
           <div className="flex flex-col items-center justify-center gap-3 mb-8 mt-4">
             <img 
@@ -384,6 +388,7 @@ export default function App({ userName, userId, tipo, onLogout }: PaginaInicialP
             <h1 className="text-3xl font-bold text-gray-700">{viewTitles[view]}</h1>
 
             <div className="flex items-center gap-4">
+              {/* Biometria */}
               {(bioStatus === 'idle' || bioStatus === 'sucesso' || bioStatus === 'erro') && (
                 <button
                   onClick={() => iniciarRegisto(userId)}
@@ -410,16 +415,22 @@ export default function App({ userName, userId, tipo, onLogout }: PaginaInicialP
                 </div>
               )}
 
-              <button onClick={onLogout} className="flex items-center gap-3 hover:opacity-80 transition-opacity cursor-pointer" title="Clique para fazer Logout">
-                <span className="text-xl text-gray-800 font-medium">Bem-vindo, {userName}! ({tipo})</span>
-                <div className="w-10 h-10 bg-gray-500 rounded-full flex items-center justify-center text-white shadow-sm">
-                  <img 
-                    src={sair} 
-                    alt="Ícone de Sair" 
-                    className="w-5 h-5 object-contain inverted-color-if-needed" 
-                  />
-                </div>
+              {/* Botão de Configurações*/}
+              <button
+                onClick={() => setConfOpen(true)}
+                className="w-11 h-11 flex items-center justify-center hover:bg-gray-100 rounded-2xl transition-colors cursor-pointer"
+                title="Configurações"
+              >
+                <img
+                  src={conf}
+                  alt="Configurações"
+                  className="w-8 h-8 object-contain"
+                />
               </button>
+
+              <span className="text-xl text-gray-800 font-medium pl-2">
+                Bem-vindo, {userName}! ({tipo})
+              </span>
             </div>
           </header>
 
@@ -433,6 +444,7 @@ export default function App({ userName, userId, tipo, onLogout }: PaginaInicialP
         © 2026 Diogo Rocha - Fernando Ferreira - Jaime Quaresma - João Santos
       </footer>
 
+      {/* Modais */}
       {modalAberto && (
         <DiagnosticoRapidoModal
           onClose={() => {
@@ -442,6 +454,12 @@ export default function App({ userName, userId, tipo, onLogout }: PaginaInicialP
           idMedico={userId}
         />
       )}
+
+      <ConfPop
+        isOpen={confOpen}
+        onClose={() => setConfOpen(false)}
+        onLogout={onLogout}
+      />
     </div>
   )
 }
