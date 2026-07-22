@@ -42,7 +42,8 @@ function AppContent() {
       }
     }
 
-    fetch(`http://localhost:8080/api/users/${userId}`)
+    //fetch(`http://localhost:8080/api/users/${userId}`)
+    fetch(`/api/users/${userId}`)
       .then(async (response) => {
         if (!response.ok) {
           throw new Error("Unable to load user profile");

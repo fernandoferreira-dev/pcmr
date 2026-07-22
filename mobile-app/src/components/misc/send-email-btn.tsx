@@ -5,7 +5,7 @@ import SendIcon from "../../assets/send-icon.png"
 import EmailIcon from "../../assets/email-icon.png"
 import { useTranslation } from "react-i18next";
 
-const API_URL = "http://localhost:8080";
+//const API_URL = "http://localhost:8080";
 
 interface UtilizadorResumo {
   idUtilizador: number;
@@ -40,8 +40,11 @@ export default function SendEmailButtonComponent({ idRemetente }: { idRemetente:
       return;
     }
     try {
-      const res = await fetch(
+      /*const res = await fetch(
         `${API_URL}/api/mensagens/utilizadores/procurar?nome=${encodeURIComponent(nome)}&excluirId=${idRemetente}`
+      );*/
+      const res = await fetch(
+        `/api/mensagens/utilizadores/procurar?nome=${encodeURIComponent(nome)}&excluirId=${idRemetente}`
       );
       if (!res.ok) return;
       const data: UtilizadorResumo[] = await res.json();
@@ -84,7 +87,7 @@ export default function SendEmailButtonComponent({ idRemetente }: { idRemetente:
     };
 
     try {
-      const res = await fetch(`${API_URL}/api/mensagens`, {
+      const res = await fetch(`/api/mensagens`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(emailData),

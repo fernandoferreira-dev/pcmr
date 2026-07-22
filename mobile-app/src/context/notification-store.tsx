@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 
-const API_URL = 'http://localhost:8080';
+//const API_URL = 'http://localhost:8080';
 const POLL_INTERVAL_MS = 4000;
 
 export interface NotificationItem {
@@ -81,9 +81,11 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
 
   fetchHistory: async (userId) => {
     try {
-      const pedidos: Promise<Response>[] = [fetch(`${API_URL}/api/alertas/recentes?limite=10`)];
+      //const pedidos: Promise<Response>[] = [fetch(`${API_URL}/api/alertas/recentes?limite=10`)];
+      const pedidos: Promise<Response>[] = [fetch(`/api/alertas/recentes?limite=10`)];
       if (userId) {
-        pedidos.push(fetch(`${API_URL}/api/mensagens/recebidas?userId=${userId}`));
+        //pedidos.push(fetch(`${API_URL}/api/mensagens/recebidas?userId=${userId}`));
+        pedidos.push(fetch(`/api/mensagens/recebidas?userId=${userId}`));
       }
 
       const respostas = await Promise.all(pedidos);
@@ -109,7 +111,8 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
 
     const verificar = async () => {
       try {
-        const res = await fetch(`${API_URL}/api/alertas/recentes?limite=1`);
+        //const res = await fetch(`${API_URL}/api/alertas/recentes?limite=1`);
+        const res = await fetch(`/api/alertas/recentes?limite=1`);
         if (!res.ok) return;
         const data: AlertaResumo[] = await res.json();
         if (data.length === 0) return;

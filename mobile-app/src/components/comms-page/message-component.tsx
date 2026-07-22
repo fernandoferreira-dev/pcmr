@@ -8,7 +8,6 @@ import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "../../context/auth-context";
 import { useTranslation } from "react-i18next";
 
-const API_URL = "http://localhost:8080";
 
 type FiltroOpcao = "env" | "rec" | "all" | "saved";
 
@@ -49,7 +48,8 @@ export default function MessageComponent() {
 
             //filtra mensagens enviadas
             if (selectedOption === "env") {
-                const res = await fetch(`${API_URL}/api/mensagens/enviadas?${params}`);
+                //const res = await fetch(`${API_URL}/api/mensagens/enviadas?${params}`);
+                const res = await fetch(`/api/mensagens/enviadas?${params}`);
                 if (!res.ok) {
                     throw new Error("Erro ao carregar mensagens enviadas");
                 }
@@ -57,7 +57,8 @@ export default function MessageComponent() {
 
                 //filtra mensagens recebidas
             } else if (selectedOption === "rec") {
-                const res = await fetch(`${API_URL}/api/mensagens/recebidas?${params}`);
+                //const res = await fetch(`${API_URL}/api/mensagens/recebidas?${params}`);
+                const res = await fetch(`/api/mensagens/recebidas?${params}`);
                 if (!res.ok) {
                     throw new Error("Erro ao carregar mensagens recebidas");
                 }
@@ -67,8 +68,10 @@ export default function MessageComponent() {
             //filtra todas de uma maneira muito porca lol
             else if (selectedOption === "all") {
                 const [resEnv, resRec] = await Promise.all([
-                    fetch(`${API_URL}/api/mensagens/enviadas?${params}`),
-                    fetch(`${API_URL}/api/mensagens/recebidas?${params}`),
+                    //fetch(`${API_URL}/api/mensagens/enviadas?${params}`),
+                    //fetch(`${API_URL}/api/mensagens/recebidas?${params}`),
+                    fetch(`/api/mensagens/enviadas?${params}`),
+                    fetch(`/api/mensagens/recebidas?${params}`),
                 ]);
                 if (!resEnv.ok || !resRec.ok) {
                     throw new Error("Erro ao carregar mensagens");
@@ -87,8 +90,10 @@ export default function MessageComponent() {
             //filtra mensagens guardadas (enviadas + recebidas, apenas as marcadas como guardada)
             else if (selectedOption === "saved") {
                 const [resEnv, resRec] = await Promise.all([
-                    fetch(`${API_URL}/api/mensagens/enviadas?${params}`),
-                    fetch(`${API_URL}/api/mensagens/recebidas?${params}`),
+                    //fetch(`${API_URL}/api/mensagens/enviadas?${params}`),
+                    //fetch(`${API_URL}/api/mensagens/recebidas?${params}`),
+                    fetch(`/api/mensagens/enviadas?${params}`),
+                    fetch(`/api/mensagens/recebidas?${params}`),
                 ]);
                 if (!resEnv.ok || !resRec.ok) {
                     throw new Error("Erro ao carregar mensagens guardadas");
@@ -119,7 +124,8 @@ export default function MessageComponent() {
 
     const marcarComoLida = async (id: number) => {
         try {
-            const res = await fetch(`${API_URL}/api/mensagens/${id}/lida?userId=${userId}`, {
+            //const res = await fetch(`${API_URL}/api/mensagens/${id}/lida?userId=${userId}`, {
+            const res = await fetch(`/api/mensagens/${id}/lida?userId=${userId}`, {
                 method: "PATCH",
             });
             if (!res.ok) throw new Error("Erro ao marcar como lida");

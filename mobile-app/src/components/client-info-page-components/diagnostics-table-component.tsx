@@ -18,7 +18,6 @@ type DiagnosticoResponseDTO = {
     relacaoCausaEfeito: string;
 };
 
-const API_BASE_URL = "http://localhost:8080";
 
 const EXPORT_BASE_URL = `${window.location.origin}${import.meta.env.BASE_URL}export`.replace(/([^:])\/{2,}/g, "$1/");
 
@@ -40,7 +39,8 @@ export default function DiagnosticsTableComponent() {
     const loadDiagnostics = () => {
         setLoading(true);
 
-        fetch(`${API_BASE_URL}/api/diagnosticos`)
+        //fetch(`${API_BASE_URL}/api/diagnosticos`)
+        fetch(`/api/diagnosticos`)
             .then(async (response) => {
                 if (!response.ok) {
                     throw new Error("Unable to load diagnostics");

@@ -46,7 +46,7 @@ type PontoGraficoExport = {
 };
 
 // TODO: replace with your real deployed backend URL (not localhost)
-const API_BASE_URL = "http://localhost:8080";
+//const API_BASE_URL = "http://localhost:8080";
 
 type ExportStatus = "loading" | "generating" | "done" | "error";
 
@@ -88,8 +88,10 @@ export default function DiagnosticExportPage() {
                 // (only the list endpoint and /{id}/historico), so fetch the
                 // full list and pick out the matching id.
                 const [listaResponse, historicoResponse] = await Promise.all([
-                    fetch(`${API_BASE_URL}/api/diagnosticos`),
-                    fetch(`${API_BASE_URL}/api/diagnosticos/${id}/historico`),
+                    //fetch(`${API_BASE_URL}/api/diagnosticos`),
+                    //fetch(`${API_BASE_URL}/api/diagnosticos/${id}/historico`),
+                    fetch(`/api/diagnosticos`),
+                    fetch(`/api/diagnosticos/${id}/historico`),
                 ]);
 
                 if (!listaResponse.ok || !historicoResponse.ok) {

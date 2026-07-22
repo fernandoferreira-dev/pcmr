@@ -17,7 +17,8 @@ export default function CountersComponent() {
     useEffect(() => {
         const fetchDashboard = async () => {
             try {
-                const response = await fetch(`http://localhost:8080/api/diagnosticos/dashboard`);
+                //const response = await fetch(`http://localhost:8080/api/diagnosticos/dashboard`);
+                const response = await fetch(`/api/diagnosticos/dashboard`);
                 if (!response.ok) {
                     throw new Error(`Request failed with status ${response.status}`);
                 }
