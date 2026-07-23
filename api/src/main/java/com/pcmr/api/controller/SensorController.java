@@ -1,11 +1,16 @@
 package com.pcmr.api.controller;
+
+import com.pcmr.api.dto.ConfiguracaoSistemaDTO;
+import com.pcmr.api.dto.EstadoAlertaDTO;
 import com.pcmr.api.dto.EstadoSensorDTO;
+import com.pcmr.api.dto.LeituraComEstadoDTO;
 import com.pcmr.api.dto.NovoSensorRequestDTO;
 import com.pcmr.api.dto.RenomearSensorRequestDTO;
 import com.pcmr.api.dto.SensorDTO;
 import com.pcmr.api.model.Sensor;
 import com.pcmr.api.repository.SensorRepository;
 import com.pcmr.api.service.AtividadeSensorService;
+import com.pcmr.api.service.ConfiguracaoService;
 import com.pcmr.api.service.LeituraSensorService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -31,6 +36,9 @@ public class SensorController {
 
     @Autowired
     private SensorRepository sensorRepository;
+
+    @Autowired
+    private ConfiguracaoService configuracaoService;
 
     private static final long LIMITE_ONLINE_SEGUNDOS = 10;
     private static final Set<String> TIPOS_VALIDOS = Set.of("WEARABLE", "PRESENCA", "BIOMETRICO", "GENERICO");
@@ -120,9 +128,6 @@ public class SensorController {
         return ResponseEntity.ok(dtos);
     }
 
-    /**
-     * ENDPOINT CRÍTICO - Última leitura do sensor (usado pelo frontend)
-     */
     @GetMapping("/{deviceId}/ultima-leitura")
     public ResponseEntity<?> ultimaLeitura(@PathVariable String deviceId) {
         LeituraSensorService.LeituraAtual leitura = leituraSensorService.getUltimaLeitura(deviceId);
@@ -133,7 +138,59 @@ public class SensorController {
             ));
         }
 
-        return ResponseEntity.ok(leitura);
+        LeituraComEstadoDTO dto = new LeituraComEstadoDTO(leitura);
+
+        ConfiguracaoSistemaDTO config = configuracaoService.obterAtualPorNome(deviceId);
+        if (config != null) {
+            dto.setAlertaTemperatura(avaliarTemperatura(leitura.getTemperatura(), config));
+            dto.setAlertaBpm(avaliarBpm(leitura.getBpm(), config));
+        }
+
+        return ResponseEntity.ok(dto);
+    }
+
+    private EstadoAlertaDTO avaliarTemperatura(double temperatura, ConfiguracaoSistemaDTO config) {
+        if (temperatura > config.getTemperaturaMaxAlerta()) {
+            return new EstadoAlertaDTO(
+                    "ALTA",
+                    String.format("Temperatura de %.1f°C excede o limite de %.1f°C",
+                            temperatura, config.getTemperaturaMaxAlerta()),
+                    config.getTemperaturaMinAlerta(), config.getTemperaturaMaxAlerta()
+            );
+        }
+        if (temperatura < config.getTemperaturaMinAlerta()) {
+            return new EstadoAlertaDTO(
+                    "BAIXA",
+                    String.format("Temperatura de %.1f°C está abaixo do mínimo de %.1f°C",
+                            temperatura, config.getTemperaturaMinAlerta()),
+                    config.getTemperaturaMinAlerta(), config.getTemperaturaMaxAlerta()
+            );
+        }
+        return new EstadoAlertaDTO("NORMAL", null, config.getTemperaturaMinAlerta(), config.getTemperaturaMaxAlerta());
+    }
+
+    private EstadoAlertaDTO avaliarBpm(int bpm, ConfiguracaoSistemaDTO config) {
+        if (bpm <= 0) {
+            // Sem leitura válida de bpm ainda — não é estado de alerta
+            return new EstadoAlertaDTO("NORMAL", null, config.getBpmMinAlerta(), config.getBpmMaxAlerta());
+        }
+        if (bpm > config.getBpmMaxAlerta()) {
+            return new EstadoAlertaDTO(
+                    "ALTO",
+                    String.format("Frequência de %d bpm excede o limite máximo de %d bpm",
+                            bpm, config.getBpmMaxAlerta()),
+                    config.getBpmMinAlerta(), config.getBpmMaxAlerta()
+            );
+        }
+        if (bpm < config.getBpmMinAlerta()) {
+            return new EstadoAlertaDTO(
+                    "BAIXO",
+                    String.format("Frequência de %d bpm está abaixo do mínimo de %d bpm",
+                            bpm, config.getBpmMinAlerta()),
+                    config.getBpmMinAlerta(), config.getBpmMaxAlerta()
+            );
+        }
+        return new EstadoAlertaDTO("NORMAL", null, config.getBpmMinAlerta(), config.getBpmMaxAlerta());
     }
 
     @GetMapping("/{deviceId}/ping")

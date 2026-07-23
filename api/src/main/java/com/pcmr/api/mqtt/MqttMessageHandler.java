@@ -2,12 +2,14 @@ package com.pcmr.api.mqtt;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.pcmr.api.dto.ConfiguracaoSistemaDTO;
 import com.pcmr.api.dto.SensorReadingDTO;
 import com.pcmr.api.model.Notification;
 import com.pcmr.api.service.AlertaMonitorService;
 import com.pcmr.api.service.AlertaQuedaBuzzerService;
 import com.pcmr.api.service.AtividadeSensorService;
 import com.pcmr.api.service.BiometriaService;
+import com.pcmr.api.service.ConfiguracaoService;
 import com.pcmr.api.service.LeituraSensorService;
 import com.pcmr.api.service.NotificationService;
 import com.pcmr.api.service.PresencaService;
@@ -27,22 +29,12 @@ public class MqttMessageHandler {
     private final MqttSecurityService mqttSecurityService;
     private final AlertaQuedaBuzzerService alertaQuedaBuzzerService;
     private final NotificationService notificationService;
+    private final ConfiguracaoService configuracaoService;
 
     private static final String DEVICE_ID_NODE1 = "node1-presenca";
     private static final String DEVICE_ID_NODE3 = "esp32-pico-fingerprint";
 
     private final ObjectMapper objectMapper = new ObjectMapper();
-
-    // Limites usados pela avaliação local de notificações
-    private static final int BPM_WARNING_MIN = 50;
-    private static final int BPM_WARNING_MAX = 110;
-    private static final int BPM_CRITICAL_MIN = 40;
-    private static final int BPM_CRITICAL_MAX = 130;
-
-    private static final double TEMP_WARNING_MIN = 35.5;
-    private static final double TEMP_WARNING_MAX = 38.0;
-    private static final double TEMP_CRITICAL_MIN = 34.5;
-    private static final double TEMP_CRITICAL_MAX = 39.5;
 
     @Autowired
     public MqttMessageHandler(LeituraSensorService leituraSensorService,
@@ -52,7 +44,8 @@ public class MqttMessageHandler {
                               AlertaMonitorService alertaMonitorService,
                               MqttSecurityService mqttSecurityService,
                               AlertaQuedaBuzzerService alertaQuedaBuzzerService,
-                              NotificationService notificationService) {
+                              NotificationService notificationService,
+                              ConfiguracaoService configuracaoService) {
         this.leituraSensorService = leituraSensorService;
         this.biometriaService = biometriaService;
         this.presencaService = presencaService;
@@ -61,6 +54,7 @@ public class MqttMessageHandler {
         this.mqttSecurityService = mqttSecurityService;
         this.alertaQuedaBuzzerService = alertaQuedaBuzzerService;
         this.notificationService = notificationService;
+        this.configuracaoService = configuracaoService;
     }
 
     @ServiceActivator(inputChannel = "mqttInputChannel")
@@ -77,7 +71,7 @@ public class MqttMessageHandler {
             String deviceId = extrairDeviceId(topic);
             if (deviceId != null) {
                 System.out.println("⚠️ [MQTT STATUS] O dispositivo '" + deviceId + "' reportou estado: " + payloadBruto);
-                
+
                 atividadeSensorService.registarAtividade(deviceId);
 
                 if ("OFFLINE".equalsIgnoreCase(payloadBruto)) {
@@ -97,7 +91,7 @@ public class MqttMessageHandler {
                     "Erro ao decifrar/validar mensagem MQTT no tópico '"
                             + topic + "': " + e.getMessage()
             );
-            return; 
+            return;
         }
 
         try {
@@ -213,7 +207,6 @@ public class MqttMessageHandler {
         return partes.length >= 2 ? partes[1] : null;
     }
 
-    // Gera notificações in-app com base em limites de bpm/temperatura
     private void avaliarLeitura(String deviceId, SensorReadingDTO leitura) {
         int bpm = leitura.getBpm();
         double temperatura = leitura.getTemperatura();
@@ -227,19 +220,19 @@ public class MqttMessageHandler {
             );
         }
 
+        ConfiguracaoSistemaDTO config = configuracaoService.obterAtualPorNome(deviceId);
+        if (config == null) {
+            // Sensor sem configuração aplicável (ex: PRESENCA, BIOMETRICO, ou não registado) — nada a avaliar
+            return;
+        }
+
         // Frequência cardíaca (bpm)
         if (bpm > 0) {
-            if (bpm < BPM_CRITICAL_MIN || bpm > BPM_CRITICAL_MAX) {
+            if (bpm > config.getBpmMaxAlerta() || bpm < config.getBpmMinAlerta()) {
                 notificationService.criarNotificacao(
-                        "Frequência cardíaca crítica",
-                        String.format("O sensor '%s' registou %d bpm, fora do intervalo seguro (%d-%d bpm).", deviceId, bpm, BPM_CRITICAL_MIN, BPM_CRITICAL_MAX),
-                        deviceId,
-                        Notification.Severidade.CRITICAL
-                );
-            } else if (bpm < BPM_WARNING_MIN || bpm > BPM_WARNING_MAX) {
-                notificationService.criarNotificacao(
-                        "Frequência cardíaca anómala",
-                        String.format("O sensor '%s' registou %d bpm, fora do intervalo normal (%d-%d bpm).", deviceId, bpm, BPM_WARNING_MIN, BPM_WARNING_MAX),
+                        "Frequência cardíaca fora do limite",
+                        String.format("O sensor '%s' registou %d bpm, fora do intervalo configurado (%d-%d bpm).",
+                                deviceId, bpm, config.getBpmMinAlerta(), config.getBpmMaxAlerta()),
                         deviceId,
                         Notification.Severidade.WARNING
                 );
@@ -248,17 +241,11 @@ public class MqttMessageHandler {
 
         // Temperatura corporal
         if (temperatura > 0) {
-            if (temperatura < TEMP_CRITICAL_MIN || temperatura > TEMP_CRITICAL_MAX) {
+            if (temperatura > config.getTemperaturaMaxAlerta() || temperatura < config.getTemperaturaMinAlerta()) {
                 notificationService.criarNotificacao(
-                        "Temperatura corporal crítica",
-                        String.format("O sensor '%s' registou %.1f°C, fora do intervalo seguro (%.1f-%.1f°C).", deviceId, temperatura, TEMP_CRITICAL_MIN, TEMP_CRITICAL_MAX),
-                        deviceId,
-                        Notification.Severidade.CRITICAL
-                );
-            } else if (temperatura < TEMP_WARNING_MIN || temperatura > TEMP_WARNING_MAX) {
-                notificationService.criarNotificacao(
-                        "Temperatura corporal anómala",
-                        String.format("O sensor '%s' registou %.1f°C, fora do intervalo normal (%.1f-%.1f°C).", deviceId, temperatura, TEMP_WARNING_MIN, TEMP_WARNING_MAX),
+                        "Temperatura corporal fora do limite",
+                        String.format("O sensor '%s' registou %.1f°C, fora do intervalo configurado (%.1f-%.1f°C).",
+                                deviceId, temperatura, config.getTemperaturaMinAlerta(), config.getTemperaturaMaxAlerta()),
                         deviceId,
                         Notification.Severidade.WARNING
                 );
