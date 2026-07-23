@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import "../../styles/diagnostic-data-styles/data-table-styles.css";
+import "../../styles/diagnostic-data-styles/diagnostic-modal-styles.css";
 import { useTranslation } from "react-i18next";
 
 type Diagnostic = {
@@ -18,16 +19,35 @@ type DiagnosticoResponseDTO = {
     relacaoCausaEfeito: string;
 };
 
+type PontoHistorico = {
+    gdhLeitura: string;
+    temperatura: number;
+    bpm: number;
+    magnitudeG: number;
+};
 
-const EXPORT_BASE_URL = `${window.location.origin}${import.meta.env.BASE_URL}export`.replace(/([^:])\/{2,}/g, "$1/");
+type SensorStat = {
+    min: number;
+    max: number;
+    avg: number;
+};
 
-// Lets AppInventor's injected object be referenced without a TS error
-declare global {
-    interface Window {
-        AppInventor?: {
-            setWebViewString: (value: string) => void;
-        };
+type DiagnosticStats = {
+    temperatura: SensorStat;
+    bpm: SensorStat;
+    magnitudeG: SensorStat;
+};
+
+function calcularStats(valores: number[]): SensorStat {
+    if (!valores.length) {
+        return { min: 0, max: 0, avg: 0 };
     }
+
+    const min = Math.min(...valores);
+    const max = Math.max(...valores);
+    const avg = valores.reduce((soma, valor) => soma + valor, 0) / valores.length;
+
+    return { min, max, avg };
 }
 
 export default function DiagnosticsTableComponent() {
@@ -35,11 +55,18 @@ export default function DiagnosticsTableComponent() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [search, setSearch] = useState("");
-    const {t} = useTranslation()
+    const { t } = useTranslation();
+
+    // Modal state
+    const [modalOpen, setModalOpen] = useState(false);
+    const [modalLoading, setModalLoading] = useState(false);
+    const [modalError, setModalError] = useState<string | null>(null);
+    const [selectedDiagnostic, setSelectedDiagnostic] = useState<Diagnostic | null>(null);
+    const [stats, setStats] = useState<DiagnosticStats | null>(null);
+
     const loadDiagnostics = () => {
         setLoading(true);
 
-        //fetch(`${API_BASE_URL}/api/diagnosticos`)
         fetch(`/api/diagnosticos`)
             .then(async (response) => {
                 if (!response.ok) {
@@ -99,14 +126,46 @@ export default function DiagnosticsTableComponent() {
         );
     });
 
-    const handleExportClick = (diagnostic: Diagnostic) => {
-        const exportUrl = `${EXPORT_BASE_URL}/${diagnostic.id}`;
+    // Replaces the old "export to PDF" flow: fetches the same /historico
+    // endpoint and opens a modal with min/avg/max instead of a chart+PDF.
+    const handleViewDetails = async (diagnostic: Diagnostic) => {
+        setSelectedDiagnostic(diagnostic);
+        setModalOpen(true);
+        setModalLoading(true);
+        setModalError(null);
+        setStats(null);
 
-        if (window.AppInventor) {
-            window.AppInventor.setWebViewString(exportUrl);
-        } else {
-            window.open(exportUrl, "_blank");
+        try {
+            const response = await fetch(`/api/diagnosticos/${diagnostic.id}/historico`);
+
+            if (!response.ok) {
+                throw new Error("Falha ao obter histórico.");
+            }
+
+            const historico = (await response.json()) as PontoHistorico[];
+
+            const temperaturas = historico.map((ponto) => ponto.temperatura);
+            const bpms = historico.map((ponto) => ponto.bpm);
+            const magnitudes = historico.map((ponto) => ponto.magnitudeG);
+
+            setStats({
+                temperatura: calcularStats(temperaturas),
+                bpm: calcularStats(bpms),
+                magnitudeG: calcularStats(magnitudes),
+            });
+        } catch (err) {
+            console.error(err);
+            setModalError("Não foi possível carregar os dados do diagnóstico.");
+        } finally {
+            setModalLoading(false);
         }
+    };
+
+    const closeModal = () => {
+        setModalOpen(false);
+        setSelectedDiagnostic(null);
+        setStats(null);
+        setModalError(null);
     };
 
     return (
@@ -148,9 +207,9 @@ export default function DiagnosticsTableComponent() {
                                             <div className="table-patient">
                                                 <button
                                                     className="export-button"
-                                                    onClick={() => handleExportClick(diagnostic)}
+                                                    onClick={() => handleViewDetails(diagnostic)}
                                                 >
-                                                    {t('diagnostics.exportButton')}
+                                                    {t('diagnostics.viewButton', 'Ver Detalhes')}
                                                 </button>
                                                 <span className="patient-name">
                                                     {diagnostic.patient}
@@ -177,6 +236,112 @@ export default function DiagnosticsTableComponent() {
                     </div>
                 </div>
             </section>
+
+            {modalOpen && (
+                <div className="modal-overlay" onClick={closeModal}>
+                    <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+                        <div className="modal-header">
+                            <h2 className="modal-title">
+                                {t('diagnostics.modalTitle', 'Relatório de Diagnóstico')}
+                            </h2>
+                            <button
+                                className="modal-close"
+                                onClick={closeModal}
+                                aria-label="Fechar"
+                            >
+                                ×
+                            </button>
+                        </div>
+
+                        {modalLoading && (
+                            <p className="modal-loading">{t('general.loading')}</p>
+                        )}
+
+                        {modalError && <p className="modal-error">{modalError}</p>}
+
+                        {!modalLoading && !modalError && selectedDiagnostic && (
+                            <div className="modal-body">
+                                <div className="modal-info-row">
+                                    <span className="modal-label">
+                                        {t('diagnostics.modalId', 'Diagnóstico')}
+                                    </span>
+                                    <span className="modal-value">
+                                        #{selectedDiagnostic.id}
+                                    </span>
+                                </div>
+                                <div className="modal-info-row">
+                                    <span className="modal-label">
+                                        {t('diagnostics.tablePatient')}
+                                    </span>
+                                    <span className="modal-value">
+                                        {selectedDiagnostic.patient}
+                                    </span>
+                                </div>
+                                <div className="modal-info-row">
+                                    <span className="modal-label">
+                                        {t('diagnostics.tableTime')}
+                                    </span>
+                                    <span className="modal-value">
+                                        {formatDate(selectedDiagnostic.date)}
+                                    </span>
+                                </div>
+                                <div className="modal-info-row">
+                                    <span className="modal-label">
+                                        {t('diagnostics.tableObs')}
+                                    </span>
+                                    <span className="modal-value">
+                                        {selectedDiagnostic.status || "-"}
+                                    </span>
+                                </div>
+
+                                <div className="modal-divider" />
+
+                                <h3 className="modal-subtitle">
+                                    {t('diagnostics.modalSensorTitle', 'Evolução dos Sensores')}
+                                </h3>
+
+                                {stats && (
+                                    <div className="modal-stats-table">
+                                        <div className="modal-stats-header">
+                                            <span></span>
+                                            <span>{t('diagnostics.statMin', 'Mín.')}</span>
+                                            <span>{t('diagnostics.statAvg', 'Média')}</span>
+                                            <span>{t('diagnostics.statMax', 'Máx.')}</span>
+                                        </div>
+
+                                        <div className="modal-stats-row">
+                                            <span className="modal-stats-label">
+                                                {t('diagnostics.statTemp', 'Temperatura (°C)')}
+                                            </span>
+                                            <span>{stats.temperatura.min.toFixed(1)}</span>
+                                            <span>{stats.temperatura.max.toFixed(1)}</span>
+                                            <span>{stats.temperatura.avg.toFixed(1)}</span>
+                                        </div>
+
+                                        <div className="modal-stats-row">
+                                            <span className="modal-stats-label">
+                                                {t('diagnostics.statBpm', 'BPM')}
+                                            </span>
+                                            <span>{stats.bpm.min.toFixed(0)}</span>
+                                            <span>{stats.bpm.max.toFixed(0)}</span>
+                                            <span>{stats.bpm.avg.toFixed(0)}</span>
+                                        </div>
+
+                                        <div className="modal-stats-row">
+                                            <span className="modal-stats-label">
+                                                {t('diagnostics.statMag', 'Magnitude (G)')}
+                                            </span>
+                                            <span>{stats.magnitudeG.min.toFixed(2)}</span>
+                                            <span>{stats.magnitudeG.max.toFixed(2)}</span>
+                                            <span>{stats.magnitudeG.avg.toFixed(2)}</span>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        )}
+                    </div>
+                </div>
+            )}
         </>
     );
 }
