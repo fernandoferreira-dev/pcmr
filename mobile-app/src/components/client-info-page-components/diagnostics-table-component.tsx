@@ -314,8 +314,8 @@ export default function DiagnosticsTableComponent() {
                                                 {t('diagnostics.statTemp', 'Temperatura (°C)')}
                                             </span>
                                             <span>{stats.temperatura.min.toFixed(1)}</span>
-                                            <span>{stats.temperatura.avg.toFixed(1)}</span>
                                             <span>{stats.temperatura.max.toFixed(1)}</span>
+                                            <span>{stats.temperatura.avg.toFixed(1)}</span>
                                         </div>
 
                                         <div className="modal-stats-row">
@@ -323,8 +323,8 @@ export default function DiagnosticsTableComponent() {
                                                 {t('diagnostics.statBpm', 'BPM')}
                                             </span>
                                             <span>{stats.bpm.min.toFixed(0)}</span>
-                                            <span>{stats.bpm.avg.toFixed(0)}</span>
                                             <span>{stats.bpm.max.toFixed(0)}</span>
+                                            <span>{stats.bpm.avg.toFixed(0)}</span>
                                         </div>
 
                                         <div className="modal-stats-row">
@@ -332,8 +332,8 @@ export default function DiagnosticsTableComponent() {
                                                 {t('diagnostics.statMag', 'Magnitude (G)')}
                                             </span>
                                             <span>{stats.magnitudeG.min.toFixed(2)}</span>
-                                            <span>{stats.magnitudeG.avg.toFixed(2)}</span>
                                             <span>{stats.magnitudeG.max.toFixed(2)}</span>
+                                            <span>{stats.magnitudeG.avg.toFixed(2)}</span>
                                         </div>
                                     </div>
                                 )}
