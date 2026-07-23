@@ -8,6 +8,7 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from 'recharts'
+import { Activity, Users, Radio, Server as ServerIcon } from 'lucide-react'
 import DadosPessoais from './dados_pessoais'
 import DadosDiagnostico from './Dados_Diagnosticos'
 import Comunicacao from './comunicacao.tsx'
@@ -184,7 +185,9 @@ const OverviewDashboard = ({ userId, onAbrirConsulta, onAbrirComunicacao }: Over
             <div className="font-bold text-gray-800 text-sm">{t('paginaInicial.mainDiagnostics')}</div>
             <div className="text-xs text-gray-600">{stats ? stats.totalDiagnosticos : t('paginaInicial.mainNoData')}</div>
           </div>
-          <div className="w-8 h-8 bg-red-500 rounded-full shrink-0 shadow-sm" />
+          <div className="w-8 h-8 bg-red-500 rounded-full shrink-0 shadow-sm flex items-center justify-center">
+            <Activity className="w-4 h-4 text-white" />
+          </div>
         </div>
 
         <div className="flex-1 p-4 flex justify-between items-center border-r border-gray-300">
@@ -192,7 +195,9 @@ const OverviewDashboard = ({ userId, onAbrirConsulta, onAbrirComunicacao }: Over
             <div className="font-bold text-gray-800 text-sm">{t('paginaInicial.mainPatients')}</div>
             <div className="text-xs text-gray-600">{stats ? stats.totalPacientes : t('paginaInicial.mainNoData')}</div>
           </div>
-          <div className="w-8 h-8 bg-red-500 rounded-full shrink-0 shadow-sm" />
+          <div className="w-8 h-8 bg-red-500 rounded-full shrink-0 shadow-sm flex items-center justify-center">
+            <Users className="w-4 h-4 text-white" />
+          </div>
         </div>
 
         <div className="flex-1 p-4 flex justify-between items-center border-r border-gray-300">
@@ -200,7 +205,9 @@ const OverviewDashboard = ({ userId, onAbrirConsulta, onAbrirComunicacao }: Over
             <div className="font-bold text-gray-800 text-sm">{t('paginaInicial.mainSensorNode')}</div>
             <div className="text-xs text-gray-600">{t('paginaInicial.mainStatus')}</div>
           </div>
-          <div className="w-8 h-8 bg-red-500 rounded-full shrink-0 shadow-sm" />
+          <div className="w-8 h-8 bg-red-500 rounded-full shrink-0 shadow-sm flex items-center justify-center">
+            <Radio className="w-4 h-4 text-white" />
+          </div>
         </div>
 
         <div className="flex-1 p-4 flex justify-between items-center">
@@ -208,7 +215,9 @@ const OverviewDashboard = ({ userId, onAbrirConsulta, onAbrirComunicacao }: Over
             <div className="font-bold text-gray-800 text-sm">{t('paginaInicial.mainServer')}</div>
             <div className="text-xs text-gray-600">{t('paginaInicial.mainStatus')}</div>
           </div>
-          <div className="w-8 h-8 bg-red-500 rounded-full shrink-0 shadow-sm" />
+          <div className="w-8 h-8 bg-red-500 rounded-full shrink-0 shadow-sm flex items-center justify-center">
+            <ServerIcon className="w-4 h-4 text-white" />
+          </div>
         </div>
       </div>
 

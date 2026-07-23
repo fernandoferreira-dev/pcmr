@@ -60,12 +60,6 @@ public class MqttSecurityService {
         long crcCalculado = Crc32Util.calcular(plano);
         String jsonString = new String(plano, StandardCharsets.UTF_8);
 
-        //LOG DE DEPURACÃO
-        System.out.println("----------------------------------------");
-        System.out.println("🔍 JSON Decifrado no Java (" + plano.length + " bytes): " + jsonString);
-        System.out.println("🔍 CRC Esperado: " + envelope.getCrc() + " | CRC Calculado: " + crcCalculado);
-        System.out.println("----------------------------------------");
-
         //Validação estrita do CRC32
         if (crcCalculado != envelope.getCrc()) {
             throw new SecurityException(
