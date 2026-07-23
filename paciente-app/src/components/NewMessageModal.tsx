@@ -43,18 +43,20 @@ export function NewMessageModal({ senderId, onClose, onSent }: Props) {
                 if (!res.ok) return;
                 const data = await res.json();
 
-                // Tipagem segura em vez de 'any'
                 const mappedResults: UserSummary[] = (data as Array<{
                     idUtilizador: number;
                     nome: string;
                     email: string;
                     tipoUtilizador: string;
-                }>).map((u) => ({
-                    userId: u.idUtilizador,
-                    name: u.nome,
-                    email: u.email,
-                    userType: u.tipoUtilizador
-                }));
+                }>)
+                    // impede que um paciente veja/selecione outro paciente como destinatário
+                    .filter((u) => u.tipoUtilizador?.toLowerCase() !== "paciente")
+                    .map((u) => ({
+                        userId: u.idUtilizador,
+                        name: u.nome,
+                        email: u.email,
+                        userType: u.tipoUtilizador
+                    }));
 
                 setResults(mappedResults);
             } catch {
