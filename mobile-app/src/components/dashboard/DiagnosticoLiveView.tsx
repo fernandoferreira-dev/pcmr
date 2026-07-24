@@ -152,6 +152,7 @@ export default function DiagnosticoLiveView({
 
   const metrica = METRICAS.find((m) => m.key === metricaAtiva)!;
 
+  
   const mensagemAlertaTemp =
     calibrado && leitura?.alertaTemperatura && leitura.alertaTemperatura.estado !== "NORMAL"
       ? leitura.alertaTemperatura.mensagem
