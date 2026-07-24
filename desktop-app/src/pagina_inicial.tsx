@@ -27,6 +27,7 @@ import conf from './assets/imagens/setting.png'
 import logo from './assets/imagens/logosemback (1).png'
 import ConfPop from './confpop'   // ← Novo import
 import { useTranslation } from 'react-i18next'
+import { useTheme } from './hooks/useTheme';
 
 type View = 'home' | 'dados_diagnostico' | 'comunicacao' | 'dados_equipamentos' | 'dados_pessoais'
 
@@ -43,7 +44,7 @@ function NavButton({ id, label, icon, isActive, onClick }: NavButtonProps) {
     <button
       className={`cursor-pointer w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-colors  ${isActive
         ? 'bg-[#8CA483] font-semibold text-black shadow-sm'
-        : 'hover:bg-[#9CB39E] text-gray-800'
+        : 'hover:bg-[#9CB39E] text-gray-800 dark:text-gray-900'
         }`}
       onClick={() => onClick(id)}
     >
@@ -173,37 +174,37 @@ const OverviewDashboard = ({ userId, onAbrirConsulta, onAbrirComunicacao }: Over
     })) ?? []
 
   return (
-    <div className="flex flex-col gap-4 w-full h-full p-6 bg-[#EBEBEB] rounded-4xl shadow-inner overflow-y-auto">
+    <div className="flex flex-col gap-4 w-full h-full p-6 bg-[#EBEBEB] dark:bg-gray-800 rounded-4xl shadow-inner overflow-y-auto">
       {/*OverviewDashboard*/}
-      <div className="text-xs text-gray-500 font-bold tracking-wider shrink-0">
+      <div className="text-xs text-gray-500 dark:text-gray-400 font-bold tracking-wider shrink-0">
         {t('paginaInicial.mainDayWeekMonth')}
       </div>
 
-      <div className="flex shrink-0 bg-white rounded-xl border border-gray-300 overflow-hidden shadow-sm">
-        <div className="flex-1 p-4 flex justify-between items-center border-r border-gray-300">
+      <div className="flex shrink-0 bg-white dark:bg-gray-900 rounded-xl border border-gray-300 dark:border-gray-700 overflow-hidden shadow-sm">
+        <div className="flex-1 p-4 flex justify-between items-center border-r border-gray-300 dark:border-gray-700">
           <div>
-            <div className="font-bold text-gray-800 text-sm">{t('paginaInicial.mainDiagnostics')}</div>
-            <div className="text-xs text-gray-600">{stats ? stats.totalDiagnosticos : t('paginaInicial.mainNoData')}</div>
+            <div className="font-bold text-gray-800 dark:text-gray-100 text-sm">{t('paginaInicial.mainDiagnostics')}</div>
+            <div className="text-xs text-gray-600 dark:text-gray-400">{stats ? stats.totalDiagnosticos : t('paginaInicial.mainNoData')}</div>
           </div>
           <div className="w-8 h-8 bg-red-500 rounded-full shrink-0 shadow-sm flex items-center justify-center">
             <Activity className="w-4 h-4 text-white" />
           </div>
         </div>
 
-        <div className="flex-1 p-4 flex justify-between items-center border-r border-gray-300">
+        <div className="flex-1 p-4 flex justify-between items-center border-r border-gray-300 dark:border-gray-700">
           <div>
-            <div className="font-bold text-gray-800 text-sm">{t('paginaInicial.mainPatients')}</div>
-            <div className="text-xs text-gray-600">{stats ? stats.totalPacientes : t('paginaInicial.mainNoData')}</div>
+            <div className="font-bold text-gray-800 dark:text-gray-100 text-sm">{t('paginaInicial.mainPatients')}</div>
+            <div className="text-xs text-gray-600 dark:text-gray-400">{stats ? stats.totalPacientes : t('paginaInicial.mainNoData')}</div>
           </div>
           <div className="w-8 h-8 bg-red-500 rounded-full shrink-0 shadow-sm flex items-center justify-center">
             <Users className="w-4 h-4 text-white" />
           </div>
         </div>
 
-        <div className="flex-1 p-4 flex justify-between items-center border-r border-gray-300">
+        <div className="flex-1 p-4 flex justify-between items-center border-r border-gray-300 dark:border-gray-700">
           <div>
-            <div className="font-bold text-gray-800 text-sm">{t('paginaInicial.mainSensorNode')}</div>
-            <div className="text-xs text-gray-600">{t('paginaInicial.mainStatus')}</div>
+            <div className="font-bold text-gray-800 dark:text-gray-100 text-sm">{t('paginaInicial.mainSensorNode')}</div>
+            <div className="text-xs text-gray-600 dark:text-gray-400">{t('paginaInicial.mainStatus')}</div>
           </div>
           <div className="w-8 h-8 bg-red-500 rounded-full shrink-0 shadow-sm flex items-center justify-center">
             <Radio className="w-4 h-4 text-white" />
@@ -212,8 +213,8 @@ const OverviewDashboard = ({ userId, onAbrirConsulta, onAbrirComunicacao }: Over
 
         <div className="flex-1 p-4 flex justify-between items-center">
           <div>
-            <div className="font-bold text-gray-800 text-sm">{t('paginaInicial.mainServer')}</div>
-            <div className="text-xs text-gray-600">{t('paginaInicial.mainStatus')}</div>
+            <div className="font-bold text-gray-800 dark:text-gray-100 text-sm">{t('paginaInicial.mainServer')}</div>
+            <div className="text-xs text-gray-600 dark:text-gray-400">{t('paginaInicial.mainStatus')}</div>
           </div>
           <div className="w-8 h-8 bg-red-500 rounded-full shrink-0 shadow-sm flex items-center justify-center">
             <ServerIcon className="w-4 h-4 text-white" />
@@ -222,8 +223,8 @@ const OverviewDashboard = ({ userId, onAbrirConsulta, onAbrirComunicacao }: Over
       </div>
 
       {/* Gráfico e resto do dashboard (mantido igual) */}
-      <div className="flex flex-col flex-1 min-h-37.5 bg-white rounded-xl border border-gray-300 p-4 shadow-sm">
-        <div className="text-sm font-semibold text-gray-500 mb-2">{t('paginaInicial.mainDiagnosticsPerMonth')}</div>
+      <div className="flex flex-col flex-1 min-h-37.5 bg-white dark:bg-gray-900 rounded-xl border border-gray-300 dark:border-gray-700 p-4 shadow-sm">
+        <div className="text-sm font-semibold text-gray-500 dark:text-gray-400 mb-2">{t('paginaInicial.mainDiagnosticsPerMonth')}</div>
         {erroStats && <div className="flex-1 flex items-center justify-center text-sm text-red-500">{erroStats}</div>}
         {!erroStats && dadosGrafico.length === 0 && (
           <div className="flex-1 flex items-center justify-center text-sm text-gray-400">
@@ -247,8 +248,8 @@ const OverviewDashboard = ({ userId, onAbrirConsulta, onAbrirComunicacao }: Over
 
       <div className="flex flex-col sm:flex-row gap-4 shrink-0 h-auto sm:h-48">
         {/* Notificações e Consulta Rápida*/}
-        <div className="flex-1 bg-white rounded-xl border border-gray-300 p-4 shadow-sm flex flex-col">
-          <div className="text-sm font-bold text-gray-600 mb-2">{t('paginaInicial.mainNotifications')}</div>
+        <div className="flex-1 bg-white dark:bg-gray-900 rounded-xl border border-gray-300 dark:border-gray-700 p-4 shadow-sm flex flex-col">
+          <div className="text-sm font-bold text-gray-600 dark:text-gray-300 mb-2">{t('paginaInicial.mainNotifications')}</div>
           {/* Código de notificações */}
           {erroNotificacoes && (
             <div className="flex-1 flex items-center justify-center text-xs text-red-500">
@@ -268,10 +269,10 @@ const OverviewDashboard = ({ userId, onAbrirConsulta, onAbrirComunicacao }: Over
                 <button
                   key={n.idMensagem}
                   onClick={() => onAbrirComunicacao(n.idMensagem)}
-                  className="text-left px-3 py-2 rounded-xl bg-gray-50 hover:bg-gray-100 transition-colors cursor-pointer"
+                  className="text-left px-3 py-2 rounded-xl bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors cursor-pointer"
                 >
                   <div className="flex items-center justify-between gap-2">
-                    <span className="text-xs font-semibold text-gray-800 truncate">
+                    <span className="text-xs font-semibold text-gray-800 dark:text-gray-100 truncate">
                       {n.nomeRemetente}
                     </span>
                     <span
@@ -279,16 +280,16 @@ const OverviewDashboard = ({ userId, onAbrirConsulta, onAbrirComunicacao }: Over
                       title={n.lida ? t('paginaInicial.mainRead') : t('paginaInicial.mainUnread')}
                     />
                   </div>
-                  <div className="text-xs text-gray-500 truncate">{n.assunto}</div>
-                  <div className="text-[0.65rem] text-gray-400">{formatarDataHoraCurta(n.dataEnvio)}</div>
+                  <div className="text-xs text-gray-500 dark:text-gray-400 truncate">{n.assunto}</div>
+                  <div className="text-[0.65rem] text-gray-400 dark:text-gray-500">{formatarDataHoraCurta(n.dataEnvio)}</div>
                 </button>
               ))}
             </div>
           )}
         </div>
 
-        <div className="flex-1 bg-white rounded-xl border border-gray-300 p-4 shadow-sm flex flex-col">
-          <div className="text-sm font-bold text-gray-600 mb-2">{t('paginaInicial.mainQuickConsultation')}</div>
+        <div className="flex-1 bg-white dark:bg-gray-900 rounded-xl border border-gray-300 dark:border-gray-700 p-4 shadow-sm flex flex-col">
+          <div className="text-sm font-bold text-gray-600 dark:text-gray-300 mb-2">{t('paginaInicial.mainQuickConsultation')}</div>
           <div className="flex-1 bg-[#AAB99F] rounded-xl border border-[#91a086] p-4 flex flex-col justify-between">
             <div className="w-10 h-10 bg-white/70 rounded-full flex items-center justify-center text-[#AAB99F] text-3xl font-bold shadow-sm">
               <img src={cruzverde} alt={t('paginaInicial.mainDiagnostics')} className="w-6 h-6 object-contain" />
@@ -367,7 +368,7 @@ export default function App({ userName, userId, tipo, onLogout }: PaginaInicialP
       <div className="flex-1 flex p-4 gap-6 overflow-hidden">
 
         {/* Barra Lateral */}
-        <aside className="w-72 h-full bg-[#AAB99F] rounded-4xl p-6 shadow-md flex flex-col">
+        <aside className="w-72 h-full bg-[#AAB99F] dark:bg-[#5f7358] rounded-4xl p-6 shadow-md flex flex-col">
           {/*LOGO*/}
           <div className="flex flex-col items-center justify-center gap-3 mb-8 mt-4">
             <img
@@ -375,7 +376,7 @@ export default function App({ userName, userId, tipo, onLogout }: PaginaInicialP
               alt={t('paginaInicial.mainAppName')}
               className="h-20 w-auto object-contain drop-shadow-md"
             />
-            <div className="text-2xl font-bold text-gray-800 tracking-wide">
+            <div className="text-2xl font-bold text-gray-800 dark:text-gray-900 tracking-wide">
               {t('paginaInicial.mainAppName')}
             </div>
           </div>
@@ -396,7 +397,7 @@ export default function App({ userName, userId, tipo, onLogout }: PaginaInicialP
         {/* Área Principal */}
         <main className="flex-1 flex flex-col min-w-0 pr-4 pt-2 pb-4 overflow-hidden bg-(--background)">
           <header className="flex justify-between items-center mb-6 px-2 shrink-0">
-            <h1 className="text-3xl font-bold text-gray-700">{viewTitles[view]}</h1>
+            <h1 className="text-3xl font-bold text-gray-700 dark:text-gray-200">{viewTitles[view]}</h1>
 
             <div className="flex items-center gap-4">
               {/* Biometria */}
@@ -416,7 +417,7 @@ export default function App({ userName, userId, tipo, onLogout }: PaginaInicialP
               )}
 
               {bioStatus !== 'idle' && (
-                <div className={`text-xs px-3 py-1.5 rounded-lg ${bioStatus === 'aguardar_dedo' || bioStatus === 'a_processar' ? 'bg-blue-100 text-blue-800' : bioStatus === 'sucesso' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                <div className={`text-xs px-3 py-1.5 rounded-lg ${bioStatus === 'aguardar_dedo' || bioStatus === 'a_processar' ? 'bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200' : bioStatus === 'sucesso' ? 'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200' : 'bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200'
                   }`}>
                   <span>{bioMensagem}</span>
                   {(bioStatus === 'aguardar_dedo' || bioStatus === 'a_processar') && (
@@ -428,7 +429,7 @@ export default function App({ userName, userId, tipo, onLogout }: PaginaInicialP
               {/* Botão de Configurações*/}
               <button
                 onClick={() => setConfOpen(true)}
-                className="w-11 h-11 flex items-center justify-center hover:bg-gray-100 rounded-2xl transition-colors cursor-pointer"
+                className="w-11 h-11 flex items-center justify-center hover:bg-gray-100 dark:hover:bg-gray-800 rounded-2xl transition-colors cursor-pointer"
                 title={t('equipData.equipSettings')}
               >
                 <img
@@ -438,7 +439,7 @@ export default function App({ userName, userId, tipo, onLogout }: PaginaInicialP
                 />
               </button>
 
-              <span className="text-xl text-gray-800 font-medium pl-2">
+              <span className="text-xl text-gray-800 dark:text-gray-200 font-medium pl-2">
                 {t('paginaInicial.mainWelcome')} {userName}! ({tipo})
               </span>
             </div>

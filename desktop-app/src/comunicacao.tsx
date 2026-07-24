@@ -155,14 +155,14 @@ export default function Comunicacao({
   })
 
   return (
-    <div className="relative flex flex-col w-full h-full p-6 bg-[#EBEBEB] rounded-4xl shadow-inner">
+    <div className="relative flex flex-col w-full h-full p-6 bg-[#EBEBEB] dark:bg-gray-800 rounded-4xl shadow-inner">
       {/* Alternador Recebidas / Enviadas */}
       <div className="flex gap-2 mb-4 shrink-0">
         <button
           onClick={() => setVista('recebidas')}
           className={`px-4 py-2 rounded-full text-sm font-medium transition-colors cursor-pointer ${vista === 'recebidas'
             ? 'bg-[#AAB99F] text-white shadow-sm'
-            : 'bg-white text-gray-600 border border-gray-300 hover:bg-gray-50'
+            : 'bg-white dark:bg-gray-900 text-gray-600 dark:text-gray-300 border border-gray-300 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800'
             }`}
         >
           {t('comunicacao.comReceived')}
@@ -171,7 +171,7 @@ export default function Comunicacao({
           onClick={() => setVista('enviadas')}
           className={`px-4 py-2 rounded-full text-sm font-medium transition-colors cursor-pointer ${vista === 'enviadas'
             ? 'bg-[#AAB99F] text-white shadow-sm'
-            : 'bg-white text-gray-600 border border-gray-300 hover:bg-gray-50'
+            : 'bg-white dark:bg-gray-900 text-gray-600 dark:text-gray-300 border border-gray-300 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800'
             }`}
         >
           {t('comunicacao.comSent')}
@@ -193,14 +193,14 @@ export default function Comunicacao({
             value={pesquisa}
             onChange={(e) => setPesquisa(e.target.value)}
             placeholder={vista === 'recebidas' ? t('comunicacao.searchBySender') : t('comunicacao.searchByRecipient')}
-            className="w-full pl-11 pr-4 py-3 bg-white rounded-full border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-[#AAB99F] cursor-text"
+            className="w-full pl-11 pr-4 py-3 bg-white dark:bg-gray-900 rounded-full border border-gray-300 dark:border-gray-700 text-sm dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-[#AAB99F] cursor-text"
           />
         </div>
 
         <select
           value={filtroEstado}
           onChange={(e) => setFiltroEstado(e.target.value as FiltroEstado)}
-          className="px-4 py-3 bg-white rounded-full border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-[#AAB99F] cursor-pointer text-gray-600 w-full sm:w-auto"
+          className="px-4 py-3 bg-white dark:bg-gray-900 rounded-full border border-gray-300 dark:border-gray-700 text-sm focus:outline-none focus:ring-2 focus:ring-[#AAB99F] cursor-pointer text-gray-600 dark:text-gray-300 w-full sm:w-auto"
         >
           <option value="todas">{t('comunicacao.comAll')}</option>
           <option value="lidas">{t('comunicacao.comRead')}</option>
@@ -210,7 +210,7 @@ export default function Comunicacao({
       </div>
 
       {erro && (
-        <div className="mb-4 bg-yellow-50 border border-yellow-300 text-yellow-700 rounded-2xl px-4 py-3 text-sm shrink-0">
+        <div className="mb-4 bg-yellow-50 dark:bg-yellow-900/40 border border-yellow-300 dark:border-yellow-700 text-yellow-700 dark:text-yellow-300 rounded-2xl px-4 py-3 text-sm shrink-0">
           {erro}
         </div>
       )}
@@ -233,7 +233,7 @@ export default function Comunicacao({
             <div
               key={m.idMensagem}
               onClick={() => abrirMensagem(m)}
-              className="rounded-2xl border border-gray-300 overflow-hidden shadow-sm cursor-pointer bg-white"
+              className="rounded-2xl border border-gray-300 dark:border-gray-700 overflow-hidden shadow-sm cursor-pointer bg-white dark:bg-gray-900"
             >
               <div className="flex items-center justify-between bg-[#AAB99F] px-4 py-3">
                 <div className="flex items-center gap-3">
@@ -263,7 +263,7 @@ export default function Comunicacao({
               </div>
 
               <div className="flex items-center justify-between px-4 py-3">
-                <span className="text-sm text-gray-600 truncate pr-4">
+                <span className="text-sm text-gray-600 dark:text-gray-300 truncate pr-4">
                   {t('comunicacao.subject')}: {m.assunto}
                 </span>
 
@@ -292,7 +292,7 @@ export default function Comunicacao({
               </div>
 
               {mensagemExpandida === m.idMensagem && (
-                <div className="px-4 pb-4 pt-1 border-t border-gray-200 flex flex-col gap-3">
+                <div className="px-4 pb-4 pt-1 border-t border-gray-200 dark:border-gray-700 flex flex-col gap-3">
                   {(() => {
                     const temLink = m.corpo?.includes("LINK_ACAO:");
                     const partes = m.corpo?.split("LINK_ACAO:");
@@ -301,7 +301,7 @@ export default function Comunicacao({
 
                     return (
                       <>
-                        <p className="text-sm text-gray-700 whitespace-pre-wrap">{texto}</p>
+                        <p className="text-sm text-gray-700 dark:text-gray-200 whitespace-pre-wrap">{texto}</p>
 
                         {link && (
                           <button
@@ -327,7 +327,7 @@ export default function Comunicacao({
                   <button
                     onClick={(e) => alternarGuardada(m.idMensagem, e)}
                     disabled={aGuardarId === m.idMensagem}
-                    className={`self-start flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium ${m.guardada ? 'bg-amber-100 text-amber-700' : 'bg-gray-100 text-gray-600'
+                    className={`self-start flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium ${m.guardada ? 'bg-amber-100 dark:bg-amber-900/50 text-amber-700 dark:text-amber-300' : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300'
                       }`}
                   >
                     {m.guardada ? t('comunicacao.markSaved') : t('comunicacao.markSave')}
@@ -342,7 +342,7 @@ export default function Comunicacao({
       {/* Botão flutuante de nova mensagem */}
       <button
         onClick={() => setMostrarNovaMensagem(true)}
-        className="absolute bottom-6 right-6 w-14 h-14 rounded-full bg-white border border-gray-300 shadow-md flex items-center justify-center hover:bg-gray-50 transition-colors cursor-pointer"
+        className="absolute bottom-6 right-6 w-14 h-14 rounded-full bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 shadow-md flex items-center justify-center hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors cursor-pointer"
         title={t('comunicacao.newMessage')}
       >
         <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#5c6b56" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">

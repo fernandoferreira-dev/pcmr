@@ -141,20 +141,20 @@ export default function DadosEquipamentos({ userId }: { userId: number }) {
   };
 
   return (
-    <div className="relative w-full h-full bg-[#EBEBEB] rounded-3xl p-8 shadow-inner flex flex-col overflow-hidden">
+    <div className="relative w-full h-full bg-[#EBEBEB] dark:bg-gray-800 rounded-3xl p-8 shadow-inner flex flex-col overflow-hidden">
       {/* Header */}
       <div className="flex items-center justify-between mb-8">
         <div className="flex items-center gap-3">
-          <h1 className="text-xl font-semibold text-gray-900">
+          <h1 className="text-xl font-semibold text-gray-900 dark:text-gray-100">
             {t('equipData.equipTestConnection')}
           </h1>
           <button
             onClick={() => setMostrarConfig(true)}
-            className="p-2 hover:bg-white rounded-full transition-colors cursor-pointer"
+            className="p-2 hover:bg-white dark:hover:bg-gray-700 rounded-full transition-colors cursor-pointer"
             title={t('equipData.equipSettings')}
             aria-label={t('equipData.equipSystemSettings')}
           >
-            <Settings size={20} className="text-gray-700" />
+            <Settings size={20} className="text-gray-700 dark:text-gray-300" />
           </button>
         </div>
 
@@ -179,23 +179,23 @@ export default function DadosEquipamentos({ userId }: { userId: number }) {
             placeholder={t('equipData.equipSearchPlaceholder')}
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-10 pr-4 py-2.5 bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm cursor-text"
+            className="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm dark:text-gray-200 cursor-text"
           />
         </div>
       </div>
 
       {/* Table Container */}
-      <div className="flex-1 overflow-auto bg-white rounded-lg border border-gray-200">
+      <div className="flex-1 overflow-auto bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700">
         <table className="w-full border-collapse">
           <thead>
-            <tr className="border-b border-gray-200 bg-gray-50">
-              <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">{t('equipData.equipStatus')}</th>
-              <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">{t('equipData.equipName')}</th>
-              <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">{t('equipData.equipLocation')}</th>
-              <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">{t('equipData.equipType')}</th>
-              <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">{t('equipData.equipLastReading')}</th>
-              <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">{t('equipData.equipLastUpdate')}</th>
-              <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">{t('equipData.equipAction')}</th>
+            <tr className="border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
+              <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700 dark:text-gray-300">{t('equipData.equipStatus')}</th>
+              <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700 dark:text-gray-300">{t('equipData.equipName')}</th>
+              <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700 dark:text-gray-300">{t('equipData.equipLocation')}</th>
+              <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700 dark:text-gray-300">{t('equipData.equipType')}</th>
+              <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700 dark:text-gray-300">{t('equipData.equipLastReading')}</th>
+              <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700 dark:text-gray-300">{t('equipData.equipLastUpdate')}</th>
+              <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700 dark:text-gray-300">{t('equipData.equipAction')}</th>
             </tr>
           </thead>
           <tbody>
@@ -208,7 +208,7 @@ export default function DadosEquipamentos({ userId }: { userId: number }) {
                 return (
                   <tr
                     key={item.idSensor}
-                    className="border-b border-gray-100 hover:bg-gray-50 transition-colors"
+                    className="border-b border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
                   >
                     <td className="px-4 py-3">
                       <div
@@ -220,7 +220,7 @@ export default function DadosEquipamentos({ userId }: { userId: number }) {
                         }
                       />
                     </td>
-                    <td className="px-4 py-3 text-sm text-gray-900">
+                    <td className="px-4 py-3 text-sm text-gray-900 dark:text-gray-100">
                       {aEditarEsteItem ? (
                         <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
                           <input
@@ -228,12 +228,12 @@ export default function DadosEquipamentos({ userId }: { userId: number }) {
                             value={nomeEditando}
                             onChange={(e) => setNomeEditando(e.target.value)}
                             placeholder={item.nome}
-                            className="border border-gray-300 rounded-lg px-2 py-1 text-sm w-40"
+                            className="border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 rounded-lg px-2 py-1 text-sm w-40"
                           />
                           <button
                             onClick={(e) => guardarNomeExibicao(item.idSensor, e)}
                             disabled={aGuardarNome}
-                            className="text-green-600 hover:text-green-800 cursor-pointer disabled:opacity-50"
+                            className="text-green-600 hover:text-green-800 dark:hover:text-green-400 cursor-pointer disabled:opacity-50"
                             title={t('equipData.equipSave')}
                           >
                             <Check size={16} />
@@ -256,7 +256,7 @@ export default function DadosEquipamentos({ userId }: { userId: number }) {
                           </div>
                           <button
                             onClick={(e) => iniciarEdicaoNome(item, e)}
-                            className="text-gray-300 hover:text-gray-600 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+                            className="text-gray-300 hover:text-gray-600 dark:hover:text-gray-300 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
                             title={t('equipData.equipEditDisplayName')}
                           >
                             <Pencil size={13} />
@@ -264,19 +264,19 @@ export default function DadosEquipamentos({ userId }: { userId: number }) {
                         </div>
                       )}
                     </td>
-                    <td className="px-4 py-3 text-sm text-gray-600">{item.localizacao || "—"}</td>
-                    <td className="px-4 py-3 text-sm text-gray-600">{item.tipo || "—"}</td>
-                    <td className="px-4 py-3 text-sm text-gray-600">
+                    <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-400">{item.localizacao || "—"}</td>
+                    <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-400">{item.tipo || "—"}</td>
+                    <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-400">
                       {getTempoRespostaLabel(item.nome, estado)}
                     </td>
-                    <td className="px-4 py-3 text-sm text-gray-600">
+                    <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-400">
                       {getUltimaAtualizacaoLabel(item.nome)}
                     </td>
                     <td className="px-4 py-3">
                       <button
                         onClick={() => testarConexao(item.nome)}
                         disabled={estado === "a_testar"}
-                        className="px-3 py-1.5 bg-gray-100 hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed text-xs font-semibold text-gray-700 rounded-full transition-colors cursor-pointer"
+                        className="px-3 py-1.5 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed text-xs font-semibold text-gray-700 dark:text-gray-300 rounded-full transition-colors cursor-pointer"
                       >
                         {estado === "a_testar" ? t('equipData.equipTesting') : "Ping"}
                       </button>
@@ -286,7 +286,7 @@ export default function DadosEquipamentos({ userId }: { userId: number }) {
               })
             ) : (
               <tr>
-                <td colSpan={7} className="px-4 py-8 text-center text-gray-500">
+                <td colSpan={7} className="px-4 py-8 text-center text-gray-500 dark:text-gray-400">
                   {t('equipData.equipNoResults')} "{searchTerm}"
                 </td>
               </tr>

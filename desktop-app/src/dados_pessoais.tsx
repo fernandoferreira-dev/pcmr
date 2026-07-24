@@ -128,26 +128,26 @@ export default function DadosPessoais({ userId }: { userId: number }) {
   };
 
   const inputClass =
-    "w-full bg-gray-50 border border-gray-300 rounded-xl px-3 py-1.5 text-base font-semibold text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#AAB99F] focus:border-transparent transition-all cursor-text";
+    "w-full bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-xl px-3 py-1.5 text-base font-semibold text-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-[#AAB99F] focus:border-transparent transition-all cursor-text";
 
   return (
-    <div className="flex flex-col gap-6 w-full h-full p-6 bg-[#EBEBEB] rounded-4xl shadow-inner overflow-y-auto">
+    <div className="flex flex-col gap-6 w-full h-full p-6 bg-[#EBEBEB] dark:bg-gray-800 rounded-4xl shadow-inner overflow-y-auto">
       {erro && (
-        <div className="bg-red-50 border border-red-200 text-red-700 rounded-2xl px-4 py-3 text-sm font-medium">
+        <div className="bg-red-50 dark:bg-red-900/40 border border-red-200 dark:border-red-700 text-red-700 dark:text-red-300 rounded-2xl px-4 py-3 text-sm font-medium">
           {erro}
         </div>
       )}
 
       {sucesso && (
-        <div className="bg-green-50 border border-green-200 text-green-700 rounded-2xl px-4 py-3 text-sm font-medium">
+        <div className="bg-green-50 dark:bg-green-900/40 border border-green-200 dark:border-green-700 text-green-700 dark:text-green-300 rounded-2xl px-4 py-3 text-sm font-medium">
           {sucesso}
         </div>
       )}
 
       <div className="flex flex-col lg:flex-row gap-6 w-full">
         {/* Cartão principal - Informações de contacto */}
-        <div className="flex-1 bg-white rounded-2xl border border-gray-300 shadow-sm p-6">
-          <div className="text-sm font-bold text-gray-600 mb-2 tracking-wide uppercase">
+        <div className="flex-1 bg-white dark:bg-gray-900 rounded-2xl border border-gray-300 dark:border-gray-700 shadow-sm p-6">
+          <div className="text-sm font-bold text-gray-600 dark:text-gray-300 mb-2 tracking-wide uppercase">
             {t('personalData.personalGeneralInfo')}
           </div>
 
@@ -178,7 +178,7 @@ export default function DadosPessoais({ userId }: { userId: number }) {
                 onChange={(e) => handleInputChange("nome", e.target.value)}
               />
             ) : (
-              <span className="text-lg font-semibold text-gray-800">
+              <span className="text-lg font-semibold text-gray-800 dark:text-gray-100">
                 {perfil?.nome ?? "—"}
               </span>
             )}
@@ -203,7 +203,7 @@ export default function DadosPessoais({ userId }: { userId: number }) {
               </svg>
             }
           >
-            <span className="text-lg font-semibold text-gray-400 select-none">
+            <span className="text-lg font-semibold text-gray-400 dark:text-gray-500 select-none">
               {perfil?.username ?? "—"}
             </span>
           </InfoRow>
@@ -236,7 +236,7 @@ export default function DadosPessoais({ userId }: { userId: number }) {
                 }
               />
             ) : (
-              <span className="text-lg font-semibold text-gray-800">
+              <span className="text-lg font-semibold text-gray-800 dark:text-gray-100">
                 {perfil?.telemovel ?? t('personalData.personalPhoneNotDefined')}
               </span>
             )}
@@ -269,7 +269,7 @@ export default function DadosPessoais({ userId }: { userId: number }) {
                 onChange={(e) => handleInputChange("email", e.target.value)}
               />
             ) : (
-              <span className="text-lg font-semibold text-gray-800">
+              <span className="text-lg font-semibold text-gray-800 dark:text-gray-100">
                 {perfil?.email ?? "—"}
               </span>
             )}
@@ -278,20 +278,20 @@ export default function DadosPessoais({ userId }: { userId: number }) {
 
         {/* Cartão lateral - Resumo da conta */}
         <div className="w-full lg:w-80 flex flex-col gap-4 shrink-0">
-          <div className="bg-white rounded-2xl border border-gray-300 shadow-sm p-6 flex flex-col gap-4">
-            <div className="text-sm font-bold text-gray-600 tracking-wide uppercase">
+          <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-300 dark:border-gray-700 shadow-sm p-6 flex flex-col gap-4">
+            <div className="text-sm font-bold text-gray-600 dark:text-gray-300 tracking-wide uppercase">
               {t('personalData.personalAccountSummary')}
             </div>
 
             <div className="flex items-center justify-between">
-              <span className="text-sm text-gray-500 font-medium">{t('personalData.personalStatus')}</span>
-              <span className="px-3 py-1 rounded-full bg-[#AAB99F]/30 text-[#5c6b56] text-sm font-semibold uppercase cursor-default">
+              <span className="text-sm text-gray-500 dark:text-gray-400 font-medium">{t('personalData.personalStatus')}</span>
+              <span className="px-3 py-1 rounded-full bg-[#AAB99F]/30 text-[#5c6b56] dark:text-[#c3d4bb] text-sm font-semibold uppercase cursor-default">
                 {perfil?.tipoUtilizador ?? "—"}
               </span>
             </div>
 
             <div className="flex flex-col gap-1">
-              <span className="text-sm text-gray-500 font-medium">
+              <span className="text-sm text-gray-500 dark:text-gray-400 font-medium">
                 {t('personalData.personalBirthDate')}
               </span>
               {isEditing ? (
@@ -308,7 +308,7 @@ export default function DadosPessoais({ userId }: { userId: number }) {
                   }
                 />
               ) : (
-                <span className="text-sm font-semibold text-gray-800">
+                <span className="text-sm font-semibold text-gray-800 dark:text-gray-100">
                   {formatarData(perfil?.dataNascimento ?? null)}
                 </span>
               )}

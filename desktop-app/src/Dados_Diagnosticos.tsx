@@ -64,7 +64,7 @@ export default function DadosDiagnostico() {
   const [diagnosticoExport, setDiagnosticoExport] = useState<Diagnostico | null>(null);
   const chartRef = useRef<HTMLDivElement>(null);
 
-  const {t} = useTranslation();
+  const { t } = useTranslation();
 
   useEffect(() => {
     fetch("/api/diagnosticos/dashboard")
@@ -191,55 +191,55 @@ export default function DadosDiagnostico() {
   });
 
   return (
-    <div className="relative flex flex-col w-full h-full p-6 bg-[#EBEBEB] rounded-4xl shadow-inner overflow-hidden">
+    <div className="relative flex flex-col w-full h-full p-6 bg-[#EBEBEB] dark:bg-gray-800 rounded-4xl shadow-inner overflow-hidden">
 
       {erro && (
-        <div className="mb-4 bg-yellow-50 border border-yellow-300 text-yellow-700 rounded-2xl px-4 py-3 text-sm shrink-0">
+        <div className="mb-4 bg-yellow-50 dark:bg-yellow-900/40 border border-yellow-300 dark:border-yellow-700 text-yellow-700 dark:text-yellow-300 rounded-2xl px-4 py-3 text-sm shrink-0">
           {erro}
         </div>
       )}
 
       {/* Cards de Dashboard */}
       <section className="grid gap-4 md:grid-cols-2 mb-4 shrink-0">
-        <article className="flex items-center justify-between rounded-3xl border border-gray-300 bg-white px-5 py-4 shadow-sm">
+        <article className="flex items-center justify-between rounded-3xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 px-5 py-4 shadow-sm">
           <div>
-            <p className="text-sm font-semibold text-gray-500">{t('diagnosticData.title')}</p>
-            <p className="mt-1 text-2xl font-bold text-gray-800">
+            <p className="text-sm font-semibold text-gray-500 dark:text-gray-400">{t('diagnosticData.title')}</p>
+            <p className="mt-1 text-2xl font-bold text-gray-800 dark:text-gray-100">
               {loading ? "..." : data.totalPacientes}
             </p>
-            <p className="text-xs text-gray-400 mt-0.5">{t('diagnosticData.diagBDTotal')}</p>
+            <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">{t('diagnosticData.diagBDTotal')}</p>
           </div>
-          <div className="flex h-14 w-14 items-center justify-center rounded-full bg-[#f4f7f2] text-[#AAB99F]">
+          <div className="flex h-14 w-14 items-center justify-center rounded-full bg-[#f4f7f2] dark:bg-gray-800 text-[#AAB99F]">
             <Stethoscope size={28} strokeWidth={1.8} />
           </div>
         </article>
 
-        <article className="flex items-center justify-between rounded-3xl border border-gray-300 bg-white px-5 py-4 shadow-sm">
+        <article className="flex items-center justify-between rounded-3xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 px-5 py-4 shadow-sm">
           <div>
-            <p className="text-sm font-semibold text-gray-500">{t('diagnosticData.diagDiag')}</p>
-            <p className="mt-1 text-2xl font-bold text-gray-800">
+            <p className="text-sm font-semibold text-gray-500 dark:text-gray-400">{t('diagnosticData.diagDiag')}</p>
+            <p className="mt-1 text-2xl font-bold text-gray-800 dark:text-gray-100">
               {loading ? "..." : data.totalDiagnosticos}
             </p>
-            <p className="text-xs text-gray-400 mt-0.5">{t('diagnosticData.diagTotalRegist')}</p>
+            <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">{t('diagnosticData.diagTotalRegist')}</p>
           </div>
-          <div className="flex h-14 w-14 items-center justify-center rounded-full bg-[#f4f7f2] text-[#AAB99F]">
+          <div className="flex h-14 w-14 items-center justify-center rounded-full bg-[#f4f7f2] dark:bg-gray-800 text-[#AAB99F]">
             <ClipboardList size={28} strokeWidth={1.8} />
           </div>
         </article>
       </section>
 
       {/* Barra de Filtros */}
-      <section className="bg-white rounded-3xl border border-gray-300 p-4 mb-4 shrink-0">
+      <section className="bg-white dark:bg-gray-900 rounded-3xl border border-gray-300 dark:border-gray-700 p-4 mb-4 shrink-0">
         <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 flex-1">
 
             {/* Campo de Busca por Nome */}
             <div className="flex flex-col gap-1">
-              <span className="ml-2 text-xs font-semibold text-gray-600">{t('diagnosticData.diagSearch')}</span>
-              <span className="relative flex h-11 items-center gap-2 rounded-full border border-gray-300 bg-white px-4 text-gray-700 focus-within:ring-2 focus-within:ring-[#AAB99F]">
+              <span className="ml-2 text-xs font-semibold text-gray-600 dark:text-gray-300">{t('diagnosticData.diagSearch')}</span>
+              <span className="relative flex h-11 items-center gap-2 rounded-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-4 text-gray-700 dark:text-gray-200 focus-within:ring-2 focus-within:ring-[#AAB99F]">
                 <Search size={16} className="text-gray-400 shrink-0" />
                 <input
-                  className="bg-transparent text-sm outline-none w-full text-gray-700"
+                  className="bg-transparent text-sm outline-none w-full text-gray-700 dark:text-gray-200"
                   type="text"
                   placeholder={t('diagnosticData.diagPatientName')}
                   value={filtroNome}
@@ -250,11 +250,11 @@ export default function DadosDiagnostico() {
 
             {/* Data de Início */}
             <div className="flex flex-col gap-1">
-              <span className="ml-2 text-xs font-semibold text-gray-600">{t('diagnosticData.diagDateStart')}</span>
-              <span className="relative flex h-11 items-center gap-2 rounded-full border border-gray-300 bg-white px-4 text-gray-700 focus-within:ring-2 focus-within:ring-[#AAB99F]">
+              <span className="ml-2 text-xs font-semibold text-gray-600 dark:text-gray-300">{t('diagnosticData.diagDateStart')}</span>
+              <span className="relative flex h-11 items-center gap-2 rounded-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-4 text-gray-700 dark:text-gray-200 focus-within:ring-2 focus-within:ring-[#AAB99F]">
                 <CalendarDays size={16} className="text-gray-400" />
                 <input
-                  className="bg-transparent text-sm outline-none cursor-pointer text-gray-700 w-full"
+                  className="bg-transparent text-sm outline-none cursor-pointer text-gray-700 dark:text-gray-200 w-full"
                   type="date"
                   value={dataInicio}
                   onChange={(e) => setDataInicio(e.target.value)}
@@ -264,11 +264,11 @@ export default function DadosDiagnostico() {
 
             {/* Data de Fim */}
             <div className="flex flex-col gap-1">
-              <span className="ml-2 text-xs font-semibold text-gray-600">{t('diagnosticData.diagDateEnd')}</span>
-              <span className="relative flex h-11 items-center gap-2 rounded-full border border-gray-300 bg-white px-4 text-gray-700 focus-within:ring-2 focus-within:ring-[#AAB99F]">
+              <span className="ml-2 text-xs font-semibold text-gray-600 dark:text-gray-300">{t('diagnosticData.diagDateEnd')}</span>
+              <span className="relative flex h-11 items-center gap-2 rounded-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-4 text-gray-700 dark:text-gray-200 focus-within:ring-2 focus-within:ring-[#AAB99F]">
                 <CalendarDays size={16} className="text-gray-400" />
                 <input
-                  className="bg-transparent text-sm outline-none cursor-pointer text-gray-700 w-full"
+                  className="bg-transparent text-sm outline-none cursor-pointer text-gray-700 dark:text-gray-200 w-full"
                   type="date"
                   value={dataFim}
                   onChange={(e) => setDataFim(e.target.value)}
@@ -286,11 +286,11 @@ export default function DadosDiagnostico() {
 
       {/* Tabela de Histórico de Diagnósticos */}
       <section className="flex min-h-0 flex-1 flex-col">
-        <h2 className="px-1 mb-3 text-lg font-bold text-gray-800">
+        <h2 className="px-1 mb-3 text-lg font-bold text-gray-800 dark:text-gray-100">
           {t('diagnosticData.diagHistory')}
         </h2>
 
-        <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-2xl border border-gray-300 bg-white shadow-sm">
+        <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-2xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-sm">
           {/* Cabeçalho da Grelha/Tabela */}
           <div className="grid grid-cols-[1.2fr_1.5fr_1.2fr_1fr] gap-4 bg-[#AAB99F] px-5 py-3.5 text-sm font-bold text-white shrink-0">
             <span>ID</span>
@@ -300,7 +300,7 @@ export default function DadosDiagnostico() {
           </div>
 
           {/* Corpo da Grelha/Tabela com Scroll */}
-          <div className="flex-1 overflow-y-auto divide-y divide-gray-200">
+          <div className="flex-1 overflow-y-auto divide-y divide-gray-200 dark:divide-gray-700">
             {loading ? (
               <p className="p-5 text-center text-sm text-gray-400">
                 {t('diagnosticData.diagLoading')}
@@ -313,23 +313,23 @@ export default function DadosDiagnostico() {
               diagnosticosFiltrados.map((item) => (
                 <div
                   key={item.id}
-                  className="grid grid-cols-[1.2fr_1.5fr_1.2fr_1fr] items-center gap-4 px-5 py-3 text-sm text-gray-600 hover:bg-gray-50 transition-colors"
+                  className="grid grid-cols-[1.2fr_1.5fr_1.2fr_1fr] items-center gap-4 px-5 py-3 text-sm text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
                 >
                   <div className="flex items-center gap-3">
                     <button
                       onClick={() => iniciarExportacao(item)}
                       disabled={exportandoId !== null}
-                      className="inline-flex h-8 items-center rounded-full border border-gray-300 bg-white px-3 text-xs font-medium text-gray-600 shadow-sm transition hover:bg-gray-50 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="inline-flex h-8 items-center rounded-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 text-xs font-medium text-gray-600 dark:text-gray-300 shadow-sm transition hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       {exportandoId === item.id ? t('diagnosticData.diagExporting') : t('diagnosticData.diagExportButton')}
                     </button>
-                    <span className="font-bold text-gray-800">
+                    <span className="font-bold text-gray-800 dark:text-gray-100">
                       #{item.id}
                     </span>
                   </div>
-                  <span className="font-medium text-gray-700">{item.patient}</span>
-                  <span className="text-gray-500">{formatarData(item.date)}</span>
-                  <span className="truncate text-gray-500" title={item.status}>
+                  <span className="font-medium text-gray-700 dark:text-gray-200">{item.patient}</span>
+                  <span className="text-gray-500 dark:text-gray-400">{formatarData(item.date)}</span>
+                  <span className="truncate text-gray-500 dark:text-gray-400" title={item.status}>
                     {item.status}
                   </span>
                 </div>
