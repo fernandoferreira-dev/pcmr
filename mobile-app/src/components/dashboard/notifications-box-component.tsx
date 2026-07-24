@@ -1,6 +1,7 @@
 import type { FC } from 'react';
 import { useNotificationStore } from '../../context/notification-store';
 import '../../styles/dashboard-styles/notification-box.css';
+import { useTranslation } from "react-i18next";
 
 interface NotificationBoxComponentProps {}
 
@@ -20,15 +21,15 @@ const formatarData = (iso: string) => {
 const NotificationBoxComponent: FC<NotificationBoxComponentProps> = () => {
   const notifications = useNotificationStore((state) => state.notifications);
   const ultimas = notifications.slice(0, 10);
-
+  const { t } = useTranslation();
   return (
     <div className="notification-box">
-      <h1>Ultimas notificações:</h1>
+      <h1>{t('dashboard.latestNotifications')}</h1>
 
       <div className="notification-box-list">
         {ultimas.length === 0 && (
           <div className="notification-box-text notification-box-text--empty">
-            <h3>Sem notificações por agora.</h3>
+            <h3>{t('dashboard.noNotifications')}</h3>
           </div>
         )}
 
@@ -44,4 +45,4 @@ const NotificationBoxComponent: FC<NotificationBoxComponentProps> = () => {
   );
 };
 
-export default NotificationBoxComponent;
+export default NotificationBoxComponent;
