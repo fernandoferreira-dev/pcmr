@@ -6,6 +6,7 @@ import '../../styles/dashboard-styles/dashboard-styles.css';
 import '../../styles/dashboard-styles/notification-box.css';
 import NotificationBoxComponent from './notifications-box-component';
 import { useAuth } from '../../context/auth-context';
+import { useTranslation } from "react-i18next";
 
 type Props = { username: string };
 
@@ -32,6 +33,7 @@ export default function AdminDashboardComponent({ username }: Props) {
   const [estadoPing, setEstadoPing] = useState<EstadoSensorDTO | null>(null);
 
   const [isDiagnosticOpen, setIsDiagnosticOpen] = useState(false);
+  const { t } = useTranslation();
 
   const testarConexao = () => {
     fetch(`/api/sensores/1/ping`) //mudar mais logo quando o lambido do fernando ligar o servidor
@@ -62,11 +64,11 @@ export default function AdminDashboardComponent({ username }: Props) {
   return (
     <>
       <div className="main-page">
-        <h1>Bem vindo, {username || "Admin"}</h1>
+        <h1>{t('dashboard.welcome')} {username || "Admin"}</h1>
         <div className="mainbox">
           <PresencaToastComponent />
           <button onClick={() => setIsDiagnosticOpen(true)} className="diagnosticbtn">
-            Consulta Rápida
+            {t('dashboard.quickConsultationButton')}
           </button>
           {isDiagnosticOpen && userId !== null && (
             <DiagnosticButtonComponent
@@ -76,11 +78,11 @@ export default function AdminDashboardComponent({ username }: Props) {
           )}
           <div className="main-page-states">
             <div className="main-page-states-box">
-              <h2>Estado do servidor: </h2>
+              <h2>{t('dashboard.serverStatus')}</h2>
               <div className="OKstate" style={getStatusStyle(isServerOk)}></div>
             </div>
             <div className="main-page-states-box">
-              <h2>Estado do sensor nó: </h2>
+              <h2>{t('dashboard.nodeSensorStatus')}</h2>
               <div className="OKstate" style={getStatusStyle(isSensorOk)}></div>
             </div>
           </div>

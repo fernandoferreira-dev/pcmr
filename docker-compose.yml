@@ -29,7 +29,7 @@ services:
       dockerfile: Dockerfile
     container_name: desktop_app_container
     ports:
-      - "3000:80"
+      - "3000"
     volumes:
       - ./desktop-app/src:/app/src
       - ./desktop-app/index.html:/app/index.html
@@ -46,7 +46,7 @@ services:
       dockerfile: Dockerfile
     container_name: mobile_app_container
     ports:
-      - "3001:80"
+      - "3001"
     depends_on:
       - spring-app
       - mqtt5
@@ -60,7 +60,7 @@ services:
       dockerfile: Dockerfile
     container_name: paciente-app-container
     ports:
-      - "3002:80"
+      - "3002"
     depends_on:
      - spring-app
     networks:

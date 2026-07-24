@@ -10,8 +10,7 @@ type ConfPopProps = {
 
 export default function ConfPop({ isOpen, onClose, onLogout }: ConfPopProps) {
   const [darkMode, setDarkMode] = useState(false);
-  const [language, setLanguage] = useState('Português');
-  const { t, i18n } = useTranslation();
+  const { i18n } = useTranslation();
 
   const handleLanguageChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const lang = e.target.value; // "pt" or "en"
@@ -57,12 +56,12 @@ export default function ConfPop({ isOpen, onClose, onLogout }: ConfPopProps) {
           <div className="flex items-center justify-between">
             <span className="text-gray-700 font-medium">Preferência de Lingua</span>
             <select
-              value={language}
+              value={i18n.language}
               onChange={handleLanguageChange}
               className="bg-gray-100 border border-gray-200 text-gray-700 rounded-2xl px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#8CA483] cursor-pointer"
             >
-              <option value="Português">Português</option>
-              <option value="English">Inglês</option>
+              <option value="pt">Português</option>
+              <option value="eng">Inglês</option>
             </select>
           </div>
 

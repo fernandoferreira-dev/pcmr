@@ -6,11 +6,12 @@ export const resources = {
         translation: {
             dashboard: {
                 title: 'Dashboard',
-                welcome: 'Welcome, {{name}}',
+                welcome: 'Welcome, ',
                 quickConsultationButton: 'Quick Consultation',
                 serverStatus: 'Server status:',
                 nodeSensorStatus: 'Node sensor status:',
                 latestNotifications: 'Latest notifications:',
+                noNotifications: 'No notifications for now'
             },
             personalData: {
                 title: 'Personal Data',
@@ -80,6 +81,7 @@ export const resources = {
                 serverStatus: 'Estado do servidor:',
                 nodeSensorStatus: 'Estado do sensor nó:',
                 latestNotifications: 'Ultimas notificações:',
+                noNotifications: 'Sem notificações por agora'
             },
             personalData: {
                 title: 'Dados Pessoais',

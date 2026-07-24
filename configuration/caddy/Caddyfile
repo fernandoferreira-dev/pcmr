@@ -1,11 +1,11 @@
 app.fernandoferreira.dev {
-    reverse_proxy desktop-app:80
+    reverse_proxy desktop_app_container:80
 }
 
 mobile.fernandoferreira.dev {
-    reverse_proxy mobile-app:80
+    reverse_proxy mobile_app_container:80
 }
 
 paciente.fernandoferreira.dev {
-    reverse_proxy paciente-app:80
+    reverse_proxy paciente-app-container:80
 }
