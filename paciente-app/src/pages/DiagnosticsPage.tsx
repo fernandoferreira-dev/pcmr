@@ -2,24 +2,24 @@ import { useState, useEffect } from "react";
 import { useApp } from "../context/AppContext";
 import "../assets/styles/index.css";
 
-type Diagnostico = {
+type Diagnostic = {
     id: number;
     date: string;
     status: string;
-    temperatura: number;
+    temperature: number;
     bpm: number;
     magnitudeG: number;
 };
 
 type ModalProps = {
-    diagnostico: Diagnostico;
+    diagnostic: Diagnostic;
     onClose: () => void;
 };
 
-function DiagnosticoDetalheModal({ diagnostico, onClose }: ModalProps) {
+function DiagnosticoDetalheModal({ diagnostic, onClose }: ModalProps) {
     const { idioma, t } = useApp();
 
-    const formatarData = (iso: string) =>
+    const formatDate = (iso: string) =>
         new Date(iso).toLocaleString(idioma === "pt" ? "pt-PT" : "en-US", {
             day: "2-digit",
             month: "short",
@@ -29,8 +29,8 @@ function DiagnosticoDetalheModal({ diagnostico, onClose }: ModalProps) {
         });
 
     useEffect(() => {
-        const handleKeyDown = (e: KeyboardEvent) => {
-            if (e.key === "Escape") onClose();
+        const handleKeyDown = (event: KeyboardEvent) => {
+            if (event.key === "Escape") onClose();
         };
         window.addEventListener("keydown", handleKeyDown);
         return () => window.removeEventListener("keydown", handleKeyDown);
@@ -57,7 +57,7 @@ function DiagnosticoDetalheModal({ diagnostico, onClose }: ModalProps) {
                             {t("Diagnóstico", "Diagnosis")} :
                         </span>
                         <h2 className="text-base font-bold text-text mt-0.5">
-                            {formatarData(diagnostico.date)}
+                            {formatDate(diagnostic.date)}
                         </h2>
                     </div>
                     <button
@@ -74,7 +74,7 @@ function DiagnosticoDetalheModal({ diagnostico, onClose }: ModalProps) {
                         <div className="flex flex-col items-center bg-primary/5 border border-primary/10 rounded-2xl p-3">
                             <span className="text-xl">.</span>
                             <span className="text-sm font-black text-text mt-1">
-                                {diagnostico.temperatura?.toFixed?.(1) ?? diagnostico.temperatura} <span className="text-[10px] font-normal">°C</span>
+                                {diagnostic.temperature?.toFixed?.(1) ?? diagnostic.temperature} <span className="text-[10px] font-normal">°C</span>
                             </span>
                             <span className="text-[9px] text-muted font-bold uppercase tracking-wider mt-0.5">
                                 {t("Temp.", "Temp.")}
@@ -84,7 +84,7 @@ function DiagnosticoDetalheModal({ diagnostico, onClose }: ModalProps) {
                         <div className="flex flex-col items-center bg-primary/5 border border-primary/10 rounded-2xl p-3">
                             <span className="text-xl">.</span>
                             <span className="text-sm font-black text-text mt-1">
-                                {diagnostico.bpm} <span className="text-[10px] font-normal">bpm</span>
+                                {diagnostic.bpm} <span className="text-[10px] font-normal">bpm</span>
                             </span>
                             <span className="text-[9px] text-muted font-bold uppercase tracking-wider mt-0.5">
                                 {t("Cardíaco", "Heart Rate")}
@@ -94,7 +94,7 @@ function DiagnosticoDetalheModal({ diagnostico, onClose }: ModalProps) {
                         <div className="flex flex-col items-center bg-primary/5 border border-primary/10 rounded-2xl p-3">
                             <span className="text-xl">.</span>
                             <span className="text-sm font-black text-text mt-1">
-                                {diagnostico.magnitudeG?.toFixed?.(2) ?? diagnostico.magnitudeG} <span className="text-[10px] font-normal">G</span>
+                                {diagnostic.magnitudeG?.toFixed?.(2) ?? diagnostic.magnitudeG} <span className="text-[10px] font-normal">G</span>
                             </span>
                             <span className="text-[9px] text-muted font-bold uppercase tracking-wider mt-0.5">
                                 {t("Magnitude", "Magnitude")}
@@ -110,8 +110,8 @@ function DiagnosticoDetalheModal({ diagnostico, onClose }: ModalProps) {
                             {t("Observações Médicas", "Doctor's Notes")}
                         </h3>
                         <p className="text-xs text-text leading-relaxed whitespace-pre-wrap select-text">
-                            {diagnostico.status?.trim()
-                                ? diagnostico.status
+                            {diagnostic.status?.trim()
+                                ? diagnostic.status
                                 : t("Sem observações registadas para este diagnóstico.", "No notes registered for this diagnosis.")}
                         </p>
                     </div>
@@ -128,45 +128,45 @@ function DiagnosticoDetalheModal({ diagnostico, onClose }: ModalProps) {
     );
 }
 
-export default function DiagnosticsPage({ idPessoa }: { idPessoa: number }) {
+export default function DiagnosticsPage({ personId }: { personId: number }) {
     const { idioma, t } = useApp();
-    const [diagnosticos, setDiagnosticos] = useState<Diagnostico[]>([]);
-    const [carregando, setCarregando] = useState(true);
-    const [erro, setErro] = useState<string | null>(null);
-    const [selecionado, setSelecionado] = useState<Diagnostico | null>(null);
+    const [diagnostics, setDiagnostics] = useState<Diagnostic[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+    const [selectedDiagnostic, setSelectedDiagnostic] = useState<Diagnostic | null>(null);
 
     useEffect(() => {
         const controller = new AbortController();
 
-        async function carregarDiagnosticos() {
-            setCarregando(true);
-            setErro(null);
+        async function fetchDiagnostics() {
+            setIsLoading(true);
+            setError(null);
 
             try {
-                const res = await fetch(`/api/diagnosticos?idPaciente=${idPessoa}`, {
+                const response = await fetch(`/api/diagnosticos?idPaciente=${personId}`, {
                     signal: controller.signal,
                 });
 
-                if (!res.ok) throw new Error();
+                if (!response.ok) throw new Error();
 
-                const data: Diagnostico[] = await res.json();
-                setDiagnosticos(data);
+                const data: Diagnostic[] = await response.json();
+                setDiagnostics(data);
             } catch (err: unknown) {
                 if (err instanceof Error && err.name !== "AbortError") {
-                    setErro(t("Não foi possível carregar os diagnósticos.", "Unable to load diagnostics."));
+                    setError(t("Não foi possível carregar os diagnósticos.", "Unable to load diagnostics."));
                 }
             } finally {
                 if (!controller.signal.aborted) {
-                    setCarregando(false);
+                    setIsLoading(false);
                 }
             }
         }
 
-        carregarDiagnosticos();
+        fetchDiagnostics();
         return () => controller.abort();
-    }, [idPessoa, t]);
+    }, [personId, t]);
 
-    const formatarData = (iso: string) =>
+    const formatDate = (iso: string) =>
         new Date(iso).toLocaleString(idioma === "pt" ? "pt-PT" : "en-US", {
             day: "2-digit",
             month: "short",
@@ -186,13 +186,13 @@ export default function DiagnosticsPage({ idPessoa }: { idPessoa: number }) {
                 </p>
             </header>
 
-            {erro && (
+            {error && (
                 <div className="bg-red-500/10 border border-red-500/20 text-red-600 rounded-2xl p-3.5 text-xs font-semibold text-center mb-4">
-                    {erro}
+                    {error}
                 </div>
             )}
 
-            {carregando && (
+            {isLoading && (
                 <div className="flex flex-col gap-2.5">
                     {[0, 1, 2].map((i) => (
                         <div
@@ -209,7 +209,7 @@ export default function DiagnosticsPage({ idPessoa }: { idPessoa: number }) {
                 </div>
             )}
 
-            {!carregando && !erro && diagnosticos.length === 0 && (
+            {!isLoading && !error && diagnostics.length === 0 && (
                 <div className="flex flex-col items-center justify-center text-center py-12 px-4 bg-background rounded-3xl border border-dashed border-primary-outline/60 my-4">
                     <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary mb-3">
                         <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
@@ -226,10 +226,10 @@ export default function DiagnosticsPage({ idPessoa }: { idPessoa: number }) {
             )}
 
             <div className="flex flex-col gap-2.5">
-                {diagnosticos.map((d) => (
+                {diagnostics.map((item) => (
                     <button
-                        key={d.id}
-                        onClick={() => setSelecionado(d)}
+                        key={item.id}
+                        onClick={() => setSelectedDiagnostic(item)}
                         className="text-left rounded-2xl p-3.5 bg-background border border-primary-outline/40 active:scale-[0.99] transition-all shadow-2xs hover:border-primary/30 cursor-pointer flex flex-col gap-1"
                     >
                         <div className="flex justify-between items-center gap-2">
@@ -237,20 +237,20 @@ export default function DiagnosticsPage({ idPessoa }: { idPessoa: number }) {
                                 {t("Diagnóstico", "Diagnosis")} :
                             </span>
                             <span className="text-[11px] font-medium text-muted shrink-0">
-                                {formatarData(d.date)}
+                                {formatDate(item.date)}
                             </span>
                         </div>
                         <p className="text-xs text-text font-medium truncate mt-0.5">
-                            {d.status?.trim() ? d.status : t("Sem observações registadas", "No registered notes")}
+                            {item.status?.trim() ? item.status : t("Sem observações registadas", "No registered notes")}
                         </p>
                     </button>
                 ))}
             </div>
 
-            {selecionado && (
+            {selectedDiagnostic && (
                 <DiagnosticoDetalheModal
-                    diagnostico={selecionado}
-                    onClose={() => setSelecionado(null)}
+                    diagnostic={selectedDiagnostic}
+                    onClose={() => setSelectedDiagnostic(null)}
                 />
             )}
         </div>

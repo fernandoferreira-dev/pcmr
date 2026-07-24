@@ -50,7 +50,7 @@ function MainContent() {
     return (
         <div className="min-h-screen bg-background text-text font-sans antialiased">
             <main className="transition-all duration-200">
-                {abaAtiva === "diagnosticos" && <DiagnosticsPage idPessoa={sessao.idPessoa} />}
+                {abaAtiva === "diagnosticos" && <DiagnosticsPage personId={sessao.idPessoa} />}
                 {abaAtiva === "mensagens" && <MensagensPage userId={sessao.userId} />}
                 {abaAtiva === "definicoes" && <SettingsPage onLogout={handleLogout} />}
             </main>
