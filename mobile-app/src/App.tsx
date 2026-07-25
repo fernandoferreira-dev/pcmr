@@ -79,9 +79,6 @@ function AppContent() {
           console.log("Saved userId:", profile.userId);
           login(profile);
         }}
-        onAccountCreated={(profile) => {
-          sessionStorage.setItem("pendingProfile", JSON.stringify(profile));
-        }}
       />
     );
   }

@@ -15,10 +15,9 @@ type UserProfile = {
 
 type Props = {
   onLogin: (profile: UserProfile) => void;
-  onAccountCreated?: (profile: UserProfile) => void;
 };
 
-export default function LoginPage({ onLogin, onAccountCreated }: Props) {
+export default function LoginPage({ onLogin }: Props) {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
