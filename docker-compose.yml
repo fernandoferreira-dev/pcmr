@@ -60,7 +60,7 @@ services:
       dockerfile: Dockerfile
     container_name: paciente-app-container
     ports:
-      - "3002"
+      - "3002:80"
     depends_on:
      - spring-app
     networks:
