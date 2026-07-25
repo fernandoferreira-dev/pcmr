@@ -126,7 +126,6 @@ export default function LoginPage({ onLogin }: Props) {
   
   return (
     <>
-      <h1 style={{ color: "#4E5452" }}>Medycist</h1>
       <div className="login-wrapper">
         <div>
           <img
