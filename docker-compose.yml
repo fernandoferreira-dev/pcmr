@@ -46,7 +46,8 @@ services:
       dockerfile: Dockerfile
     container_name: mobile_app_container
     ports:
-      - "3001"
+      - "3001:3001"
+      - "3001:80"
     depends_on:
       - spring-app
       - mqtt5
