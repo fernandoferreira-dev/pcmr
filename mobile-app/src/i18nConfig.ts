@@ -76,7 +76,7 @@ export const resources = {
         translation: {
             dashboard: {
                 title: 'Dashboard',
-                welcome: 'Bem vindo, {{name}}',
+                welcome: 'Bem vindo,',
                 quickConsultationButton: 'Consulta Rápida',
                 serverStatus: 'Estado do servidor:',
                 nodeSensorStatus: 'Estado do sensor nó:',
