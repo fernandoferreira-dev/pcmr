@@ -4,13 +4,50 @@ import "../assets/styles/index.css";
 
 type Diagnostic = {
     id: number;
+    patient: string;
     date: string;
     status: string;
-    temperature: number;
+    cause: string;
+};
+
+type DiagnosticoResponseDTO = {
+    id: number;
+    patient: string;
+    date: string;
+    status: string;
+    relacaoCausaEfeito: string;
+};
+
+type PontoHistorico = {
+    gdhLeitura: string;
+    temperatura: number;
     bpm: number;
     magnitudeG: number;
-    patientName?: string;
 };
+
+type SensorStat = {
+    min: number;
+    max: number;
+    avg: number;
+};
+
+type DiagnosticStats = {
+    temperatura: SensorStat;
+    bpm: SensorStat;
+    magnitudeG: SensorStat;
+};
+
+function calcularStats(valores: number[]): SensorStat {
+    if (!valores.length) {
+        return { min: 0, max: 0, avg: 0 };
+    }
+
+    const min = Math.min(...valores);
+    const max = Math.max(...valores);
+    const avg = valores.reduce((soma, valor) => soma + valor, 0) / valores.length;
+
+    return { min, max, avg };
+}
 
 type ModalProps = {
     diagnostic: Diagnostic;
@@ -19,15 +56,49 @@ type ModalProps = {
 
 function DiagnosticoDetalheModal({ diagnostic, onClose }: ModalProps) {
     const { idioma, t } = useApp();
+    const [modalLoading, setModalLoading] = useState(true);
+    const [modalError, setModalError] = useState<string | null>(null);
+    const [stats, setStats] = useState<DiagnosticStats | null>(null);
 
-    const formatDate = (iso: string) =>
-        new Date(iso).toLocaleString(idioma === "pt" ? "pt-PT" : "en-US", {
-            day: "2-digit",
-            month: "2-digit",
-            year: "numeric",
-            hour: "2-digit",
-            minute: "2-digit",
-        });
+    useEffect(() => {
+        const controller = new AbortController();
+
+        async function fetchHistorico() {
+            setModalLoading(true);
+            setModalError(null);
+
+            try {
+                const response = await fetch(`/api/diagnosticos/${diagnostic.id}/historico`, {
+                    signal: controller.signal,
+                });
+
+                if (!response.ok) throw new Error();
+
+                const historico = (await response.json()) as PontoHistorico[];
+
+                const temperaturas = historico.map((ponto) => ponto.temperatura);
+                const bpms = historico.map((ponto) => ponto.bpm);
+                const magnitudes = historico.map((ponto) => ponto.magnitudeG);
+
+                setStats({
+                    temperatura: calcularStats(temperaturas),
+                    bpm: calcularStats(bpms),
+                    magnitudeG: calcularStats(magnitudes),
+                });
+            } catch (err: unknown) {
+                if (err instanceof Error && err.name !== "AbortError") {
+                    setModalError(t("Não foi possível carregar os dados do diagnóstico.", "Unable to load diagnostic data."));
+                }
+            } finally {
+                if (!controller.signal.aborted) {
+                    setModalLoading(false);
+                }
+            }
+        }
+
+        fetchHistorico();
+        return () => controller.abort();
+    }, [diagnostic.id, t]);
 
     useEffect(() => {
         const handleKeyDown = (event: KeyboardEvent) => {
@@ -37,9 +108,14 @@ function DiagnosticoDetalheModal({ diagnostic, onClose }: ModalProps) {
         return () => window.removeEventListener("keydown", handleKeyDown);
     }, [onClose]);
 
-    const tempVal = diagnostic.temperature ?? 0;
-    const bpmVal = diagnostic.bpm ?? 0;
-    const magVal = diagnostic.magnitudeG ?? 0;
+    const formatDate = (iso: string) =>
+        new Date(iso).toLocaleString(idioma === "pt" ? "pt-PT" : "en-US", {
+            day: "2-digit",
+            month: "2-digit",
+            year: "numeric",
+            hour: "2-digit",
+            minute: "2-digit",
+        });
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
@@ -66,73 +142,91 @@ function DiagnosticoDetalheModal({ diagnostic, onClose }: ModalProps) {
                     </button>
                 </div>
 
-                {/* Informações Principais */}
-                <div className="py-4 space-y-3 text-sm">
-                    <div className="flex justify-between items-center border-b border-primary-outline/10 pb-2">
-                        <span className="text-muted">{t("Diagnóstico", "Diagnosis")}</span>
-                        <span className="font-semibold text-text">#{diagnostic.id}</span>
+                {modalLoading && (
+                    <div className="py-12 text-center text-sm text-muted">
+                        {t("A carregar detalhes...", "Loading details...")}
                     </div>
+                )}
 
-                    <div className="flex justify-between items-center border-b border-primary-outline/10 pb-2">
-                        <span className="text-muted">{t("Paciente", "Patient")}</span>
-                        <span className="font-semibold text-text">{diagnostic.patientName || "Ana Ferreira"}</span>
+                {modalError && (
+                    <div className="bg-red-500/10 border border-red-500/20 text-red-600 rounded-xl p-3 text-xs font-semibold text-center my-4">
+                        {modalError}
                     </div>
+                )}
 
-                    <div className="flex justify-between items-center border-b border-primary-outline/10 pb-2">
-                        <span className="text-muted">{t("Horário", "Time")}</span>
-                        <span className="font-semibold text-text">{formatDate(diagnostic.date)}</span>
-                    </div>
+                {!modalLoading && !modalError && (
+                    <>
+                        {/* Informações Principais */}
+                        <div className="py-4 space-y-3 text-sm">
+                            <div className="flex justify-between items-center border-b border-primary-outline/10 pb-2">
+                                <span className="text-muted">{t("Diagnóstico", "Diagnosis")}</span>
+                                <span className="font-semibold text-text">#{diagnostic.id}</span>
+                            </div>
 
-                    <div className="flex justify-between items-start gap-4 pb-2">
-                        <span className="text-muted shrink-0">{t("Observações", "Observations")}</span>
-                        <span className="text-right font-medium text-text text-xs leading-relaxed max-w-65">
-                            {diagnostic.status?.trim()
-                                ? diagnostic.status
-                                : t("Sem observações registadas.", "No observations registered.")}
-                        </span>
-                    </div>
-                </div>
+                            <div className="flex justify-between items-center border-b border-primary-outline/10 pb-2">
+                                <span className="text-muted">{t("Paciente", "Patient")}</span>
+                                <span className="font-semibold text-text">{diagnostic.patient || "Ana Ferreira"}</span>
+                            </div>
 
-                {/* Evolução dos Sensores */}
-                <div className="mt-2 pt-2">
-                    <h3 className="text-center font-bold text-text text-sm mb-4">
-                        {t("Evolução dos Sensores", "Sensor Evolution")}
-                    </h3>
+                            <div className="flex justify-between items-center border-b border-primary-outline/10 pb-2">
+                                <span className="text-muted">{t("Horário", "Time")}</span>
+                                <span className="font-semibold text-text">{formatDate(diagnostic.date)}</span>
+                            </div>
 
-                    <div className="grid grid-cols-4 text-xs font-semibold text-muted pb-2 border-b border-primary-outline/10 text-right">
-                        <div className="text-left"></div>
-                        <div>{t("MÍN.", "MIN.")}</div>
-                        <div>{t("MÉDIA", "AVG.")}</div>
-                        <div>{t("MÁX.", "MAX.")}</div>
-                    </div>
-
-                    <div className="space-y-3 pt-3 text-xs text-text">
-                        <div className="grid grid-cols-4 items-center text-right">
-                            <span className="text-left font-medium text-muted">
-                                {t("Temperatura (°C)", "Temperature (°C)")}
-                            </span>
-                            <span>{tempVal.toFixed(1)}</span>
-                            <span>{tempVal.toFixed(1)}</span>
-                            <span>{tempVal.toFixed(1)}</span>
+                            <div className="flex justify-between items-start gap-4 pb-2">
+                                <span className="text-muted shrink-0">{t("Observações", "Observations")}</span>
+                                <span className="text-right font-medium text-text text-xs leading-relaxed max-w-65">
+                                    {diagnostic.status?.trim()
+                                        ? diagnostic.status
+                                        : t("Sem observações registadas.", "No observations registered.")}
+                                </span>
+                            </div>
                         </div>
 
-                        <div className="grid grid-cols-4 items-center text-right border-t border-primary-outline/10 pt-3">
-                            <span className="text-left font-medium text-muted">BPM</span>
-                            <span>{bpmVal}</span>
-                            <span>{bpmVal}</span>
-                            <span>{bpmVal}</span>
-                        </div>
+                        {/* Evolução dos Sensores */}
+                        {stats && (
+                            <div className="mt-2 pt-2">
+                                <h3 className="text-center font-bold text-text text-sm mb-4">
+                                    {t("Evolução dos Sensores", "Sensor Evolution")}
+                                </h3>
 
-                        <div className="grid grid-cols-4 items-center text-right border-t border-primary-outline/10 pt-3">
-                            <span className="text-left font-medium text-muted">
-                                {t("Magnitude (G)", "Magnitude (G)")}
-                            </span>
-                            <span>{magVal.toFixed(2)}</span>
-                            <span>{magVal.toFixed(2)}</span>
-                            <span>{magVal.toFixed(2)}</span>
-                        </div>
-                    </div>
-                </div>
+                                <div className="grid grid-cols-4 text-xs font-semibold text-muted pb-2 border-b border-primary-outline/10 text-right">
+                                    <div className="text-left"></div>
+                                    <div>{t("MÍN.", "MIN.")}</div>
+                                    <div>{t("MÉDIA", "AVG.")}</div>
+                                    <div>{t("MÁX.", "MAX.")}</div>
+                                </div>
+
+                                <div className="space-y-3 pt-3 text-xs text-text">
+                                    <div className="grid grid-cols-4 items-center text-right">
+                                        <span className="text-left font-medium text-muted">
+                                            {t("Temperatura (°C)", "Temperature (°C)")}
+                                        </span>
+                                        <span>{stats.temperatura.min.toFixed(1)}</span>
+                                        <span>{stats.temperatura.avg.toFixed(1)}</span>
+                                        <span>{stats.temperatura.max.toFixed(1)}</span>
+                                    </div>
+
+                                    <div className="grid grid-cols-4 items-center text-right border-t border-primary-outline/10 pt-3">
+                                        <span className="text-left font-medium text-muted">BPM</span>
+                                        <span>{stats.bpm.min.toFixed(0)}</span>
+                                        <span>{stats.bpm.avg.toFixed(0)}</span>
+                                        <span>{stats.bpm.max.toFixed(0)}</span>
+                                    </div>
+
+                                    <div className="grid grid-cols-4 items-center text-right border-t border-primary-outline/10 pt-3">
+                                        <span className="text-left font-medium text-muted">
+                                            {t("Magnitude (G)", "Magnitude (G)")}
+                                        </span>
+                                        <span>{stats.magnitudeG.min.toFixed(2)}</span>
+                                        <span>{stats.magnitudeG.avg.toFixed(2)}</span>
+                                        <span>{stats.magnitudeG.max.toFixed(2)}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+                    </>
+                )}
             </div>
         </div>
     );
@@ -159,8 +253,17 @@ export default function DiagnosticsPage({ personId }: { personId: number }) {
 
                 if (!response.ok) throw new Error();
 
-                const data: Diagnostic[] = await response.json();
-                setDiagnostics(data);
+                const data: DiagnosticoResponseDTO[] = await response.json();
+
+                const diagnosticsMapped: Diagnostic[] = data.map((item) => ({
+                    id: item.id,
+                    patient: item.patient || "",
+                    date: item.date || "",
+                    status: item.status || "",
+                    cause: item.relacaoCausaEfeito || "",
+                }));
+
+                setDiagnostics(diagnosticsMapped);
             } catch (err: unknown) {
                 if (err instanceof Error && err.name !== "AbortError") {
                     setError(t("Não foi possível carregar os diagnósticos.", "Unable to load diagnostics."));
