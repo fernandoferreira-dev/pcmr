@@ -9,6 +9,7 @@ type Diagnostic = {
     temperature: number;
     bpm: number;
     magnitudeG: number;
+    patientName?: string;
 };
 
 type ModalProps = {
@@ -22,7 +23,7 @@ function DiagnosticoDetalheModal({ diagnostic, onClose }: ModalProps) {
     const formatDate = (iso: string) =>
         new Date(iso).toLocaleString(idioma === "pt" ? "pt-PT" : "en-US", {
             day: "2-digit",
-            month: "short",
+            month: "2-digit",
             year: "numeric",
             hour: "2-digit",
             minute: "2-digit",
@@ -36,93 +37,102 @@ function DiagnosticoDetalheModal({ diagnostic, onClose }: ModalProps) {
         return () => window.removeEventListener("keydown", handleKeyDown);
     }, [onClose]);
 
+    const tempVal = diagnostic.temperature ?? 0;
+    const bpmVal = diagnostic.bpm ?? 0;
+    const magVal = diagnostic.magnitudeG ?? 0;
+
     return (
-        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
             {/* Backdrop */}
             <div
-                className="fixed inset-0 bg-black/60 backdrop-blur-xs transition-opacity"
+                className="fixed inset-0 bg-black/50 backdrop-blur-xs transition-opacity"
                 onClick={onClose}
             />
 
-            {/* Modal Bottom Sheet */}
-            <div className="relative z-10 bg-background rounded-t-3xl sm:rounded-3xl shadow-2xl w-full max-w-lg p-5 max-h-[88vh] flex flex-col font-sans border-t sm:border border-primary-outline/40 animate-slideUp sm:animate-fadeIn pb-[calc(1.25rem+env(safe-area-inset-bottom))]">
-
-                {/* Pega Tátil */}
-                <div className="w-12 h-1.5 bg-primary/20 rounded-full mx-auto mb-3 sm:hidden" />
+            {/* Modal Card */}
+            <div className="relative z-10 bg-background rounded-2xl shadow-xl w-full max-w-md p-6 flex flex-col font-sans border border-primary-outline/20">
 
                 {/* Cabeçalho */}
-                <div className="flex items-start justify-between mb-3">
-                    <div>
-                        <span className="text-[10px] font-black uppercase tracking-wider text-primary">
-                            {t("Diagnóstico", "Diagnosis")} :
-                        </span>
-                        <h2 className="text-base font-bold text-text mt-0.5">
-                            {formatDate(diagnostic.date)}
-                        </h2>
-                    </div>
+                <div className="flex items-center justify-between pb-4 border-b border-primary-outline/20">
+                    <h2 className="text-lg font-bold text-text">
+                        {t("Relatório de Diagnóstico", "Diagnostic Report")}
+                    </h2>
                     <button
                         onClick={onClose}
-                        className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center text-muted active:bg-primary/20 transition-colors cursor-pointer shrink-0"
+                        className="text-muted hover:text-text transition-colors cursor-pointer p-1"
                         aria-label={t("Fechar", "Close")}
                     >
                         ✕
                     </button>
                 </div>
 
-                <div className="overflow-y-auto flex-1 pr-0.5 space-y-4 touch-pan-y">
-                    <div className="grid grid-cols-3 gap-2 my-2">
-                        <div className="flex flex-col items-center bg-primary/5 border border-primary/10 rounded-2xl p-3">
-                            <span className="text-xl">.</span>
-                            <span className="text-sm font-black text-text mt-1">
-                                {diagnostic.temperature?.toFixed?.(1) ?? diagnostic.temperature} <span className="text-[10px] font-normal">°C</span>
-                            </span>
-                            <span className="text-[9px] text-muted font-bold uppercase tracking-wider mt-0.5">
-                                {t("Temp.", "Temp.")}
-                            </span>
-                        </div>
-
-                        <div className="flex flex-col items-center bg-primary/5 border border-primary/10 rounded-2xl p-3">
-                            <span className="text-xl">.</span>
-                            <span className="text-sm font-black text-text mt-1">
-                                {diagnostic.bpm} <span className="text-[10px] font-normal">bpm</span>
-                            </span>
-                            <span className="text-[9px] text-muted font-bold uppercase tracking-wider mt-0.5">
-                                {t("Cardíaco", "Heart Rate")}
-                            </span>
-                        </div>
-
-                        <div className="flex flex-col items-center bg-primary/5 border border-primary/10 rounded-2xl p-3">
-                            <span className="text-xl">.</span>
-                            <span className="text-sm font-black text-text mt-1">
-                                {diagnostic.magnitudeG?.toFixed?.(2) ?? diagnostic.magnitudeG} <span className="text-[10px] font-normal">G</span>
-                            </span>
-                            <span className="text-[9px] text-muted font-bold uppercase tracking-wider mt-0.5">
-                                {t("Magnitude", "Magnitude")}
-                            </span>
-                        </div>
+                {/* Informações Principais */}
+                <div className="py-4 space-y-3 text-sm">
+                    <div className="flex justify-between items-center border-b border-primary-outline/10 pb-2">
+                        <span className="text-muted">{t("Diagnóstico", "Diagnosis")}</span>
+                        <span className="font-semibold text-text">#{diagnostic.id}</span>
                     </div>
 
-                    <div className="bg-primary/5 border border-primary-outline/30 rounded-2xl p-3.5">
-                        <h3 className="text-xs font-bold text-text uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
-                            <svg className="w-3.5 h-3.5 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                            </svg>
-                            {t("Observações Médicas", "Doctor's Notes")}
-                        </h3>
-                        <p className="text-xs text-text leading-relaxed whitespace-pre-wrap select-text">
+                    <div className="flex justify-between items-center border-b border-primary-outline/10 pb-2">
+                        <span className="text-muted">{t("Paciente", "Patient")}</span>
+                        <span className="font-semibold text-text">{diagnostic.patientName || "Ana Ferreira"}</span>
+                    </div>
+
+                    <div className="flex justify-between items-center border-b border-primary-outline/10 pb-2">
+                        <span className="text-muted">{t("Horário", "Time")}</span>
+                        <span className="font-semibold text-text">{formatDate(diagnostic.date)}</span>
+                    </div>
+
+                    <div className="flex justify-between items-start gap-4 pb-2">
+                        <span className="text-muted shrink-0">{t("Observações", "Observations")}</span>
+                        <span className="text-right font-medium text-text text-xs leading-relaxed max-w-65">
                             {diagnostic.status?.trim()
                                 ? diagnostic.status
-                                : t("Sem observações registadas para este diagnóstico.", "No notes registered for this diagnosis.")}
-                        </p>
+                                : t("Sem observações registadas.", "No observations registered.")}
+                        </span>
                     </div>
                 </div>
 
-                <button
-                    onClick={onClose}
-                    className="w-full mt-4 py-3.5 bg-primary text-background font-bold rounded-xl active:scale-98 transition-all shadow-md text-sm shrink-0 cursor-pointer"
-                >
-                    {t("Fechar", "Close")}
-                </button>
+                {/* Evolução dos Sensores */}
+                <div className="mt-2 pt-2">
+                    <h3 className="text-center font-bold text-text text-sm mb-4">
+                        {t("Evolução dos Sensores", "Sensor Evolution")}
+                    </h3>
+
+                    <div className="grid grid-cols-4 text-xs font-semibold text-muted pb-2 border-b border-primary-outline/10 text-right">
+                        <div className="text-left"></div>
+                        <div>{t("MÍN.", "MIN.")}</div>
+                        <div>{t("MÉDIA", "AVG.")}</div>
+                        <div>{t("MÁX.", "MAX.")}</div>
+                    </div>
+
+                    <div className="space-y-3 pt-3 text-xs text-text">
+                        <div className="grid grid-cols-4 items-center text-right">
+                            <span className="text-left font-medium text-muted">
+                                {t("Temperatura (°C)", "Temperature (°C)")}
+                            </span>
+                            <span>{tempVal.toFixed(1)}</span>
+                            <span>{tempVal.toFixed(1)}</span>
+                            <span>{tempVal.toFixed(1)}</span>
+                        </div>
+
+                        <div className="grid grid-cols-4 items-center text-right border-t border-primary-outline/10 pt-3">
+                            <span className="text-left font-medium text-muted">BPM</span>
+                            <span>{bpmVal}</span>
+                            <span>{bpmVal}</span>
+                            <span>{bpmVal}</span>
+                        </div>
+
+                        <div className="grid grid-cols-4 items-center text-right border-t border-primary-outline/10 pt-3">
+                            <span className="text-left font-medium text-muted">
+                                {t("Magnitude (G)", "Magnitude (G)")}
+                            </span>
+                            <span>{magVal.toFixed(2)}</span>
+                            <span>{magVal.toFixed(2)}</span>
+                            <span>{magVal.toFixed(2)}</span>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     );
